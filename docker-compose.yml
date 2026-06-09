@@ -1,0 +1,12 @@
+services:
+  cheat-sheet:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: linux-cheat-sheet
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - NODE_ENV=production
