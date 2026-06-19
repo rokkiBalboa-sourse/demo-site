@@ -41,8 +41,8 @@ export default function Home() {
               </button>
             </div>
             <a
-              href={variant === 1 ? "/docs/Отчёт_1.docx" : "/docs/Отчёт_4.docx"}
-              download
+              href={variant === 1 ? "/docs/otchet_1.docx" : "/docs/otchet_4.docx"}
+              download={variant === 1 ? "Отчёт_1.docx" : "Отчёт_4.docx"}
               className="px-4 py-2 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 rounded-xl text-sm font-semibold flex items-center gap-2 transition-all duration-200 shadow-sm cursor-pointer"
             >
               <Download className="w-4 h-4" />
