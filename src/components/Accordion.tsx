@@ -9,6 +9,7 @@ interface AccordionItemProps {
   defaultOpen?: boolean;
   level?: 1 | 2;
   badge?: string;
+  titleClassName?: string;
 }
 
 export function AccordionItem({
@@ -17,6 +18,7 @@ export function AccordionItem({
   defaultOpen = false,
   level = 1,
   badge,
+  titleClassName,
 }: AccordionItemProps) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
@@ -33,7 +35,7 @@ export function AccordionItem({
   const titleStyles =
     level === 1
       ? "text-lg font-bold text-zinc-100 group-hover:text-emerald-400 transition-colors flex items-center gap-3"
-      : "text-base font-semibold text-zinc-200 group-hover:text-emerald-400 transition-colors flex items-center gap-2";
+      : `${titleClassName ? "" : "text-zinc-200 group-hover:text-emerald-400"} text-base font-semibold transition-colors flex items-center gap-2 ${titleClassName || ""}`;
 
   const contentContainerStyles =
     level === 1
