@@ -5,8 +5,9 @@ import Link from 'next/link';
 import { SubmissionWithDetails, Task, ModuleInfo, StudentWithStats } from '@/lib/types';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { Download, Search, ExternalLink, Clock, CheckCircle2, AlertTriangle, Layers, Users, ClipboardList } from 'lucide-react';
+import { Download, Search, ExternalLink, Clock, CheckCircle2, AlertTriangle, Layers, Users, ClipboardList, Settings } from 'lucide-react';
 import { StudentsManagementClient } from './StudentsManagementClient';
+import { AdminSettingsClient } from './AdminSettingsClient';
 
 interface AdminDashboardClientProps {
   submissions: SubmissionWithDetails[];
@@ -23,7 +24,7 @@ export function AdminDashboardClient({
   availableGroups,
   students,
 }: AdminDashboardClientProps) {
-  const [activeTab, setActiveTab] = useState<'submissions' | 'students'>('submissions');
+  const [activeTab, setActiveTab] = useState<'submissions' | 'students' | 'settings'>('submissions');
   const [selectedModule, setSelectedModule] = useState<string>('ALL');
   const [selectedTask, setSelectedTask] = useState<string>('ALL');
   const [selectedGroup, setSelectedGroup] = useState<string>('ALL');
@@ -94,9 +95,23 @@ export function AdminDashboardClient({
           <Users className="w-3.5 h-3.5 text-emerald-400" />
           <span>База студентов ({students.length})</span>
         </button>
+
+        <button
+          onClick={() => setActiveTab('settings')}
+          className={`px-4 py-2.5 font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-colors ${
+            activeTab === 'settings'
+              ? 'border-white text-white bg-zinc-900/80'
+              : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30'
+          }`}
+        >
+          <Settings className="w-3.5 h-3.5 text-cyan-400" />
+          <span>Настройки и Бэкап</span>
+        </button>
       </div>
 
-      {activeTab === 'students' ? (
+      {activeTab === 'settings' ? (
+        <AdminSettingsClient />
+      ) : activeTab === 'students' ? (
         <StudentsManagementClient
           initialStudents={students}
           availableGroups={availableGroups}

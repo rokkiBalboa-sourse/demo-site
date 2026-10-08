@@ -23,28 +23,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Задание не найдено' }, { status: 404 });
     }
 
-    // Защита от перезалива: исправить отчёт можно ТОЛЬКО после отправки на доработку ('rejected')
-    const existingSubmission = await db.getSubmissionByUserAndTask(session.id, task.id);
-    if (existingSubmission) {
-      if (existingSubmission.status === 'pending') {
-        return NextResponse.json(
-          {
-            error:
-              'Отчёт уже отправлен и ожидает проверки преподавателем. Исправить отчёт можно только после того, как администратор отправит его на доработку.',
-          },
-          { status: 403 }
-        );
-      }
-      if (existingSubmission.status === 'reviewed') {
-        return NextResponse.json(
-          {
-            error:
-              'Отчёт уже проверен и принят. Повторный перезалив заблокирован.',
-          },
-          { status: 403 }
-        );
-      }
-    }
+
 
     const submission = await db.createOrUpdateSubmission({
       userId: session.id,

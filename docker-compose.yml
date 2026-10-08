@@ -31,6 +31,9 @@ services:
       JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_min_32_chars}
       APP_URL: ${APP_URL:-https://exam.sudostudy.dev}
       NEXTAUTH_URL: ${APP_URL:-https://exam.sudostudy.dev}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      ADMIN_NAME: ${ADMIN_NAME:-Кузнецов Валерий Сергеевич}
     volumes:
       - ./.data:/app/.data
     ports:

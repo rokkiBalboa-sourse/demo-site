@@ -821,8 +821,9 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
   const isReviewed = initialSubmission?.status === 'reviewed';
   const isRejected = initialSubmission?.status === 'rejected';
 
-  // Защита от перезалива: отчет можно исправить ТОЛЬКО после того, как администратор отправит его на доработку
-  const canEdit = !initialSubmission || isRejected;
+  // Разрешено редактирование, если нет сдачи, статус 'rejected' или включен режим пересдачи
+  const [isRetaking, setIsRetaking] = useState(false);
+  const canEdit = !initialSubmission || isRejected || isRetaking;
 
   const handleCopyDiag = async (stepNum: number, diagCmd: string) => {
     try {
@@ -845,13 +846,6 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
     setSuccessMessage(null);
 
     if (!canEdit) {
-      if (isPending) {
-        setError(
-          'Отчёт уже отправлен и ожидает проверки преподавателем. Перезалив невозможен до отправки на доработку.'
-        );
-      } else if (isReviewed) {
-        setError('Отчёт уже проверен и принят преподавателем. Перезалив заблокирован.');
-      }
       return;
     }
 
@@ -883,6 +877,7 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
           ? 'Исправленный отчёт успешно отправлен на повторную проверку!'
           : 'Отчёт успешно сохранён и передан на проверку преподавателю!'
       );
+      setIsRetaking(false);
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Произошла непредвиденная ошибка');
@@ -1570,7 +1565,7 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
             </div>
           )}
 
-          {isPending && (
+          {isPending && !isRetaking && (
             <div className="space-y-4">
               <div className="border border-zinc-700 bg-zinc-900/90 p-4.5 flex items-start gap-3.5">
                 <div className="w-8 h-8 rounded bg-zinc-800 border border-zinc-700 flex items-center justify-center shrink-0 mt-0.5">
@@ -1585,26 +1580,27 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                   </div>
                   <p className="text-zinc-400 leading-relaxed">
                     Вы сдали отчёт {new Date(initialSubmission.submitted_at).toLocaleString('ru-RU')}.
-                    Повторная отправка и перезалив заблокированы. Внести исправления можно будет только после того, как администратор проверит работу и отправит её <strong>на доработку</strong>.
+                    Если вам требуется внести исправления в лог или пересдать тест, нажмите кнопку «Пройти повторно / Внести исправления».
                   </p>
                 </div>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-3">
                 <Button
                   type="button"
-                  disabled
+                  variant="outline"
+                  onClick={() => setIsRetaking(true)}
                   size="lg"
-                  className="flex items-center gap-2 opacity-50 cursor-not-allowed bg-zinc-800 text-zinc-400 border-zinc-700"
+                  className="flex items-center gap-2 border-zinc-700 text-zinc-200 hover:bg-zinc-800 hover:text-white"
                 >
-                  <Lock className="w-4 h-4" />
-                  <span>Перезалив заблокирован (на проверке)</span>
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Пройти повторно / Внести исправления</span>
                 </Button>
               </div>
             </div>
           )}
 
-          {isReviewed && (
+          {isReviewed && !isRetaking && (
             <div className="space-y-4">
               <div className="border border-emerald-500/50 bg-emerald-950/30 p-4.5 flex items-start gap-3.5 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
                 <div className="w-8 h-8 rounded bg-emerald-900/50 border border-emerald-500/50 flex items-center justify-center shrink-0 mt-0.5">
@@ -1619,7 +1615,6 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                   </div>
                   <p className="text-zinc-300 leading-relaxed">
                     Работа проверена преподавателем {initialSubmission.reviewed_at ? new Date(initialSubmission.reviewed_at).toLocaleString('ru-RU') : ''}.
-                    Задание успешно зачтено, повторная отправка закрыта.
                   </p>
                   {initialSubmission.feedback && (
                     <div className="mt-2 p-2.5 bg-black/60 border border-emerald-500/40 text-emerald-200 text-xs">
@@ -1630,15 +1625,55 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                 </div>
               </div>
 
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-3">
                 <Button
                   type="button"
-                  disabled
+                  variant="outline"
+                  onClick={() => setIsRetaking(true)}
                   size="lg"
-                  className="flex items-center gap-2 opacity-50 cursor-not-allowed bg-zinc-800 text-zinc-400 border-zinc-700"
+                  className="flex items-center gap-2 border-zinc-700 text-zinc-200 hover:bg-zinc-800 hover:text-white"
                 >
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span>Работа зачтена</span>
+                  <RefreshCw className="w-4 h-4" />
+                  <span>Пройти повторно / Пересдать</span>
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {isRetaking && (
+            <div className="space-y-4">
+              <div className="border border-cyan-500/50 bg-cyan-950/30 p-4.5 flex items-start gap-3.5">
+                <div className="w-8 h-8 rounded bg-cyan-900/50 border border-cyan-500/50 flex items-center justify-center shrink-0 mt-0.5">
+                  <RefreshCw className="w-4 h-4 text-cyan-300 animate-spin" />
+                </div>
+                <div className="space-y-1.5 font-mono text-xs flex-1">
+                  <div className="font-bold text-cyan-300 uppercase tracking-wider">
+                    Режим перепрохождения / внесения правок
+                  </div>
+                  <p className="text-zinc-300 leading-relaxed">
+                    Вы можете выбрать новые ответы на вопросы и обновить лог проверки в полях выше. При отправке новые ответы будут записаны в систему, а работа снова поступит в журнал преподавателя на проверку.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsRetaking(false)}
+                  size="lg"
+                  className="border-zinc-700 text-zinc-300 hover:bg-zinc-800"
+                >
+                  Отмена
+                </Button>
+                <Button
+                  type="submit"
+                  isLoading={isLoading}
+                  size="lg"
+                  className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>Отправить обновлённый отчёт</span>
                 </Button>
               </div>
             </div>

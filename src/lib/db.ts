@@ -167,10 +167,26 @@ function ensureDataFile(): LocalStore {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   }
 
+  const envAdminUser = process.env.ADMIN_USERNAME?.trim();
+  const envAdminPass = process.env.ADMIN_PASSWORD?.trim();
+  const envAdminName = process.env.ADMIN_NAME?.trim();
+
+  const applyAdminEnv = (users: User[]) => {
+    if (!envAdminUser && !envAdminPass && !envAdminName) return;
+    const admin = users.find((u) => u.role === 'admin');
+    if (admin) {
+      if (envAdminUser) admin.username = envAdminUser;
+      if (envAdminPass) admin.password_hash = envAdminPass;
+      if (envAdminName) admin.full_name = envAdminName;
+    }
+  };
+
   // Always sync tasks with TASKS_DATA definition to ensure all 32 tasks and detailed explanations are present
   if (!fs.existsSync(DATA_FILE)) {
+    const initialUsers = JSON.parse(JSON.stringify(INITIAL_USERS)) as User[];
+    applyAdminEnv(initialUsers);
     const initial: LocalStore = {
-      users: INITIAL_USERS,
+      users: initialUsers,
       tasks: TASKS_DATA,
       submissions: INITIAL_SUBMISSIONS,
     };
@@ -184,11 +200,17 @@ function ensureDataFile(): LocalStore {
 
     // Always sync tasks with latest code definition
     parsed.tasks = TASKS_DATA;
+
+    // Sync admin credentials from env if set
+    applyAdminEnv(parsed.users);
+
     saveStore(parsed);
     return parsed;
   } catch {
+    const initialUsers = JSON.parse(JSON.stringify(INITIAL_USERS)) as User[];
+    applyAdminEnv(initialUsers);
     const fallback: LocalStore = {
-      users: INITIAL_USERS,
+      users: initialUsers,
       tasks: TASKS_DATA,
       submissions: INITIAL_SUBMISSIONS,
     };
@@ -509,17 +531,6 @@ export const db = {
     const now = new Date().toISOString();
 
     if (existingIndex >= 0) {
-      const existing = store.submissions[existingIndex];
-      if (existing.status === 'pending') {
-        throw new Error(
-          'Отчёт уже отправлен и ожидает проверки. Исправить отчёт можно только после отправки администратором на доработку.'
-        );
-      }
-      if (existing.status === 'reviewed') {
-        throw new Error('Отчёт уже проверен и принят. Повторный перезалив заблокирован.');
-      }
-
-      // Разрешено только при статусе 'rejected' (отправлен на доработку)
       store.submissions[existingIndex] = {
         ...store.submissions[existingIndex],
         log_output: data.logOutput,
@@ -577,5 +588,57 @@ export const db = {
 
     saveStore(store);
     return this.getSubmissionById(submissionId);
+  },
+
+  async updateAdminCredentials(data: {
+    username?: string;
+    password?: string;
+    fullName?: string;
+  }): Promise<User | null> {
+    const store = ensureDataFile();
+    const adminIndex = store.users.findIndex((u) => u.role === 'admin');
+    if (adminIndex === -1) return null;
+
+    if (data.username && data.username.toLowerCase().trim() !== store.users[adminIndex].username.toLowerCase()) {
+      const clash = store.users.find(
+        (u, idx) => idx !== adminIndex && u.username.toLowerCase() === data.username!.toLowerCase().trim()
+      );
+      if (clash) {
+        throw new Error(`Логин "${data.username.trim()}" уже занят другим пользователем`);
+      }
+      store.users[adminIndex].username = data.username.trim();
+    }
+
+    if (data.password && data.password.trim()) {
+      store.users[adminIndex].password_hash = data.password.trim();
+    }
+
+    if (data.fullName && data.fullName.trim()) {
+      store.users[adminIndex].full_name = data.fullName.trim();
+    }
+
+    store.users[adminIndex].updated_at = new Date().toISOString();
+    saveStore(store);
+    return store.users[adminIndex];
+  },
+
+  async exportStore(): Promise<LocalStore> {
+    return ensureDataFile();
+  },
+
+  async importStore(imported: { users: User[]; submissions: Submission[] }): Promise<void> {
+    const store = ensureDataFile();
+    if (!Array.isArray(imported.users) || !Array.isArray(imported.submissions)) {
+      throw new Error('Некорректная структура файла резервной копии: отсутствуют массивы users или submissions');
+    }
+
+    // Backup current file before overriding
+    const backupFile = path.join(DATA_DIR, `store.backup-${Date.now()}.json`);
+    fs.writeFileSync(backupFile, JSON.stringify(store, null, 2), 'utf-8');
+
+    store.users = imported.users;
+    store.submissions = imported.submissions;
+    store.tasks = TASKS_DATA;
+    saveStore(store);
   },
 };

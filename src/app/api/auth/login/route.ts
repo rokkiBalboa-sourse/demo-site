@@ -14,17 +14,9 @@ export async function POST(req: NextRequest) {
     }
 
     const user = await db.findUserByUsername(username.trim());
-    if (!user) {
+    if (!user || user.password_hash !== password) {
       return NextResponse.json(
-        { error: 'Пользователь не найден' },
-        { status: 401 }
-      );
-    }
-
-    // In production password_hash is verified with bcrypt/argon2
-    if (user.password_hash !== password) {
-      return NextResponse.json(
-        { error: 'Неверный пароль' },
+        { error: 'Неверный логин или пароль' },
         { status: 401 }
       );
     }
