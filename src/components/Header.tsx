@@ -2,7 +2,8 @@ import React from 'react';
 import Link from 'next/link';
 import { SessionUser } from '@/lib/types';
 import { Logo } from './Logo';
-import { ExternalLink, LogOut, ShieldAlert, BookOpen, Layers, Compass } from 'lucide-react';
+import { LogoutButton } from './LogoutButton';
+import { ExternalLink, ShieldAlert, BookOpen, Layers, Compass } from 'lucide-react';
 
 interface HeaderProps {
   user: SessionUser | null;
@@ -78,15 +79,7 @@ export function Header({ user }: HeaderProps) {
               )}
 
               {/* Logout Button */}
-              <form action="/api/auth/logout" method="POST">
-                <button
-                  type="submit"
-                  title="Выйти из системы"
-                  className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 transition-colors cursor-pointer"
-                >
-                  <LogOut className="w-4 h-4" />
-                </button>
-              </form>
+              <LogoutButton />
             </>
           ) : (
             <Link
