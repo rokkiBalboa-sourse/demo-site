@@ -91,6 +91,7 @@ export interface Submission {
   reviewed_by: string | null;
   submitted_at: string;
   reviewed_at: string | null;
+  allow_retake?: boolean;
 }
 
 export interface SubmissionWithDetails extends Submission {

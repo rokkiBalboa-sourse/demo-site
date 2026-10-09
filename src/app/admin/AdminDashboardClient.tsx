@@ -329,7 +329,16 @@ export function AdminDashboardClient({
                       <td className="py-3 px-4 font-mono text-zinc-500 whitespace-nowrap">
                         {formattedDate}
                       </td>
-                      <td className="py-3 px-4 whitespace-nowrap">{statusBadge}</td>
+                      <td className="py-3 px-4 whitespace-nowrap">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          {statusBadge}
+                          {sub.allow_retake && (
+                            <span className="text-[10px] font-mono font-bold bg-cyan-950/80 text-cyan-300 border border-cyan-500/50 px-1.5 py-0.5">
+                              ПЕРЕСДАЧА
+                            </span>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-3 px-4 font-mono text-white">
                         {sub.score !== null ? `${sub.score} б.` : '—'}
                       </td>

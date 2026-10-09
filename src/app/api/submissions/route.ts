@@ -36,9 +36,10 @@ export async function POST(req: NextRequest) {
   } catch (error: unknown) {
     console.error('Submission error', error);
     const message = error instanceof Error ? error.message : 'Не удалось сохранить отчёт';
+    const status = message.includes('заблокировано') ? 403 : 500;
     return NextResponse.json(
       { error: message },
-      { status: 500 }
+      { status }
     );
   }
 }

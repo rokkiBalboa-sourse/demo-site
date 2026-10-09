@@ -198,6 +198,11 @@ export default async function ModuleDetailPage({ params }: ModulePageProps) {
                         Задание №{task.task_number}
                       </span>
                       {statusBadge}
+                      {sub?.allow_retake && (
+                        <span className="font-mono text-xs font-bold text-cyan-300 border border-cyan-500/50 bg-cyan-950/80 px-2 py-0.5">
+                          ПЕРЕСДАЧА РАЗРЕШЕНА
+                        </span>
+                      )}
                       {task.nodes && task.nodes.length > 0 && (
                         <div className="flex items-center gap-1 font-mono text-[11px] text-zinc-400">
                           <Server className="w-3 h-3 text-zinc-500" />

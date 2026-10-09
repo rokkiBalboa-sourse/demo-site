@@ -146,6 +146,11 @@ export default async function TaskDetailPage({ params }: PageProps) {
                 {task.module_code} • Задание №{task.task_number}
               </span>
               {statusBadge}
+              {initialSubmission?.allow_retake && (
+                <span className="font-mono text-xs font-bold text-cyan-300 border border-cyan-500/50 bg-cyan-950/80 px-2 py-0.5">
+                  ПЕРЕСДАЧА РАЗРЕШЕНА
+                </span>
+              )}
               <span className="text-xs font-mono text-zinc-400">
                 Макс. балл: {task.max_score} б.
               </span>

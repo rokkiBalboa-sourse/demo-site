@@ -531,13 +531,29 @@ export const db = {
     const now = new Date().toISOString();
 
     if (existingIndex >= 0) {
+      const existing = store.submissions[existingIndex];
+
+      // Проверка: если студент получил оценку от 3 до 5, повторная сдача заблокирована,
+      // если только преподаватель явно не открыл доступ на пересдачу (allow_retake)
+      if (
+        existing.score !== null &&
+        existing.score !== undefined &&
+        existing.score >= 3 &&
+        !existing.allow_retake
+      ) {
+        throw new Error(
+          `Задание уже сдано с положительной оценкой (${existing.score}). Повторное прохождение заблокировано. Пересдача возможна только по согласованию с преподавателем.`
+        );
+      }
+
       store.submissions[existingIndex] = {
-        ...store.submissions[existingIndex],
+        ...existing,
         log_output: data.logOutput,
         answers: data.answers,
         status: 'pending',
         score: null,
         is_passed: null,
+        allow_retake: false,
         submitted_at: now,
       };
       saveStore(store);
@@ -556,6 +572,7 @@ export const db = {
         reviewed_by: null,
         submitted_at: now,
         reviewed_at: null,
+        allow_retake: false,
       };
       store.submissions.push(newSubmission);
       saveStore(store);
@@ -570,6 +587,7 @@ export const db = {
       score: number | null;
       isPassed: boolean;
       feedback: string;
+      allowRetake?: boolean;
     }
   ): Promise<SubmissionWithDetails | null> {
     const store = ensureDataFile();
@@ -582,10 +600,27 @@ export const db = {
       is_passed: data.isPassed,
       feedback: data.feedback,
       status: data.isPassed ? 'reviewed' : 'rejected',
+      allow_retake:
+        data.allowRetake !== undefined
+          ? data.allowRetake
+          : (store.submissions[index].allow_retake ?? false),
       reviewed_by: reviewerId,
       reviewed_at: new Date().toISOString(),
     };
 
+    saveStore(store);
+    return this.getSubmissionById(submissionId);
+  },
+
+  async setSubmissionRetakePermission(
+    submissionId: string,
+    allowRetake: boolean
+  ): Promise<SubmissionWithDetails | null> {
+    const store = ensureDataFile();
+    const index = store.submissions.findIndex((s) => s.id === submissionId);
+    if (index === -1) return null;
+
+    store.submissions[index].allow_retake = allowRetake;
     saveStore(store);
     return this.getSubmissionById(submissionId);
   },

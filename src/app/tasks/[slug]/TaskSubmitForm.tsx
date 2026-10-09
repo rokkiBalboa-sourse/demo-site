@@ -27,6 +27,7 @@ import {
   Settings2,
   FileText,
   Lock,
+  Unlock,
   RefreshCw,
   Info,
 } from 'lucide-react';
@@ -821,9 +822,20 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
   const isReviewed = initialSubmission?.status === 'reviewed';
   const isRejected = initialSubmission?.status === 'rejected';
 
-  // Разрешено редактирование, если нет сдачи, статус 'rejected' или включен режим пересдачи
+  // Оценка от 3 до 5 (положительная оценка):
+  const hasPassingScore =
+    initialSubmission?.score !== null &&
+    initialSubmission?.score !== undefined &&
+    initialSubmission.score >= 3;
+
+  // Если студент получил оценку от 5 до 3, повторное прохождение заблокировано,
+  // кроме случая, когда преподаватель явно открыл доступ на пересдачу (allow_retake)
+  const isRetakeBlocked = hasPassingScore && !initialSubmission?.allow_retake;
+  const isRetakeAllowedByTeacher = hasPassingScore && Boolean(initialSubmission?.allow_retake);
+
+  // Разрешено редактирование, если нет сдачи, статус 'rejected' или включен режим пересдачи (при условии отсутствия блокировки)
   const [isRetaking, setIsRetaking] = useState(false);
-  const canEdit = !initialSubmission || isRejected || isRetaking;
+  const canEdit = (!initialSubmission || isRejected || (isRetaking && !isRetakeBlocked)) && !isRetakeBlocked;
 
   const handleCopyDiag = async (stepNum: number, diagCmd: string) => {
     try {
@@ -845,7 +857,10 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
     setError(null);
     setSuccessMessage(null);
 
-    if (!canEdit) {
+    if (!canEdit || isRetakeBlocked) {
+      setError(
+        `Задание уже сдано с положительной оценкой (${initialSubmission?.score}). Повторное прохождение заблокировано. Пересдача возможна только по согласованию с преподавателем.`
+      );
       return;
     }
 
@@ -1424,10 +1439,22 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                   <span>На проверке (заблокировано)</span>
                 </span>
               )}
-              {isReviewed && (
+              {isReviewed && isRetakeBlocked && (
                 <span className="text-[11px] text-emerald-400 font-bold flex items-center gap-1.5">
-                  <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Зачтено (заблокировано)</span>
+                  <Lock className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Оценка: {initialSubmission.score} (пересдача закрыта)</span>
+                </span>
+              )}
+              {isReviewed && isRetakeAllowedByTeacher && (
+                <span className="text-[11px] text-cyan-400 font-bold flex items-center gap-1.5">
+                  <Unlock className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Пересдача разрешена</span>
+                </span>
+              )}
+              {isReviewed && !hasPassingScore && (
+                <span className="text-[11px] text-rose-400 font-bold flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Оценка: {initialSubmission?.score ?? '2'} (доступна пересдача)</span>
                 </span>
               )}
               {isRejected && (
@@ -1637,18 +1664,71 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setIsRetaking(true)}
-                  size="lg"
-                  className="flex items-center gap-2 border-zinc-700 text-zinc-200 hover:bg-zinc-800 hover:text-white"
-                >
-                  <RefreshCw className="w-4 h-4" />
-                  <span>Пройти повторно / Пересдать</span>
-                </Button>
-              </div>
+              {/* RETAKE CONTROLS & NOTICES */}
+              {isRetakeBlocked && (
+                <div className="border border-zinc-800 bg-zinc-950 p-4 flex items-start gap-3.5 font-mono text-xs">
+                  <div className="w-8 h-8 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center shrink-0 mt-0.5">
+                    <Lock className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <div className="space-y-1.5 flex-1">
+                    <div className="font-bold text-white uppercase tracking-wider flex items-center gap-2">
+                      <span>Повторное прохождение заблокировано</span>
+                      <span className="bg-zinc-800 text-zinc-300 border border-zinc-700 px-2 py-0.5 text-[10px]">
+                        ОЦЕНКА {initialSubmission.score}
+                      </span>
+                    </div>
+                    <p className="text-zinc-400 leading-relaxed text-[11px]">
+                      Вы уже получили оценку {initialSubmission.score} (от 3 до 5). Повторное прохождение задания для улучшения оценки возможно только по согласованию с преподавателем.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {isRetakeAllowedByTeacher && (
+                <div className="space-y-3">
+                  <div className="border border-cyan-500/50 bg-cyan-950/30 p-4 flex items-start gap-3.5 font-mono text-xs">
+                    <div className="w-8 h-8 rounded bg-cyan-900/50 border border-cyan-500/50 flex items-center justify-center shrink-0 mt-0.5">
+                      <Unlock className="w-4 h-4 text-cyan-300" />
+                    </div>
+                    <div className="space-y-1.5 flex-1">
+                      <div className="font-bold text-cyan-300 uppercase tracking-wider">
+                        Преподаватель разрешил пересдачу
+                      </div>
+                      <p className="text-zinc-300 leading-relaxed text-[11px]">
+                        Вам открыт доступ на повторное прохождение задания (текущая оценка: {initialSubmission.score}). Вы можете обновить лог и контрольные вопросы.
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setIsRetaking(true)}
+                      size="lg"
+                      className="flex items-center gap-2 border-cyan-600/70 text-cyan-200 hover:bg-cyan-950 hover:text-white"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      <span>Пройти повторно / Внести исправления</span>
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {!hasPassingScore && (
+                <div className="flex justify-end gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsRetaking(true)}
+                    size="lg"
+                    className="flex items-center gap-2 border-zinc-700 text-zinc-200 hover:bg-zinc-800 hover:text-white"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    <span>Пройти повторно / Пересдать</span>
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 

@@ -88,6 +88,11 @@ export default async function SubmissionReviewPage({ params }: PageProps) {
                   {submission.student_group}
                 </span>
                 {statusBadge}
+                {submission.allow_retake && (
+                  <span className="font-mono text-xs font-bold bg-cyan-950/90 text-cyan-300 border border-cyan-500/60 px-2 py-0.5">
+                    ПЕРЕСДАЧА РАЗРЕШЕНА
+                  </span>
+                )}
                 {submission.score !== null && (
                   <span className="font-mono text-xs font-bold bg-white text-zinc-950 px-2 py-0.5">
                     {submission.score} / {task?.max_score || 5} б.
