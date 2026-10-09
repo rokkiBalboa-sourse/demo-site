@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SubmissionWithDetails } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
 import { Textarea } from '@/components/ui/Textarea';
 import { CheckCircle2, AlertCircle, Save, Check, X } from 'lucide-react';
 
@@ -99,23 +98,73 @@ export function ReviewForm({ submission }: ReviewFormProps) {
         </div>
       </div>
 
-      {/* Score */}
+      {/* Score Buttons (5, 4, 3, 2) */}
       <div>
-        <label className="block text-xs font-mono uppercase text-zinc-400 mb-1">
-          Оценка / Балл (от 0 до 5)
-        </label>
-        <div className="flex items-center gap-3">
-          <Input
-            type="number"
-            min={0}
-            max={5}
-            value={score}
-            onChange={(e) => setScore(e.target.value)}
-            placeholder="5"
-            isMono
-            className="w-36 text-sm font-bold bg-zinc-950 border-zinc-800 text-white"
-          />
-          <span className="text-xs font-mono text-zinc-500">баллов за задание (макс. 5)</span>
+        <div className="flex items-center justify-between mb-2">
+          <label className="block text-xs font-mono uppercase text-zinc-400">
+            Оценка за задание
+          </label>
+          {score && (
+            <button
+              type="button"
+              onClick={() => setScore('')}
+              className="text-[11px] font-mono text-zinc-500 hover:text-zinc-300 underline cursor-pointer"
+            >
+              Снять оценку
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-4 gap-3">
+          {[
+            {
+              value: '5',
+              title: '5',
+              desc: 'Отлично',
+              activeClass:
+                'bg-emerald-950/80 text-emerald-300 border-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.35)] ring-1 ring-emerald-500/50 font-bold',
+            },
+            {
+              value: '4',
+              title: '4',
+              desc: 'Хорошо',
+              activeClass:
+                'bg-cyan-950/80 text-cyan-300 border-cyan-500 shadow-[0_0_15px_rgba(6,182,212,0.35)] ring-1 ring-cyan-500/50 font-bold',
+            },
+            {
+              value: '3',
+              title: '3',
+              desc: 'Удовлетворительно',
+              activeClass:
+                'bg-amber-950/80 text-amber-300 border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.35)] ring-1 ring-amber-500/50 font-bold',
+            },
+            {
+              value: '2',
+              title: '2',
+              desc: 'Неудовлетворительно',
+              activeClass:
+                'bg-rose-950/80 text-rose-300 border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.35)] ring-1 ring-rose-500/50 font-bold',
+            },
+          ].map((grade) => {
+            const isSelected = score === grade.value;
+            return (
+              <button
+                key={grade.value}
+                type="button"
+                onClick={() => setScore(isSelected ? '' : grade.value)}
+                className={`py-3 px-2 border text-center flex flex-col items-center justify-center transition-all cursor-pointer select-none font-mono ${
+                  isSelected
+                    ? grade.activeClass
+                    : 'bg-zinc-900 text-zinc-300 border-zinc-800 hover:border-zinc-700 hover:bg-zinc-800/60'
+                }`}
+              >
+                <span className="text-xl font-bold leading-none">{grade.title}</span>
+                <span className="text-[10px] sm:text-[11px] opacity-80 mt-1 truncate max-w-full">
+                  {grade.desc}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
