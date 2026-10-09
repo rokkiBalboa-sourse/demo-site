@@ -823,6 +823,7 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
 
   // Разрешено редактирование, если нет сдачи, статус 'rejected' или включен режим пересдачи
   const [isRetaking, setIsRetaking] = useState(false);
+  const [showLogPreview, setShowLogPreview] = useState(false);
   const canEdit = !initialSubmission || isRejected || isRetaking;
 
   const handleCopyDiag = async (stepNum: number, diagCmd: string) => {
@@ -1404,66 +1405,89 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
       {/* FORM: QUESTIONS + LOG SUBMISSION */}
       <form onSubmit={handleSubmit} className="space-y-8">
         {/* SECTION 4: CONSOLE OUTPUT (RAW LOG) */}
-        <section className="border border-zinc-800 bg-zinc-900/60 p-6 space-y-3">
-          <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+        <section className="border border-zinc-800 bg-zinc-900/60 p-6 space-y-3 font-mono">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-zinc-800">
             <div className="flex items-center gap-2">
-              <span className="font-mono text-xs font-bold bg-white text-zinc-950 px-2 py-0.5">
+              <span className="text-xs font-bold bg-white text-zinc-950 px-2 py-0.5">
                 ЭТАП 4
               </span>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-white font-mono flex items-center gap-2">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
                 <Terminal className="w-4 h-4 text-zinc-300" />
                 <span>Загрузка отчёта из консоли (RAW Terminal Output)</span>
               </h2>
             </div>
-            {!initialSubmission && <span className="text-[11px] font-mono text-zinc-500">Без валидации</span>}
-            {isPending && (
-              <span className="text-[11px] font-mono text-amber-400 font-bold flex items-center gap-1.5">
-                <Lock className="w-3.5 h-3.5 text-amber-400" />
-                <span>На проверке (заблокировано)</span>
-              </span>
-            )}
-            {isReviewed && (
-              <span className="text-[11px] font-mono text-emerald-400 font-bold flex items-center gap-1.5">
-                <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Зачтено (заблокировано)</span>
-              </span>
-            )}
-            {isRejected && (
-              <span className="text-[11px] font-mono text-amber-300 font-bold flex items-center gap-1.5">
-                <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-                <span>Доступно исправление</span>
-              </span>
-            )}
+
+            <div className="flex items-center gap-2">
+              {canEdit && logOutput.trim() && (
+                <button
+                  type="button"
+                  onClick={() => setShowLogPreview(!showLogPreview)}
+                  className="text-[11px] px-2 py-0.5 border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white cursor-pointer transition-colors"
+                >
+                  {showLogPreview ? 'Режим ввода текста' : 'Предпросмотр подсветки (OK / FAIL)'}
+                </button>
+              )}
+              {!initialSubmission && <span className="text-[11px] text-zinc-500">Без валидации</span>}
+              {isPending && (
+                <span className="text-[11px] text-amber-400 font-bold flex items-center gap-1.5">
+                  <Lock className="w-3.5 h-3.5 text-amber-400" />
+                  <span>На проверке (заблокировано)</span>
+                </span>
+              )}
+              {isReviewed && (
+                <span className="text-[11px] text-emerald-400 font-bold flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Зачтено (заблокировано)</span>
+                </span>
+              )}
+              {isRejected && (
+                <span className="text-[11px] text-amber-300 font-bold flex items-center gap-1.5">
+                  <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Доступно исправление</span>
+                </span>
+              )}
+            </div>
           </div>
 
-          <p className="text-xs text-zinc-400 font-mono">
+          <p className="text-xs text-zinc-400">
             {canEdit
               ? 'Выделите весь текст, выведенный скриптом в консоли Proxmox VE (включая результаты проверок и диагностику), и вставьте в текстовое поле ниже:'
-              : 'Сохранённый вывод проверки из консоли Proxmox VE. Редактирование заблокировано до решения администратора:'}
+              : 'Сохранённый вывод проверки из консоли Proxmox VE с подсветкой успешных и ошибочных проверок:'}
           </p>
 
-          <Textarea
-            value={logOutput}
-            onChange={(e) => canEdit && setLogOutput(e.target.value)}
-            rows={10}
-            isMono
-            readOnly={!canEdit}
-            disabled={!canEdit}
-            placeholder="[*] Checking network interface configuration...&#10;[*] Testing reachability... OK&#10;[+] ALL CHECKS COMPLETED: 5/5 points"
-            className={`text-xs font-mono bg-zinc-950 border-zinc-800 resize-y ${
-              !canEdit
-                ? 'opacity-75 cursor-not-allowed text-zinc-300 select-text'
-                : 'focus:bg-zinc-900 text-white'
-            }`}
-            required
-          />
-
-          {initialSubmission?.log_output && (
-            <div className="mt-4 pt-4 border-t border-zinc-800">
-              <div className="text-xs font-mono text-zinc-400 mb-1.5">
-                Ранее сохранённый лог консоли:
+          {canEdit ? (
+            showLogPreview ? (
+              <div className="space-y-2">
+                <TerminalLog content={logOutput} maxHeight="max-h-72" title="предпросмотр-проверки.log" />
+                <p className="text-[11px] text-zinc-500">
+                  Показан результат автоматической подсветки статусов [ OK ] и [ FAIL ]. Для внесения правок нажмите кнопку «Режим ввода текста» выше.
+                </p>
               </div>
-              <TerminalLog content={initialSubmission.log_output} maxHeight="max-h-48" />
+            ) : (
+              <Textarea
+                value={logOutput}
+                onChange={(e) => setLogOutput(e.target.value)}
+                rows={10}
+                isMono
+                placeholder="[*] Checking network interface configuration...&#10;[*] Testing reachability... OK&#10;[+] ALL CHECKS COMPLETED: 5/5 points"
+                className="text-xs font-mono bg-zinc-950 border-zinc-800 resize-y focus:bg-zinc-900 text-white"
+                required
+              />
+            )
+          ) : (
+            <TerminalLog
+              content={logOutput || initialSubmission?.log_output || ''}
+              title={`${task.slug}-audit.log`}
+              maxHeight="max-h-80"
+            />
+          )}
+
+          {canEdit && initialSubmission?.log_output && !showLogPreview && (
+            <div className="mt-4 pt-4 border-t border-zinc-800">
+              <div className="text-xs text-zinc-400 mb-1.5">
+                Ранее сданный лог (с предыдущей проверки):
+              </div>
+              <TerminalLog content={initialSubmission.log_output} maxHeight="max-h-48" title="предыдущая-сдача.log" />
             </div>
           )}
         </section>
