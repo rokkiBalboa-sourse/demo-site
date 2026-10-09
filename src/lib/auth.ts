@@ -2,7 +2,24 @@ import { cookies } from 'next/headers';
 import { db } from './db';
 import { SessionUser } from './types';
 
-const SESSION_COOKIE_NAME = 'sudostudy_session';
+export const SESSION_COOKIE_NAME = 'sudostudy_session';
+
+export function createSessionToken(userId: string): string {
+  return Buffer.from(
+    JSON.stringify({ userId, timestamp: Date.now() })
+  ).toString('base64');
+}
+
+export function getSessionCookieOptions() {
+  return {
+    httpOnly: true,
+    // На localhost (HTTP) secure должен быть false, иначе браузеры не сохраняют куку
+    secure: process.env.NODE_ENV === 'production' && process.env.COOKIE_SECURE !== 'false',
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 7, // 7 days
+  };
+}
 
 export async function getSession(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
@@ -35,17 +52,8 @@ export async function getSession(): Promise<SessionUser | null> {
 
 export async function setSession(userId: string) {
   const cookieStore = await cookies();
-  const token = Buffer.from(
-    JSON.stringify({ userId, timestamp: Date.now() })
-  ).toString('base64');
-
-  cookieStore.set(SESSION_COOKIE_NAME, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
-  });
+  const token = createSessionToken(userId);
+  cookieStore.set(SESSION_COOKIE_NAME, token, getSessionCookieOptions());
 }
 
 export async function clearSession() {

@@ -134,12 +134,8 @@ export default function LoginPage() {
       }
 
       // Login success
-      if (data.user?.role === 'admin') {
-        router.push('/admin');
-      } else {
-        router.push('/');
-      }
-      router.refresh();
+      const targetUrl = data.user?.role === 'admin' ? '/admin' : '/';
+      window.location.href = targetUrl;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка');
     } finally {
@@ -176,12 +172,8 @@ export default function LoginPage() {
       }
 
       // Successfully linked and authenticated
-      if (data.user?.role === 'admin') {
-        router.push('/admin');
-      } else {
-        router.push('/');
-      }
-      router.refresh();
+      const targetUrl = data.user?.role === 'admin' ? '/admin' : '/';
+      window.location.href = targetUrl;
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Неизвестная ошибка');
     } finally {

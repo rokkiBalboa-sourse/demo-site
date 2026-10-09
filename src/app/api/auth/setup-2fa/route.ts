@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { setSession } from '@/lib/auth';
+import { setSession, createSessionToken, SESSION_COOKIE_NAME, getSessionCookieOptions } from '@/lib/auth';
 import { verifyTotpCode } from '@/lib/totp';
 
 export async function POST(req: NextRequest) {
@@ -59,9 +59,10 @@ export async function POST(req: NextRequest) {
     }
 
     // Log the user in
+    const token = createSessionToken(user.id);
     await setSession(user.id);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: {
         id: updated.id,
@@ -71,6 +72,9 @@ export async function POST(req: NextRequest) {
         role: updated.role,
       },
     });
+
+    response.cookies.set(SESSION_COOKIE_NAME, token, getSessionCookieOptions());
+    return response;
   } catch (error) {
     console.error('Setup 2FA error', error);
     return NextResponse.json(

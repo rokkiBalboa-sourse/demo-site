@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { setSession } from '@/lib/auth';
+import { setSession, createSessionToken, SESSION_COOKIE_NAME, getSessionCookieOptions } from '@/lib/auth';
 import { generateTotpSecret, generateTotpQRCode, verifyTotpCode } from '@/lib/totp';
 
 export async function POST(req: NextRequest) {
@@ -35,9 +35,10 @@ export async function POST(req: NextRequest) {
         );
       }
 
+      const token = createSessionToken(user.id);
       await setSession(user.id);
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         user: {
           id: user.id,
@@ -47,6 +48,9 @@ export async function POST(req: NextRequest) {
           role: user.role,
         },
       });
+
+      response.cookies.set(SESSION_COOKIE_NAME, token, getSessionCookieOptions());
+      return response;
     }
 
     // СЦЕНАРИЙ 2: Вход по логину и паролю (первичный вход или настройка)
