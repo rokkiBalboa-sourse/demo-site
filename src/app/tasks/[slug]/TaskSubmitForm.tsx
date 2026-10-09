@@ -823,7 +823,6 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
 
   // Разрешено редактирование, если нет сдачи, статус 'rejected' или включен режим пересдачи
   const [isRetaking, setIsRetaking] = useState(false);
-  const [showLogPreview, setShowLogPreview] = useState(false);
   const canEdit = !initialSubmission || isRejected || isRetaking;
 
   const handleCopyDiag = async (stepNum: number, diagCmd: string) => {
@@ -1418,15 +1417,6 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
             </div>
 
             <div className="flex items-center gap-2">
-              {canEdit && logOutput.trim() && (
-                <button
-                  type="button"
-                  onClick={() => setShowLogPreview(!showLogPreview)}
-                  className="text-[11px] px-2 py-0.5 border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 hover:text-white cursor-pointer transition-colors"
-                >
-                  {showLogPreview ? 'Режим ввода текста' : 'Предпросмотр подсветки (OK / FAIL)'}
-                </button>
-              )}
               {!initialSubmission && <span className="text-[11px] text-zinc-500">Без валидации</span>}
               {isPending && (
                 <span className="text-[11px] text-amber-400 font-bold flex items-center gap-1.5">
@@ -1452,42 +1442,31 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
           <p className="text-xs text-zinc-400">
             {canEdit
               ? 'Выделите весь текст, выведенный скриптом в консоли Proxmox VE (включая результаты проверок и диагностику), и вставьте в текстовое поле ниже:'
-              : 'Сохранённый вывод проверки из консоли Proxmox VE с подсветкой успешных и ошибочных проверок:'}
+              : 'Сохранённый вывод проверки из консоли Proxmox VE:'}
           </p>
 
-          {canEdit ? (
-            showLogPreview ? (
-              <div className="space-y-2">
-                <TerminalLog content={logOutput} maxHeight="max-h-72" title="предпросмотр-проверки.log" />
-                <p className="text-[11px] text-zinc-500">
-                  Показан результат автоматической подсветки статусов [ OK ] и [ FAIL ]. Для внесения правок нажмите кнопку «Режим ввода текста» выше.
-                </p>
-              </div>
-            ) : (
-              <Textarea
-                value={logOutput}
-                onChange={(e) => setLogOutput(e.target.value)}
-                rows={10}
-                isMono
-                placeholder="[*] Checking network interface configuration...&#10;[*] Testing reachability... OK&#10;[+] ALL CHECKS COMPLETED: 5/5 points"
-                className="text-xs font-mono bg-zinc-950 border-zinc-800 resize-y focus:bg-zinc-900 text-white"
-                required
-              />
-            )
-          ) : (
-            <TerminalLog
-              content={logOutput || initialSubmission?.log_output || ''}
-              title={`${task.slug}-audit.log`}
-              maxHeight="max-h-80"
-            />
-          )}
+          <Textarea
+            value={logOutput}
+            onChange={(e) => canEdit && setLogOutput(e.target.value)}
+            rows={10}
+            isMono
+            readOnly={!canEdit}
+            disabled={!canEdit}
+            placeholder="[*] Checking network interface configuration...&#10;[*] Testing reachability... OK&#10;[+] ALL CHECKS COMPLETED: 5/5 points"
+            className={`text-xs font-mono bg-zinc-950 border-zinc-800 resize-y ${
+              !canEdit
+                ? 'opacity-75 cursor-not-allowed text-zinc-300 select-text'
+                : 'focus:bg-zinc-900 text-white'
+            }`}
+            required
+          />
 
-          {canEdit && initialSubmission?.log_output && !showLogPreview && (
+          {initialSubmission?.log_output && (
             <div className="mt-4 pt-4 border-t border-zinc-800">
               <div className="text-xs text-zinc-400 mb-1.5">
-                Ранее сданный лог (с предыдущей проверки):
+                Ранее сохранённый лог консоли:
               </div>
-              <TerminalLog content={initialSubmission.log_output} maxHeight="max-h-48" title="предыдущая-сдача.log" />
+              <TerminalLog content={initialSubmission.log_output} maxHeight="max-h-48" />
             </div>
           )}
         </section>
