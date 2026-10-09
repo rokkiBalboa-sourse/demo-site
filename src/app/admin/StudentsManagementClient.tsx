@@ -51,8 +51,8 @@ export function StudentsManagementClient({
   const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
   const [editStudent, setEditStudent] = useState<StudentWithStats | null>(null);
   const [passwordStudent, setPasswordStudent] = useState<StudentWithStats | null>(null);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [reset2FAConfirmId, setReset2FAConfirmId] = useState<string | null>(null);
+  const [studentToDelete, setStudentToDelete] = useState<StudentWithStats | null>(null);
+  const [studentToReset2FA, setStudentToReset2FA] = useState<StudentWithStats | null>(null);
   const [reset2FAMessage, setReset2FAMessage] = useState<string | null>(null);
 
   // Form states
@@ -289,7 +289,7 @@ export function StudentsManagementClient({
       }
 
       setStudents(prev => prev.filter(s => s.id !== id));
-      setDeleteConfirmId(null);
+      setStudentToDelete(null);
     } catch (err: any) {
       alert(err.message);
     } finally {
@@ -314,7 +314,7 @@ export function StudentsManagementClient({
       setStudents(prev =>
         prev.map(s => (s.id === id ? { ...s, two_factor_enabled: false, two_factor_secret: null } : s))
       );
-      setReset2FAConfirmId(null);
+      setStudentToReset2FA(null);
       setReset2FAMessage(`2FA для студента ${name} успешно сброшена! При следующем входе потребуется пароль и новая привязка.`);
       setTimeout(() => setReset2FAMessage(null), 6000);
     } catch (err: unknown) {
@@ -622,31 +622,13 @@ export function StudentsManagementClient({
                       {/* Actions */}
                       <td className="p-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Reset 2FA */}
-                          {reset2FAConfirmId === std.id ? (
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => handleReset2FA(std.id, std.full_name)}
-                                className="px-2 py-0.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[10px] transition-colors whitespace-nowrap"
-                              >
-                                Сбросить 2FA
-                              </button>
-                              <button
-                                onClick={() => setReset2FAConfirmId(null)}
-                                className="px-1.5 py-0.5 bg-zinc-800 text-zinc-400 hover:text-white text-[10px]"
-                              >
-                                Отмена
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              title="Сбросить Google Authenticator (2FA)"
-                              onClick={() => setReset2FAConfirmId(std.id)}
-                              className="p-1.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-cyan-300 transition-colors"
-                            >
-                              <ShieldOff className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                          <button
+                            title="Сбросить Google Authenticator (2FA)"
+                            onClick={() => setStudentToReset2FA(std)}
+                            className="p-1.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-cyan-300 transition-colors"
+                          >
+                            <ShieldOff className="w-3.5 h-3.5" />
+                          </button>
 
                           <button
                             title="Сменить пароль"
@@ -667,30 +649,13 @@ export function StudentsManagementClient({
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
 
-                          {deleteConfirmId === std.id ? (
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => handleDeleteStudent(std.id)}
-                                className="px-2 py-0.5 bg-rose-600 hover:bg-rose-500 text-white font-bold text-[10px] transition-colors"
-                              >
-                                Да, удалить
-                              </button>
-                              <button
-                                onClick={() => setDeleteConfirmId(null)}
-                                className="px-1.5 py-0.5 bg-zinc-800 text-zinc-400 hover:text-white text-[10px]"
-                              >
-                                Отмена
-                              </button>
-                            </div>
-                          ) : (
-                            <button
-                              title="Удалить студента"
-                              onClick={() => setDeleteConfirmId(std.id)}
-                              className="p-1.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-500 hover:text-rose-400 transition-colors"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                          <button
+                            title="Удалить студента"
+                            onClick={() => setStudentToDelete(std)}
+                            className="p-1.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-500 hover:text-rose-400 transition-colors"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -1085,6 +1050,116 @@ export function StudentsManagementClient({
                 </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL 5: CONFIRM RESET 2FA                                */}
+      {/* ========================================================= */}
+      {studentToReset2FA && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-950 border border-zinc-800 w-full max-w-sm p-6 space-y-4 font-mono text-xs">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2">
+                <ShieldOff className="w-4 h-4 text-cyan-400" />
+                <h3 className="font-bold text-white text-sm uppercase">Сброс 2FA</h3>
+              </div>
+              <button
+                onClick={() => setStudentToReset2FA(null)}
+                className="text-zinc-500 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="text-zinc-400 text-xs">
+              Студент: <strong className="text-white">{studentToReset2FA.full_name}</strong> (
+              <span className="text-sky-300 font-bold">{studentToReset2FA.username}</span>, группа{' '}
+              <span className="text-amber-300 font-bold">{studentToReset2FA.group_name}</span>)
+            </div>
+
+            <div className="p-3 bg-cyan-950/20 border border-cyan-800/40 text-cyan-200/90 leading-relaxed text-[11px] space-y-2">
+              <p>
+                Вы действительно хотите сбросить двухэтапную аутентификацию (Google Authenticator) для этого студента?
+              </p>
+              <p className="text-zinc-400 text-[10px]">
+                При следующем входе студенту потребуется войти по паролю и выполнить привязку приложения Authenticator заново.
+              </p>
+            </div>
+
+            <div className="pt-3 border-t border-zinc-800 flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setStudentToReset2FA(null)}
+                disabled={isSubmitting}
+              >
+                Отмена
+              </Button>
+              <Button
+                type="button"
+                onClick={() => handleReset2FA(studentToReset2FA.id, studentToReset2FA.full_name)}
+                disabled={isSubmitting}
+                className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold"
+              >
+                {isSubmitting ? 'Сброс...' : 'Сбросить 2FA'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* MODAL 6: CONFIRM DELETE STUDENT                           */}
+      {/* ========================================================= */}
+      {studentToDelete && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-950 border border-zinc-800 w-full max-w-sm p-6 space-y-4 font-mono text-xs">
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2">
+                <Trash2 className="w-4 h-4 text-rose-500" />
+                <h3 className="font-bold text-white text-sm uppercase">Удаление аккаунта</h3>
+              </div>
+              <button
+                onClick={() => setStudentToDelete(null)}
+                className="text-zinc-500 hover:text-white transition-colors"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="text-zinc-400 text-xs">
+              Студент: <strong className="text-white">{studentToDelete.full_name}</strong> (
+              <span className="text-sky-300 font-bold">{studentToDelete.username}</span>, группа{' '}
+              <span className="text-amber-300 font-bold">{studentToDelete.group_name}</span>)
+            </div>
+
+            <div className="p-3 bg-rose-950/25 border border-rose-800/40 text-rose-200/90 leading-relaxed text-[11px] flex gap-2.5">
+              <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
+              <div>
+                Внимание! Это действие нельзя отменить. Учётная запись, все отправленные решения и история оценивания будут безвозвратно удалены.
+              </div>
+            </div>
+
+            <div className="pt-3 border-t border-zinc-800 flex items-center justify-end gap-2">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => setStudentToDelete(null)}
+                disabled={isSubmitting}
+              >
+                Отмена
+              </Button>
+              <Button
+                type="button"
+                onClick={() => handleDeleteStudent(studentToDelete.id)}
+                disabled={isSubmitting}
+                className="bg-rose-600 hover:bg-rose-500 text-white font-bold"
+              >
+                {isSubmitting ? 'Удаление...' : 'Да, удалить'}
+              </Button>
+            </div>
           </div>
         </div>
       )}
