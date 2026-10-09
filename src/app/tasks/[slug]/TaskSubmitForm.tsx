@@ -1384,10 +1384,19 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
           </h2>
         </div>
 
-        <p className="text-xs text-zinc-400 font-mono">
-          После завершения настройки запустите однострочный проверочный скрипт в консоли целевой
-          ноды/ВМ для автоматического аудита:
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
+          <p className="text-zinc-400">
+            После завершения настройки запустите однострочный проверочный скрипт в консоли Proxmox VE (Server View &rarr; pve &rarr; Shell):
+          </p>
+          <Link
+            href="/preparation/report-guide"
+            target="_blank"
+            className="text-[11px] text-emerald-400 hover:text-emerald-300 underline flex items-center gap-1 shrink-0"
+          >
+            <HelpCircle className="w-3.5 h-3.5" />
+            <span>Инструкция по заполнению отчёта</span>
+          </Link>
+        </div>
 
         <CodeSnippet code={task.script_command} label="Скрипт проверки задания" />
       </section>

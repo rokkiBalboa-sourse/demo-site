@@ -9,6 +9,7 @@ import {
 } from '@/lib/preparation-data';
 import { ProxmoxOverviewContent } from './ProxmoxOverviewContent';
 import { StandInstallationContent } from './StandInstallationContent';
+import { ReportGuideContent } from './ReportGuideContent';
 import {
   ChevronLeft,
   Video,
@@ -105,7 +106,11 @@ export default async function PreparationTopicPage({ params }: PreparationPagePr
               </h2>
             </div>
             <span className="text-[11px] text-zinc-400">
-              {topic.slug === 'stand-installation' ? '04:57 • Full HD 1080p' : 'Медиа-разбор'}
+              {topic.slug === 'stand-installation'
+                ? '04:57 • Full HD 1080p'
+                : topic.slug === 'report-guide'
+                ? 'Оригинал без сжатия • MKV'
+                : 'Медиа-разбор'}
             </span>
           </div>
 
@@ -169,6 +174,67 @@ export default async function PreparationTopicPage({ params }: PreparationPagePr
                 </a>
               </div>
             </div>
+          ) : topic.slug === 'report-guide' ? (
+            <div className="space-y-4">
+              <div className="relative border border-zinc-800 bg-black rounded overflow-hidden shadow-2xl">
+                <video
+                  controls
+                  preload="metadata"
+                  className="w-full h-auto aspect-video max-h-[580px] bg-black"
+                >
+                  <source src="/instr/instructions.mkv" type="video/x-matroska" />
+                  <source src="/instr/instructions.mkv" type="video/mp4" />
+                  <source src="/instr/instructions.mkv" type="video/webm" />
+                  Ваш браузер не поддерживает встроенное воспроизведение видео.
+                </video>
+              </div>
+
+              {/* Video Chapters / Timestamps */}
+              <div className="border border-zinc-800 bg-zinc-950 p-4 space-y-2">
+                <span className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider block">
+                  Таймкоды видео-инструкции:
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-[11px] text-zinc-400">
+                  <div className="bg-zinc-900/80 border border-zinc-800 p-2 flex items-center gap-2">
+                    <span className="text-emerald-400 font-bold">00:00</span>
+                    <span>Server View -&gt; узел pve -&gt; Shell</span>
+                  </div>
+                  <div className="bg-zinc-900/80 border border-zinc-800 p-2 flex items-center gap-2">
+                    <span className="text-emerald-400 font-bold">00:15</span>
+                    <span>Копирование команды скрипта из задания</span>
+                  </div>
+                  <div className="bg-zinc-900/80 border border-zinc-800 p-2 flex items-center gap-2">
+                    <span className="text-emerald-400 font-bold">00:30</span>
+                    <span>Вставка скрипта в Shell и запуск</span>
+                  </div>
+                  <div className="bg-zinc-900/80 border border-zinc-800 p-2 flex items-center gap-2">
+                    <span className="text-emerald-400 font-bold">00:45</span>
+                    <span>Копирование сформированных логов</span>
+                  </div>
+                  <div className="bg-zinc-900/80 border border-zinc-800 p-2 flex items-center gap-2">
+                    <span className="text-emerald-400 font-bold">01:00</span>
+                    <span>Вставка логов в Этап 4 на сайте</span>
+                  </div>
+                  <div className="bg-zinc-900/80 border border-zinc-800 p-2 flex items-center gap-2">
+                    <span className="text-emerald-400 font-bold">01:15</span>
+                    <span>Ответы на тест (Этап 5) и отправка отчёта</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Uncompressed Video Download Button */}
+              <div className="pt-1">
+                <a
+                  href="/instr/instructions.mkv"
+                  download="instructions.mkv"
+                  className="w-full flex items-center justify-center gap-3 p-3.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-sm transition shadow-[0_0_25px_rgba(16,185,129,0.35)] cursor-pointer hover:scale-[1.008]"
+                >
+                  <DownloadCloud className="w-5 h-5 text-zinc-950" />
+                  <span>СКАЧАТЬ ВИДЕО-ИНСТРУКЦИЮ В ИСХОДНОМ КАЧЕСТВЕ (MKV БЕЗ СЖАТИЯ)</span>
+                  <ExternalLink className="w-4 h-4 text-zinc-950" />
+                </a>
+              </div>
+            </div>
           ) : (
             <div className="border-2 border-dashed border-zinc-800 bg-zinc-950/70 p-10 flex flex-col items-center justify-center text-center space-y-3 min-h-[260px] rounded-sm">
               <div className="w-14 h-14 rounded-full bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400">
@@ -191,6 +257,8 @@ export default async function PreparationTopicPage({ params }: PreparationPagePr
           <ProxmoxOverviewContent />
         ) : topic.slug === 'stand-installation' ? (
           <StandInstallationContent />
+        ) : topic.slug === 'report-guide' ? (
+          <ReportGuideContent />
         ) : (
           <div className="border border-zinc-800 bg-zinc-900/60 p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
