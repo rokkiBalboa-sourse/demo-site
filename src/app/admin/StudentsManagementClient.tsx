@@ -26,6 +26,7 @@ import {
   RefreshCw,
   X,
   Sparkles,
+  ShieldOff,
 } from 'lucide-react';
 
 interface StudentsManagementClientProps {
@@ -51,6 +52,8 @@ export function StudentsManagementClient({
   const [editStudent, setEditStudent] = useState<StudentWithStats | null>(null);
   const [passwordStudent, setPasswordStudent] = useState<StudentWithStats | null>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [reset2FAConfirmId, setReset2FAConfirmId] = useState<string | null>(null);
+  const [reset2FAMessage, setReset2FAMessage] = useState<string | null>(null);
 
   // Form states
   const [newFullName, setNewFullName] = useState('');
@@ -294,6 +297,33 @@ export function StudentsManagementClient({
     }
   };
 
+  // Reset 2FA for student
+  const handleReset2FA = async (id: string, name: string) => {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch('/api/admin/students/reset-2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentId: id }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Ошибка сброса 2FA');
+      }
+
+      setStudents(prev =>
+        prev.map(s => (s.id === id ? { ...s, two_factor_enabled: false, two_factor_secret: null } : s))
+      );
+      setReset2FAConfirmId(null);
+      setReset2FAMessage(`2FA для студента ${name} успешно сброшена! При следующем входе потребуется пароль и новая привязка.`);
+      setTimeout(() => setReset2FAMessage(null), 6000);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Ошибка сброса 2FA');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Filter students
   const filteredStudents = useMemo(() => {
     return students.filter(s => {
@@ -441,6 +471,23 @@ export function StudentsManagementClient({
         </div>
       </div>
 
+      {/* Notification banner */}
+      {reset2FAMessage && (
+        <div className="p-3 bg-cyan-950/80 border border-cyan-500/50 text-cyan-200 text-xs font-mono flex items-center justify-between gap-2 shadow-[0_0_15px_rgba(6,182,212,0.15)]">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-cyan-400 shrink-0" />
+            <span>{reset2FAMessage}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setReset2FAMessage(null)}
+            className="text-cyan-400 hover:text-white p-0.5"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Students Table */}
       <div className="border border-zinc-800 bg-zinc-900/60 overflow-hidden">
         <div className="p-3 border-b border-zinc-800 bg-zinc-900/90 flex items-center justify-between font-mono text-xs">
@@ -575,6 +622,32 @@ export function StudentsManagementClient({
                       {/* Actions */}
                       <td className="p-3 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {/* Reset 2FA */}
+                          {reset2FAConfirmId === std.id ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => handleReset2FA(std.id, std.full_name)}
+                                className="px-2 py-0.5 bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-[10px] transition-colors whitespace-nowrap"
+                              >
+                                Сбросить 2FA
+                              </button>
+                              <button
+                                onClick={() => setReset2FAConfirmId(null)}
+                                className="px-1.5 py-0.5 bg-zinc-800 text-zinc-400 hover:text-white text-[10px]"
+                              >
+                                Отмена
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              title="Сбросить Google Authenticator (2FA)"
+                              onClick={() => setReset2FAConfirmId(std.id)}
+                              className="p-1.5 bg-zinc-950 hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-cyan-300 transition-colors"
+                            >
+                              <ShieldOff className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+
                           <button
                             title="Сменить пароль"
                             onClick={() => {

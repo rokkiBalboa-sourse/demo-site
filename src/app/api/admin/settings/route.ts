@@ -20,6 +20,7 @@ export async function GET() {
       full_name: admin.full_name,
       group_name: admin.group_name,
       role: admin.role,
+      two_factor_enabled: Boolean(admin.two_factor_enabled),
     },
   });
 }

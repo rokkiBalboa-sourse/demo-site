@@ -28,6 +28,11 @@ export function AdminSettingsClient() {
   const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
   const [profileError, setProfileError] = useState<string | null>(null);
 
+  const [adminId, setAdminId] = useState('');
+  const [admin2FAEnabled, setAdmin2FAEnabled] = useState(false);
+  const [isResetting2FA, setIsResetting2FA] = useState(false);
+  const [reset2FASuccess, setReset2FASuccess] = useState<string | null>(null);
+
   // Backup & restore state
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -45,12 +50,36 @@ export function AdminSettingsClient() {
       if (res.ok) {
         const data = await res.json();
         if (data.user) {
+          setAdminId(data.user.id);
           setUsername(data.user.username);
           setFullName(data.user.full_name);
+          setAdmin2FAEnabled(Boolean(data.user.two_factor_enabled));
         }
       }
     } catch {
       // ignore
+    }
+  };
+
+  const handleResetAdmin2FA = async () => {
+    if (!adminId) return;
+    setIsResetting2FA(true);
+    setReset2FASuccess(null);
+    try {
+      const res = await fetch('/api/admin/students/reset-2fa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: adminId }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Ошибка сброса 2FA');
+      setAdmin2FAEnabled(false);
+      setReset2FASuccess('2FA администратора успешно сброшена! При следующем входе по паролю система предложит настроить её заново.');
+      setTimeout(() => setReset2FASuccess(null), 6000);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Ошибка сброса 2FA');
+    } finally {
+      setIsResetting2FA(false);
     }
   };
 
@@ -245,6 +274,47 @@ export function AdminSettingsClient() {
             </Button>
           </div>
         </form>
+
+        {reset2FASuccess && (
+          <div className="border border-emerald-500/50 bg-emerald-950/40 p-3.5 flex items-center gap-2.5 text-emerald-300 text-xs">
+            <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-400" />
+            <span>{reset2FASuccess}</span>
+          </div>
+        )}
+
+        {/* 2FA Status & Reset for Admin */}
+        <div className="p-3.5 bg-zinc-950 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-zinc-200">Двухэтапная аутентификация (Google Authenticator):</span>
+              <span
+                className={`px-2 py-0.5 text-[10px] font-bold border ${
+                  admin2FAEnabled
+                    ? 'bg-emerald-950/80 text-emerald-300 border-emerald-500/50'
+                    : 'bg-zinc-900 text-zinc-400 border-zinc-800'
+                }`}
+              >
+                {admin2FAEnabled ? 'АКТИВНА' : 'НЕ ПРИВЯЗАНА'}
+              </span>
+            </div>
+            <p className="text-[11px] text-zinc-400">
+              {admin2FAEnabled
+                ? 'Вход в панель администратора защищён кодом Google Authenticator без пароля.'
+                : 'При входе с паролем система потребует настроить Google Authenticator.'}
+            </p>
+          </div>
+
+          {admin2FAEnabled && (
+            <button
+              type="button"
+              disabled={isResetting2FA}
+              onClick={handleResetAdmin2FA}
+              className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-700 text-xs font-bold transition-colors cursor-pointer shrink-0"
+            >
+              Сбросить 2FA
+            </button>
+          )}
+        </div>
 
         <div className="mt-4 p-3.5 bg-zinc-950 border border-zinc-800 text-xs text-zinc-400 space-y-1.5">
           <div className="flex items-center gap-2 text-zinc-200 font-semibold">

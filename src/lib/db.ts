@@ -248,6 +248,38 @@ export const db = {
     return store.users.find((u) => u.id === id) || null;
   },
 
+  async setUser2FATempSecret(userId: string, tempSecret: string): Promise<void> {
+    const store = ensureDataFile();
+    const index = store.users.findIndex((u) => u.id === userId);
+    if (index === -1) return;
+    store.users[index].two_factor_temp_secret = tempSecret;
+    saveStore(store);
+  },
+
+  async confirmUser2FASetup(userId: string, secret: string): Promise<User | null> {
+    const store = ensureDataFile();
+    const index = store.users.findIndex((u) => u.id === userId);
+    if (index === -1) return null;
+    store.users[index].two_factor_enabled = true;
+    store.users[index].two_factor_secret = secret;
+    store.users[index].two_factor_temp_secret = null;
+    store.users[index].updated_at = new Date().toISOString();
+    saveStore(store);
+    return store.users[index];
+  },
+
+  async resetUser2FA(userId: string): Promise<User | null> {
+    const store = ensureDataFile();
+    const index = store.users.findIndex((u) => u.id === userId);
+    if (index === -1) return null;
+    store.users[index].two_factor_enabled = false;
+    store.users[index].two_factor_secret = null;
+    store.users[index].two_factor_temp_secret = null;
+    store.users[index].updated_at = new Date().toISOString();
+    saveStore(store);
+    return store.users[index];
+  },
+
   async getAllStudents(): Promise<User[]> {
     const store = ensureDataFile();
     return store.users

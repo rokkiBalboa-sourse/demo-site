@@ -10,6 +10,9 @@ export interface User {
   group_name: string;
   role: UserRole;
   is_active: boolean;
+  two_factor_enabled?: boolean;
+  two_factor_secret?: string | null;
+  two_factor_temp_secret?: string | null;
   created_at: string;
   updated_at: string;
 }
