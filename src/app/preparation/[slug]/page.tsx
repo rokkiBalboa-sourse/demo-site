@@ -107,7 +107,7 @@ export default async function PreparationTopicPage({ params }: PreparationPagePr
             </div>
             <span className="text-[11px] text-zinc-400">
               {topic.slug === 'stand-installation'
-                ? '04:57 • Full HD 1080p'
+                ? '04:57 • Оригинал 1080p Full HD'
                 : topic.slug === 'report-guide'
                 ? 'Оригинал без сжатия • MKV'
                 : 'Медиа-разбор'}
@@ -122,6 +122,7 @@ export default async function PreparationTopicPage({ params }: PreparationPagePr
                   preload="metadata"
                   className="w-full h-auto aspect-video max-h-[580px] bg-black"
                 >
+                  <source src="https://file.sudostudy.dev/-67JZbxxhV4" type="video/mp4" />
                   <source src="/install.mp4" type="video/mp4" />
                   Ваш браузер не поддерживает встроенное воспроизведение видео.
                 </video>
@@ -160,17 +161,27 @@ export default async function PreparationTopicPage({ params }: PreparationPagePr
                 </div>
               </div>
 
-              {/* Dedicated High-Visibility Download Button under Video */}
-              <div className="pt-1">
+              {/* Dedicated High-Visibility Download Buttons under Video */}
+              <div className="pt-1 flex flex-col sm:flex-row gap-3">
+                <a
+                  href="https://file.sudostudy.dev/-67JZbxxhV4"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex-1 flex items-center justify-center gap-2 p-3.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-white font-bold text-xs uppercase tracking-wider rounded-sm transition cursor-pointer"
+                >
+                  <DownloadCloud className="w-4 h-4 text-emerald-400" />
+                  <span>Скачать видео в оригинале (134 МБ • MP4)</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-zinc-400" />
+                </a>
                 <a
                   href="https://docker.sudostudy.dev/s/jyta52m4nDy7DCp"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full flex items-center justify-center gap-3 p-3.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-sm transition shadow-[0_0_25px_rgba(16,185,129,0.35)] cursor-pointer hover:scale-[1.008]"
+                  className="flex-1 flex items-center justify-center gap-2 p-3.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-sm transition shadow-[0_0_25px_rgba(16,185,129,0.35)] cursor-pointer hover:scale-[1.008]"
                 >
-                  <DownloadCloud className="w-5 h-5 text-zinc-950" />
-                  <span>СКАЧАТЬ СТЕНД И VMWARE WORKSTATION (ОБЛАЧНЫЙ ДИСК)</span>
-                  <ExternalLink className="w-4 h-4 text-zinc-950" />
+                  <DownloadCloud className="w-4 h-4 text-zinc-950" />
+                  <span>Скачать стенд и VMware Workstation</span>
+                  <ExternalLink className="w-3.5 h-3.5 text-zinc-950" />
                 </a>
               </div>
             </div>
