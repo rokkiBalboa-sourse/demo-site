@@ -35,7 +35,6 @@ export function TerminalLog({
         <div className="flex items-center gap-2">
           <Terminal className="w-3.5 h-3.5 text-zinc-400" />
           <span className="text-xs text-zinc-300 font-medium">{title}</span>
-          <span className="text-[10px] text-zinc-500">({lines.length} lines)</span>
         </div>
         <button
           type="button"
