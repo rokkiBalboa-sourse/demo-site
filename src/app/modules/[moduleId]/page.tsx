@@ -38,7 +38,7 @@ export default async function ModuleDetailPage({ params }: ModulePageProps) {
     notFound();
   }
 
-  if (moduleId === 'module-2' || moduleId === 'module-3') {
+  if (moduleId === 'module-3') {
     return (
       <div className="min-h-screen bg-zinc-950 flex flex-col">
         <Header user={session} />

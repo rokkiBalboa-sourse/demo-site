@@ -1106,433 +1106,1582 @@ su -l net_admin -c "sudo id"`,
   // MODULE 2 (11 TASKS)
   // =========================================================================
   {
-    id: 'm2-task-1',
-    slug: 'm2-task-1',
-    module_id: 'module-2',
-    task_number: 1,
-    title: 'Контроллер домена Samba DC и ввод клиента HQ-CLI',
-    module_code: 'Модуль 2',
-    description: 'Развертывание Active Directory Domain Controller на базе Samba 4 на сервере HQ-SRV, генерация домена AU-TEAM.IRPO и ввод рабочей станции HQ-CLI в домен.',
-    nodes: ['HQ-SRV', 'HQ-CLI'],
-    theory: [
+    "id": "m2-task-1",
+    "slug": "m2-task-1",
+    "module_id": "module-2",
+    "task_number": 1,
+    "title": "Контроллер домена Samba DC и ввод клиента HQ-CLI",
+    "module_code": "Модуль 2",
+    "description": "Развёртывание первичного контроллера домена Active Directory на базе Samba DC для зоны au-team.irpo на сервере BR-SRV, перенаправление DNS в dnsmasq на HQ-RTR, ввод графической рабочей станции HQ-CLI в домен через Центр управления системой (acc), массовое создание учетных записей hquser1–hquser5, объединение их в доменную группу hq и гранулярное ограничение прав sudo через ролевую модель libnss-role (разрешены только cat, grep, id).",
+    "nodes": [
+      "BR-SRV",
+      "HQ-RTR",
+      "HQ-CLI"
+    ],
+    "assignment": "### Задание №1: Контроллер домена Samba DC и ввод клиента HQ-CLI\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\n> ⚠️ **Важное предварительное пояснение (Обновление FRR)**\n> Перед началом выполнения заданий Модуля №2 необходимо обновить конфигурацию динамической маршрутизации FRR на маршрутизаторах **HQ-RTR** и **BR-RTR**.\n> Требуются **Шаги с 1 по 3 из Задания №7 Модуля №1**: [Инструкция Задания 7](https://demo.sudostudy.dev/2026/module1/task-7).\n> Обновите конфигурации, перезагрузите сеть и службу `frr` и проверьте связность.\n\nВ данном задании на сервере филиала (**BR-SRV**) развёртывается контроллер домена Active Directory на базе Samba DC для доменной зоны `au-team.irpo`.\nЗатем выполняется ввод клиентской графической станции **HQ-CLI** в созданный домен, создание учетных записей `hquser1`–`hquser5`, объединение их в доменную группу `hq` и настройка гранулярного делегирования прав через ролевую модель `libnss-role` и `/etc/sudoers` (разрешён запуск только команд `cat`, `grep`, `id`).\n\n#### Узлы выполнения:\n* **BR-SRV** — первичный контроллер домена (Samba DC, встроенный DNS, Kerberos, пользователи и группы).\n* **HQ-RTR** — перенаправление DNS-сервера в конфигурации DHCP (dnsmasq) на контроллер домена (192.168.3.10).\n* **HQ-CLI** — клиентская рабочая станция (ввод в домен через Центр управления системой acc, связка ролей libnss-role и ограничение sudo).",
+    "theory": [
       {
-        title: 'Архитектура Samba 4 Active Directory DC',
-        explanation: 'Команда samba-tool domain provision генерирует встроенную базу каталога LDAP, сервер аутентификации Kerberos KDC и DNS-бэкенд SAMBA_INTERNAL. Клиенты настраивают авторизацию через winbind/sssd.',
+        "title": "Что такое Samba DC?",
+        "explanation": "Samba 4 Active Directory Domain Controller (AD DC) — полноценная реализация служб каталога Microsoft Active Directory в Linux. Она объединяет в себе:\n• Сервер каталогов LDAP для хранения информации об объектах (пользователи, группы, компьютеры);\n• Центр распределения ключей Kerberos KDC для безопасной сквозной аутентификации;\n• Встроенный DNS-сервер Samba Internal DNS для разрешения служебных записей SRV, A и CNAME;\n• Общую сетевую папку политик SYSVOL."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'HQ-SRV',
-        title: 'Инициализация домена через samba-tool',
-        explanation: 'Развертываем новый домен с realm AU-TEAM.IRPO.',
-        commands: `samba-tool domain provision --use-rfc2307 --realm=AU-TEAM.IRPO --domain=AU-TEAM --server-role=dc --adminpass='P@ssw0rd2026'
-systemctl enable --now samba
-smbclient -L localhost -U%`,
+        "title": "Механизм ролей libnss-role и roleadd в ALT Linux",
+        "explanation": "В ALT Linux для сопоставления доменных групп Active Directory с локальными системными группами (например, привилегированной группой wheel) используется механизм libnss-role. Команда roleadd hq wheel сообщает системе, что члены доменной группы hq при аутентификации на машине автоматически наделяются правами локальной группы wheel."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "HQ-RTR, BR-RTR",
+        "title": "Предварительный шаг: Обновление конфигурации FRR (Модуль 1 Задание 7)",
+        "explanation": "Перед развертыванием домена обновляем настройки FRR OSPF на HQ-RTR и BR-RTR согласно шагам 1-3 Задания 7 Модуля 1, перезагружаем службу frr и сеть.",
+        "commands": "# На HQ-RTR и BR-RTR:\nsystemctl restart frr\nsystemctl restart network\nvtysh -c \"show ip ospf neighbor\""
       },
+      {
+        "step_number": 2,
+        "node": "BR-SRV",
+        "title": "Шаг 1.1: Установка пакетов Samba DC",
+        "explanation": "Обновляем кэш репозиториев и устанавливаем метапакет контроллера домена task-samba-dc под пользователем root. ВАЖНО: Сначала устанавливаем пакеты, и только потом меняем DNS на локальный!",
+        "commands": "apt-get update && apt-get install task-samba-dc -y"
+      },
+      {
+        "step_number": 3,
+        "node": "BR-SRV",
+        "title": "Шаг 1.2: Настройка DNS-резолвера перед инициализацией домена",
+        "explanation": "Прописываем рабочий upstream DNS-сервер (192.168.1.10), перезагружаем сеть и проверяем доступ в Интернет.",
+        "commands": "echo \"nameserver 192.168.1.10\" >> /etc/net/ifaces/enp7s1/resolv.conf\nsystemctl restart network\ncat /etc/resolv.conf\nping ya.ru -c 2"
+      },
+      {
+        "step_number": 4,
+        "node": "BR-SRV",
+        "title": "Шаг 1.3: Подготовка и инициализация (Provisioning) домена",
+        "explanation": "Удаляем старый smb.conf и базы Samba, создаем каталог SYSVOL и запускаем интерактивный samba-tool domain provision.",
+        "commands": "# Очистка предыдущих конфигураций\nrm -f /etc/samba/smb.conf\nrm -rf {/var/lib/samba, /var/cache/samba}\nmkdir -p /var/lib/samba/sysvol\n\n# Запуск инициализации домена:\n# Realm: AU-TEAM.IRPO\n# Domain: AU-TEAM\n# Server Role: dc\n# DNS backend: SAMBA_INTERNAL\n# DNS forwarder: 77.88.8.8 (или Enter)\n# Administrator password: P@ssw0rd\nsamba-tool domain provision"
+      },
+      {
+        "step_number": 5,
+        "node": "BR-SRV",
+        "title": "Шаг 1.4: Настройка Kerberos и запуск службы Samba DC",
+        "explanation": "Подменяем системный krb5.conf конфигурацией домена, включаем автозапуск и проверяем статус демона.",
+        "commands": "mv /etc/krb5.conf /etc/krb5.conf.back\ncp /var/lib/samba/private/krb5.conf /etc/krb5.conf\nsystemctl enable --now samba\nsystemctl status samba\nsamba-tool domain info 127.0.0.1"
+      },
+      {
+        "step_number": 6,
+        "node": "BR-SRV",
+        "title": "Шаг 2.1: Добавление ресурсных записей A в DNS домена",
+        "explanation": "Добавляем A-записи ключевых серверов, маршрутизаторов и будущих веб-ресурсов (пароль Administrator: P@ssw0rd).",
+        "commands": "samba-tool dns add br-srv.au-team.irpo au-team.irpo hq-srv A 192.168.1.10 -U Administrator\nsamba-tool dns add br-srv.au-team.irpo au-team.irpo hq-rtr A 192.168.1.1 -U Administrator\nsamba-tool dns add br-srv.au-team.irpo au-team.irpo br-rtr A 192.168.3.1 -U Administrator\nsamba-tool dns add br-srv.au-team.irpo au-team.irpo web.au-team.irpo A 172.16.1.1 -U Administrator\nsamba-tool dns add br-srv.au-team.irpo au-team.irpo docker.au-team.irpo A 172.16.2.1 -U Administrator\nsamba-tool dns query br-srv.au-team.irpo au-team.irpo @ ALL -U administrator"
+      },
+      {
+        "step_number": 7,
+        "node": "BR-SRV",
+        "title": "Шаг 2.2: Переключение резолвера BR-SRV на локальный DNS и проверка Kerberos",
+        "explanation": "Переключаем DNS в resolv.conf на 127.0.0.1, перезагружаем сеть и запрашиваем билет Kerberos TGT.",
+        "commands": "sed -i 's/nameserver 192.168.1.10/nameserver 127.0.0.1/' /etc/net/ifaces/enp7s1/resolv.conf \nsystemctl restart network\ncat /etc/resolv.conf\nkinit administrator@AU-TEAM.IRPO"
+      },
+      {
+        "step_number": 8,
+        "node": "BR-SRV",
+        "title": "Шаг 3: Создание пользователей hquser1-hquser5 и группы hq",
+        "explanation": "Создаем доменную группу hq, 5 пользователей hquser1–hquser5 с паролем P@ssw0rd и включаем их в группу.",
+        "commands": "samba-tool group add hq\nfor i in {1..5}; do samba-tool user add hquser$i P@ssw0rd; done\nfor i in {1..5}; do samba-tool group addmembers hq hquser$i; done\nsamba-tool group listmembers hq"
+      },
+      {
+        "step_number": 9,
+        "node": "HQ-RTR",
+        "title": "Шаг 4: Корректировка DNS-сервера в DHCP dnsmasq",
+        "explanation": "Меняем адрес выдаваемого DNS-сервера на IP контроллера домена 192.168.3.10 в /etc/dnsmasq.conf.",
+        "commands": "sed -i 's/192.168.1.10/192.168.3.10/' /etc/dnsmasq.conf\nsystemctl restart dnsmasq\ngrep \"dhcp-option=6\" /etc/dnsmasq.conf"
+      },
+      {
+        "step_number": 10,
+        "node": "HQ-CLI",
+        "title": "Шаг 5: Ввод рабочей станции HQ-CLI в домен (GUI Alterator)",
+        "explanation": "Обновляем сеть на клиенте и через Центр управления системой (acc) подключаем домен Active Directory.",
+        "commands": "# Обновляем сеть и проверяем DNS:\nsystemctl restart network\ncat /etc/resolv.conf\n\n# Запускаем Центр управления системой под root:\nacc\n# В левом меню: Пользователи -> Аутентификация -> Домен Active Directory -> Применить -> Пароль: P@ssw0rd.\n# После успешного ввода перезагружаем систему и логинимся как hquser1 / P@ssw0rd."
+      },
+      {
+        "step_number": 11,
+        "node": "HQ-CLI",
+        "title": "Шаг 6: Делегирование прав через libnss-role и ограничение sudo",
+        "explanation": "Привязываем группу hq к роли wheel и ограничиваем выполнение команд только cat, grep, id в /etc/sudoers.",
+        "commands": "# Под суперпользователем root (su -):\ncontrol libnss-role\nroleadd hq wheel\necho \"WHEEL_USERS ALL=(ALL:ALL) /bin/cat, /bin/grep, /usr/bin/id\" >> /etc/sudoers\ntail -n 3 /etc/sudoers\n\n# Проверка под доменным пользователем hquser1:\n# sudo id -> разрешено\n# sudo cat /etc/resolv.conf -> разрешено\n# sudo grep \"nameserver\" /etc/resolv.conf -> разрешено\n# sudo ls /root -> ЗАПРЕЩЕНО (Sorry, user hquser1 is not allowed...)"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m2_t1.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какая команда используется для проверки тикетов Kerberos?', placeholder: 'klist' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m2_t1.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какой метапакет ALT Linux устанавливает все необходимые службы и утилиты для контроллера домена Samba AD DC?",
+        "options": [
+          {
+            "id": "A",
+            "text": "task-samba-dc"
+          },
+          {
+            "id": "B",
+            "text": "samba-ad-server"
+          },
+          {
+            "id": "C",
+            "text": "active-directory-controller"
+          },
+          {
+            "id": "D",
+            "text": "samba-winbind-all"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какая утилита в ALT Linux сопоставляет доменные группы Active Directory с системными ролями (например, ролью wheel)?",
+        "options": [
+          {
+            "id": "A",
+            "text": "groupmod"
+          },
+          {
+            "id": "B",
+            "text": "roleadd"
+          },
+          {
+            "id": "C",
+            "text": "usermod -aG"
+          },
+          {
+            "id": "D",
+            "text": "nss-link"
+          }
+        ],
+        "correct_answer": "B"
+      },
+      {
+        "id": "q3",
+        "text": "Какая запись в /etc/sudoers строго разрешает членам роли WHEEL_USERS выполнять только утилиты cat, grep и id?",
+        "options": [
+          {
+            "id": "A",
+            "text": "WHEEL_USERS ALL=(ALL:ALL) /bin/cat, /bin/grep, /usr/bin/id"
+          },
+          {
+            "id": "B",
+            "text": "%wheel ALL=(ALL) NOPASSWD: ALL"
+          },
+          {
+            "id": "C",
+            "text": "hq ALL=(ALL) /bin/cat /bin/grep /bin/id"
+          },
+          {
+            "id": "D",
+            "text": "WHEEL_USERS ALL=(ALL) /bin/*"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 12,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 12,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.302Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm2-task-2',
-    slug: 'm2-task-2',
-    module_id: 'module-2',
-    task_number: 2,
-    title: 'Файловое хранилище RAID 0 на сервере HQ-SRV',
-    module_code: 'Модуль 2',
-    description: 'Создание высокоскоростного программного массива mdadm RAID 0 из двух дополнительных дисков, форматирование в ext4 и автомонтирование в /opt/storage.',
-    nodes: ['HQ-SRV'],
-    theory: [
+    "id": "m2-task-2",
+    "slug": "m2-task-2",
+    "module_id": "module-2",
+    "task_number": 2,
+    "title": "Файловое хранилище RAID 0 на сервере HQ-SRV",
+    "module_code": "Модуль 2",
+    "description": "Разметка двух дополнительных дисков /dev/sdb и /dev/sdc по 1 Гб с флагом raid on утилитой parted, объединение разделов в программный RAID 0 (/dev/md0) через mdadm, форматирование в ext4, фиксация UUID в /etc/mdadm.conf и настройка автомонтирования в точку /raid через /etc/fstab.",
+    "nodes": [
+      "HQ-SRV"
+    ],
+    "assignment": "### Задание №2: Файловое хранилище RAID 0 на сервере HQ-SRV\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на сервере центрального офиса (**HQ-SRV**) на базе двух дополнительных виртуальных дисков размером по 1 Гб настраивается программный дисковый массив уровня **RAID 0 (stripe)**.\n\nМассив форматируется в файловую систему `ext4`, сохраняется в конфигурации `/etc/mdadm.conf` и настраивается на постоянное автоматическое монтирование в точку `/raid` при загрузке операционной системы.\n\n#### Место выполнения:\nВсе действия выполняются под пользователем **root** на сервере **HQ-SRV** (`hq-srv.au-team.irpo`).",
+    "theory": [
       {
-        title: 'Организация программных массивов mdadm RAID 0',
-        explanation: 'RAID 0 распределяет блоки данных параллельно по всем дискам массива без избыточности. Конфигурация фиксируется в /etc/mdadm.conf, а автоматическое монтирование — в /etc/fstab по UUID.',
+        "title": "Что такое RAID 0 (Stripe / Чередование)?",
+        "explanation": "RAID 0 — метод объединения двух и более дисков в один логический том, при котором данные разбиваются на блоки одинакового размера и записываются на диски параллельно (поочередно).\n\nПреимущества:\n• Суммирование дискового пространства: 1 Гб + 1 Гб ≈ 2 Гб доступного объема.\n• Увеличение скорости чтения и записи практически в 2 раза за счет одновременного обращения к нескольким накопителям.\n\nНедостатки:\n• Полное отсутствие избыточности (отказоустойчивости). При выходе из строя хотя бы одного диска теряются все данные массива!"
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'HQ-SRV',
-        title: 'Создание массива /dev/md0 и форматирование в ext4',
-        explanation: 'Инициализируем массив и настраиваем автозапуск.',
-        commands: `mdadm --create --verbose /dev/md0 --level=0 --raid-devices=2 /dev/vdb /dev/vdc
-mkfs.ext4 -F /dev/md0
-mkdir -p /opt/storage
-mount /dev/md0 /opt/storage
-mdadm --detail --scan >> /etc/mdadm.conf
-echo "$(blkid -s UUID -o value /dev/md0) /opt/storage ext4 defaults 0 2" >> /etc/fstab
-df -h /opt/storage`,
+        "title": "Ключевые утилиты: parted, mdadm, /etc/mdadm.conf, /etc/fstab",
+        "explanation": "• parted: мощный редактор разделов (MBR/GPT) с установкой флага raid on;\n• mdadm: стандартная утилита ядра Linux для управления RAID-массивами;\n• /etc/mdadm.conf: сохраняет метаданные и уникальный UUID для однозначной сборки /dev/md0 при загрузке;\n• /etc/fstab: таблица статического автомонтирования файловых систем."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "HQ-SRV",
+        "title": "Шаг 1: Проверка обнаруженных накопителей",
+        "explanation": "Убеждаемся через lsblk, что виртуальной машине переданы два диска /dev/sdb и /dev/sdc объёмом по 1G.",
+        "commands": "lsblk"
       },
+      {
+        "step_number": 2,
+        "node": "HQ-SRV",
+        "title": "Шаг 2: Разметка дисков через parted",
+        "explanation": "Создаём MBR таблицу разделов msdos, раздел на 100% объема с выравниванием 1MiB и устанавливаем флаг raid on для /dev/sdb и /dev/sdc.",
+        "commands": "parted /dev/sdb --script mklabel msdos mkpart primary 1MiB 100% set 1 raid on\nparted /dev/sdc --script mklabel msdos mkpart primary 1MiB 100% set 1 raid on\nlsblk"
+      },
+      {
+        "step_number": 3,
+        "node": "HQ-SRV",
+        "title": "Шаг 3: Создание RAID-массива уровня 0",
+        "explanation": "Объединяем разделы /dev/sdb1 и /dev/sdc1 в логическое устройство /dev/md0 чередованием полос (stripe).",
+        "commands": "mdadm --create /dev/md0 --level=0 --raid-devices=2 /dev/sdb1 /dev/sdc1"
+      },
+      {
+        "step_number": 4,
+        "node": "HQ-SRV",
+        "title": "Шаг 4: Фиксация конфигурации массива в /etc/mdadm.conf",
+        "explanation": "Сканируем метаданные и UUID массива и сохраняем их в файл постоянной конфигурации.",
+        "commands": "mdadm --detail --scan >> /etc/mdadm.conf\nmdadm --detail --scan"
+      },
+      {
+        "step_number": 5,
+        "node": "HQ-SRV",
+        "title": "Шаг 5: Форматирование массива в файловую систему ext4",
+        "explanation": "Создаём файловую систему ext4 на блочном устройстве /dev/md0.",
+        "commands": "mkfs.ext4 /dev/md0"
+      },
+      {
+        "step_number": 6,
+        "node": "HQ-SRV",
+        "title": "Шаг 6: Точка монтирования /raid и запись в /etc/fstab",
+        "explanation": "Создаем каталог /raid, делаем бэкап fstab и добавляем строку постоянного автомонтирования.",
+        "commands": "mkdir /raid\ncp /etc/fstab /etc/fstab.back\necho \"/dev/md0 /raid ext4 defaults 0 0\" >> /etc/fstab"
+      },
+      {
+        "step_number": 7,
+        "node": "HQ-SRV",
+        "title": "Шаг 7: Проверка монтирования и размера массива",
+        "explanation": "Применяем монтирование командой mount -av и проверяем фактический размер тома (~2 Гб) и статус ядра.",
+        "commands": "mount -av\ndf -T /raid\ncat /proc/mdstat\nmdadm --detail /dev/md0"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m2_t2.sh | bash',
-    questions: [
-      { id: 'q1', text: 'В чем ключевое ограничение отказоустойчивости RAID 0?', placeholder: 'При выходе из строя хотя бы одного диска массив полностью теряет данные' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m2_t2.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Каков суммарный объем и уровень отказоустойчивости массива RAID 0 из двух дисков по 1 Гб?",
+        "options": [
+          {
+            "id": "A",
+            "text": "Объем 1 Гб, полная отказоустойчивость при отказе одного диска"
+          },
+          {
+            "id": "B",
+            "text": "Объем ~2 Гб, отказ любого диска приводит к полной потере всех данных"
+          },
+          {
+            "id": "C",
+            "text": "Объем 1.5 Гб с паритетом четности"
+          },
+          {
+            "id": "D",
+            "text": "Объем 2 Гб с возможностью восстановления данных по контрольным суммам"
+          }
+        ],
+        "correct_answer": "B"
+      },
+      {
+        "id": "q2",
+        "text": "Какой флаг раздела выставляется утилитой parted для обозначения участия раздела в программном RAID?",
+        "options": [
+          {
+            "id": "A",
+            "text": "boot on"
+          },
+          {
+            "id": "B",
+            "text": "raid on"
+          },
+          {
+            "id": "C",
+            "text": "lvm on"
+          },
+          {
+            "id": "D",
+            "text": "stripe on"
+          }
+        ],
+        "correct_answer": "B"
+      },
+      {
+        "id": "q3",
+        "text": "Какая команда монтирует все файловые системы из /etc/fstab с подробным выводом без перезагрузки сервера?",
+        "options": [
+          {
+            "id": "A",
+            "text": "mount -av"
+          },
+          {
+            "id": "B",
+            "text": "mount --force"
+          },
+          {
+            "id": "C",
+            "text": "fstab -reload"
+          },
+          {
+            "id": "D",
+            "text": "systemctl restart mount"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 13,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 13,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm2-task-3',
-    slug: 'm2-task-3',
-    module_id: 'module-2',
-    task_number: 3,
-    title: 'Сетевая файловая система NFS на HQ-SRV и HQ-CLI',
-    module_code: 'Модуль 2',
-    description: 'Экспорт каталога /opt/storage по протоколу Network File System v4 и автоматическое монтирование сетевого ресурса на клиенте HQ-CLI.',
-    nodes: ['HQ-SRV', 'HQ-CLI'],
-    theory: [
+    "id": "m2-task-3",
+    "slug": "m2-task-3",
+    "module_id": "module-2",
+    "task_number": 3,
+    "title": "Сетевая файловая система NFS на HQ-SRV и HQ-CLI",
+    "module_code": "Модуль 2",
+    "description": "Развёртывание службы NFS-сервера на HQ-SRV в директории /raid/nfs с правами rw для сети клиентов 192.168.2.0/27, экспорт правил в /etc/exports, настройка автомонтирования в /mnt/nfs с опцией _netdev на HQ-CLI и проверка сквозной записи файлов.",
+    "nodes": [
+      "HQ-SRV",
+      "HQ-CLI"
+    ],
+    "assignment": "### Задание №3: Сетевая файловая система NFS на HQ-SRV и HQ-CLI\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на сервере главного офиса (**HQ-SRV**) развёртывается сервер сетевой файловой системы **NFS (Network File System)**. В качестве общего ресурса используется каталог на созданном ранее дисковом массиве: `/raid/nfs`.\n\nДоступ на чтение и запись (`rw`) предоставляется исключительно для сети клиентских машин главного офиса (**HQ-CLI**, `192.168.2.0/27`). На самой рабочей станции **HQ-CLI** настраивается автоматическое монтирование сетевого ресурса в директорию `/mnt/nfs` при загрузке системы через `/etc/fstab` с опцией `_netdev`.\n\n#### Узлы выполнения:\n* **HQ-SRV** — NFS-сервер (`nfs-server`), создание каталога `/raid/nfs` и правил в `/etc/exports`.\n* **HQ-CLI** — NFS-клиент (`nfs-utils`), точка монтирования `/mnt/nfs`, проверка через `showmount` и автомонтирование в `/etc/fstab`.",
+    "theory": [
       {
-        title: 'Файл /etc/exports и параметры прав rw, sync, no_root_squash',
-        explanation: 'Демон nfs-server считывает файл /etc/exports. Опция rw открывает доступ на запись, sync требует синхронной фиксации изменений, no_subtree_check повышает надежность передачи файлов.',
+        "title": "Принцип работы сетевой файловой системы NFS",
+        "explanation": "NFS (Network File System) позволяет удаленным клиентам прозрачно работать с каталогами сервера по сети как с локальными дисками. Демоны nfs-server, mountd и RPC обрабатывают запросы и сопоставляют права доступа."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'HQ-SRV',
-        title: 'Экспорт директории в /etc/exports',
-        explanation: 'Предоставляем доступ для подсети клиентов 192.168.200.0/24.',
-        commands: `echo '/opt/storage 192.168.200.0/24(rw,sync,no_subtree_check)' >> /etc/exports
-exportfs -ra
-systemctl enable --now nfs-server
-showmount -e localhost`,
+        "title": "Параметры экспорта в /etc/exports и опции fstab",
+        "explanation": "• rw: доступ на чтение и запись;\n• no_subtree_check: отключение проверки поддеревьев (повышает скорость и надежность);\n• no_root_squash: запрет подмены root на nobody на стороне сервера;\n• soft: мягкая обработка сетевых ошибок (клиент не зависает при разрыве сети);\n• _netdev: указывает системе монтировать том только после инициализации сети."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "HQ-SRV",
+        "title": "Шаг 1: Установка пакетов NFS-сервера",
+        "explanation": "Обновляем кэш и устанавливаем nfs-server и nfs-utils под пользователем root.",
+        "commands": "apt-get update && apt-get install nfs-server nfs-utils -y"
       },
+      {
+        "step_number": 2,
+        "node": "HQ-SRV",
+        "title": "Шаг 2: Создание каталога общего доступа и установка прав",
+        "explanation": "Создаём директорию nfs внутри массива /raid и выставляем права доступа 777.",
+        "commands": "mkdir /raid/nfs\nchmod 777 /raid/nfs"
+      },
+      {
+        "step_number": 3,
+        "node": "HQ-SRV",
+        "title": "Шаг 3: Настройка файла экспорта /etc/exports",
+        "explanation": "Разрешаем доступ на чтение и запись исключительно для сети клиентов HQ-CLI (192.168.2.0/27).",
+        "commands": "cp /etc/exports /etc/exports.back\necho \"/raid/nfs 192.168.2.0/27(rw,no_subtree_check,no_root_squash)\" >> /etc/exports"
+      },
+      {
+        "step_number": 4,
+        "node": "HQ-SRV",
+        "title": "Шаг 4: Запуск и активация службы nfs-server",
+        "explanation": "Активируем автозапуск демона и проверяем список экспортируемых каталогов.",
+        "commands": "systemctl enable --now nfs-server\nsystemctl status nfs-server\nexportfs -v"
+      },
+      {
+        "step_number": 5,
+        "node": "HQ-CLI",
+        "title": "Шаг 5: Подготовка клиента и проверка экспорта через showmount",
+        "explanation": "Создаём локальный каталог /mnt/nfs и опрашиваем NFS-сервер hq-srv (192.168.1.10).",
+        "commands": "mkdir /mnt/nfs\nchmod -R 777 /mnt/nfs\nshowmount -e hq-srv"
+      },
+      {
+        "step_number": 6,
+        "node": "HQ-CLI",
+        "title": "Шаг 6: Настройка автомонтирования в /etc/fstab",
+        "explanation": "Добавляем запись постоянного монтирования с обязательной опцией _netdev.",
+        "commands": "cp /etc/fstab /etc/fstab.back\necho \"192.168.1.10:/raid/nfs /mnt/nfs nfs rw,soft,_netdev 0 0\" >> /etc/fstab\nmount -av\ndf -T /mnt/nfs"
+      },
+      {
+        "step_number": 7,
+        "node": "HQ-CLI, HQ-SRV",
+        "title": "Шаг 7: Верификация сквозной записи файла",
+        "explanation": "Создаём тестовый файл на клиенте и мгновенно проверяем его появление на сервере.",
+        "commands": "# На HQ-CLI:\ntouch /mnt/nfs/test_file\nls -l /mnt/nfs/test_file\n\n# На HQ-SRV:\nls -l /raid/nfs/test_file"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m2_t3.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какая команда перечитывает конфигурацию /etc/exports без перезапуска сервера?', placeholder: 'exportfs -ra' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m2_t3.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какая критически важная опция монтирования в /etc/fstab указывает ОС монтировать NFS-ресурс только после поднятия сети?",
+        "options": [
+          {
+            "id": "A",
+            "text": "_netdev"
+          },
+          {
+            "id": "B",
+            "text": "wait-network"
+          },
+          {
+            "id": "C",
+            "text": "network-online"
+          },
+          {
+            "id": "D",
+            "text": "dhcp-wait"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какая утилита позволяет с клиента просмотреть список сетевых каталогов, экспортируемых NFS-сервером?",
+        "options": [
+          {
+            "id": "A",
+            "text": "nfsstat -c"
+          },
+          {
+            "id": "B",
+            "text": "showmount -e <сервер>"
+          },
+          {
+            "id": "C",
+            "text": "exportfs -l"
+          },
+          {
+            "id": "D",
+            "text": "rpcinfo -p"
+          }
+        ],
+        "correct_answer": "B"
+      },
+      {
+        "id": "q3",
+        "text": "Что делает параметр экспорта no_root_squash в файле /etc/exports?",
+        "options": [
+          {
+            "id": "A",
+            "text": "Запрещает пользователю root доступ к сетевому каталогу"
+          },
+          {
+            "id": "B",
+            "text": "Сохраняет права суперпользователя root клиента при работе на сетевом диске сервера"
+          },
+          {
+            "id": "C",
+            "text": "Подменяет пользователя root на системного nobody"
+          },
+          {
+            "id": "D",
+            "text": "Включает шифрование Kerberos для root-сессий"
+          }
+        ],
+        "correct_answer": "B"
+      }
     ],
-    max_score: 5,
-    order_index: 14,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 14,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm2-task-4',
-    slug: 'm2-task-4',
-    module_id: 'module-2',
-    task_number: 4,
-    title: 'Служба сетевого времени Chrony на ISP',
-    module_code: 'Модуль 2',
-    description: 'Настройка демона Chrony на пограничном маршрутизаторе ISP в качестве центрального источника времени Stratum 2 для всех узлов сети.',
-    nodes: ['ISP', 'HQ-SRV'],
-    theory: [
+    "id": "m2-task-4",
+    "slug": "m2-task-4",
+    "module_id": "module-2",
+    "task_number": 4,
+    "title": "Служба сетевого времени Chrony на ISP",
+    "module_code": "Модуль 2",
+    "description": "Развёртывание локального NTP-сервера на маршрутизаторе ISP (172.16.1.1) с принудительным 5-м стратумом (local stratum 5) через control chrony server, синхронизация с upstream pool.ntp.org и перенаправление всех внутренних узлов (HQ-SRV, BR-RTR, BR-SRV, HQ-CLI) на сервер провайдера.",
+    "nodes": [
+      "ISP",
+      "HQ-SRV",
+      "BR-RTR",
+      "BR-SRV",
+      "HQ-CLI"
+    ],
+    "assignment": "### Задание №4: Служба сетевого времени Chrony на ISP\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на пограничном маршрутизаторе провайдера (**ISP**) развёртывается локальный сервер точного сетевого времени на базе сервиса **chrony**.\n\nМаршрутизатор синхронизируется с вышестоящими серверами в Интернете (`pool.ntp.org`) и выступает в качестве доверенного источника времени 5-го стратума (**local stratum 5**) для всех внутренних узлов обоих филиалов: **HQ-SRV**, **HQ-CLI**, **BR-RTR** и **BR-SRV**.\n\n#### Распределение ролей:\n* **NTP-сервер (Stratum 5)**: маршрутизатор **ISP** (IP-адрес в сторону HQ: `172.16.1.1`).\n* **NTP-клиенты**: HQ-SRV (`192.168.1.10`), BR-RTR (`172.16.2.2`), BR-SRV (`192.168.3.10`), HQ-CLI (`192.168.2.x`).",
+    "theory": [
       {
-        title: 'Преимущества Chrony над ntpd и директива local stratum',
-        explanation: 'Chrony быстрее компенсирует джиттер и задержки в виртуализированных средах. Директива "local stratum 10" позволяет ISP отвечать клиентам даже при отсутствии связи с внешними upstream-серверами.',
+        "title": "Иерархия уровней синхронизации (Stratum) в NTP",
+        "explanation": "Stratum 0 — эталонные атомные часы / GPS;\nStratum 1 — серверы, подключенные к Stratum 0;\nStratum 2 — серверы сети интернет;\n... Stratum 5 — маршрутизатор ISP. Он объявляет себя сервером 5-го стратума, благодаря чему даже при обрыве внешнего канала клиенты получают согласованное время (local stratum 5)."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'ISP',
-        title: 'Конфигурирование /etc/chrony.conf на ISP',
-        explanation: 'Разрешаем синхронизацию для корпоративных подсетей 172.16.0.0/16.',
-        commands: `cat << 'EOF' >> /etc/chrony.conf
-allow 172.16.0.0/16
-local stratum 8
-EOF
-systemctl enable --now chronyd
-chronyc tracking`,
+        "title": "Механизм control chrony server в ALT Linux",
+        "explanation": "По умолчанию демон chronyd в ALT Linux ограничен подсистемой control и работает только клиентом. Команда control chrony server открывает UDP-порт 123 и разрешает обслуживание сетевых клиентов."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "ISP",
+        "title": "Шаг 1: Настройка NTP-сервера на маршрутизаторе ISP",
+        "explanation": "Открываем серверный режим через control, выставляем prefer minstratum 4 и объявляем local stratum 5.",
+        "commands": "control chrony server\nsed -i 's/pool pool.ntp.org iburst/pool pool.ntp.org iburst prefer minstratum 4/' /etc/chrony.conf\ngrep pool /etc/chrony.conf\nsed -i 's/\\#local stratum 10/local stratum 5/' /etc/chrony.conf\ngrep \"local stratum\" /etc/chrony.conf\nsystemctl restart chronyd"
       },
+      {
+        "step_number": 2,
+        "node": "HQ-SRV, BR-RTR, BR-SRV",
+        "title": "Шаг 2: Настройка клиентов филиалов",
+        "explanation": "Заменяем внешний пул на внутренний адрес ISP (172.16.1.1 iburst), перезапускаем службу и проверяем источники.",
+        "commands": "# Выполняется на HQ-SRV, BR-RTR и BR-SRV:\nsed -i 's/pool pool.ntp.org iburst/server 172.16.1.1 iburst/' /etc/chrony.conf && systemctl restart chronyd\n\n# Ждём 10 секунд и проверяем:\nchronyc sources"
+      },
+      {
+        "step_number": 3,
+        "node": "HQ-CLI",
+        "title": "Шаг 3: Настройка клиента рабочей станции HQ-CLI",
+        "explanation": "Добавляем адрес сервера 172.16.1.1 iburst в конфигурацию и перезапускаем chronyd под root.",
+        "commands": "echo \"server 172.16.1.1 iburst\" >> /etc/chrony.conf && systemctl restart chronyd\nchronyc sources"
+      },
+      {
+        "step_number": 4,
+        "node": "ISP, HQ-CLI",
+        "title": "Шаг 4: Верификация синхронизации и статуса стратума",
+        "explanation": "Проверяем отметку активного источника (^*), Stratum 5 и детальную статистику chronyc tracking.",
+        "commands": "chronyc sources\nchronyc tracking"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m2_t4.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какая утилита командной строки используется для мониторинга источников времени в Chrony?', placeholder: 'chronyc sources -v' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m2_t4.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какая команда подсистемы безопасности ALT Linux переводит демон chronyd в режим сервера времени для локальной сети?",
+        "options": [
+          {
+            "id": "A",
+            "text": "control chrony server"
+          },
+          {
+            "id": "B",
+            "text": "systemctl set-mode chrony-server"
+          },
+          {
+            "id": "C",
+            "text": "chrony-control --enable-server"
+          },
+          {
+            "id": "D",
+            "text": "chmod +x /usr/sbin/chronyd"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Что означает символ звёздочки (*) в столбце State (S) вывода команды chronyc sources?",
+        "options": [
+          {
+            "id": "A",
+            "text": "Источник заблокирован фаерволом"
+          },
+          {
+            "id": "B",
+            "text": "Текущий активный синхронизированный системный источник времени"
+          },
+          {
+            "id": "C",
+            "text": "Резервный кандидат низкого качества"
+          },
+          {
+            "id": "D",
+            "text": "Локальные несинхронизированные часы хоста"
+          }
+        ],
+        "correct_answer": "B"
+      },
+      {
+        "id": "q3",
+        "text": "Какой стратум имеет клиентская система, успешно синхронизирующаяся с сервером 5-го стратума?",
+        "options": [
+          {
+            "id": "A",
+            "text": "Stratum 4"
+          },
+          {
+            "id": "B",
+            "text": "Stratum 5"
+          },
+          {
+            "id": "C",
+            "text": "Stratum 6"
+          },
+          {
+            "id": "D",
+            "text": "Stratum 10"
+          }
+        ],
+        "correct_answer": "C"
+      }
     ],
-    max_score: 5,
-    order_index: 15,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 15,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm2-task-5',
-    slug: 'm2-task-5',
-    module_id: 'module-2',
-    task_number: 5,
-    title: 'Автоматизация с Ansible на сервере BR-SRV',
-    module_code: 'Модуль 2',
-    description: 'Подготовка управляющего узла Ansible: файл инвентаря hosts, конфигурация ansible.cfg и плейбук автоматического развертывания пакетов.',
-    nodes: ['BR-SRV'],
-    theory: [
+    "id": "m2-task-5",
+    "slug": "m2-task-5",
+    "module_id": "module-2",
+    "task_number": 5,
+    "title": "Автоматизация с Ansible на сервере BR-SRV",
+    "module_code": "Модуль 2",
+    "description": "Развёртывание управляющего узла Ansible на BR-SRV, установка ansible и sshpass, активация OpenSSH на порту 2026 на HQ-RTR, BR-RTR и HQ-CLI, настройка ansible.cfg (host_key_checking = False), формирование инвентаря /etc/ansible/hosts и проверка всех хостов через ad-hoc модуль ping (SUCCESS).",
+    "nodes": [
+      "BR-SRV",
+      "HQ-RTR",
+      "BR-RTR",
+      "HQ-CLI",
+      "HQ-SRV"
+    ],
+    "assignment": "### Задание №5: Автоматизация с Ansible на сервере BR-SRV\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на сервере филиала (**BR-SRV**) развёртывается система управления конфигурациями **Ansible**.\n\nСервер **BR-SRV** выступает управляющим узлом (Control Node). На нём формируется инвентарный файл со всеми ключевыми машинами инфраструктуры (**HQ-SRV**, **HQ-CLI**, **HQ-RTR**, **BR-RTR**), задаются параметры подключения по нестандартному порту SSH **2026**, и проверяется доступность узлов без интерактивных запросов паролей и отпечатков ключей.\n\n#### Место выполнения:\n* **BR-SRV** (`br-srv.au-team.irpo`) — управляющий узел (Control Node).\n* **HQ-RTR**, **BR-RTR**, **HQ-CLI** — предварительное включение службы OpenSSH на порту 2026.",
+    "theory": [
       {
-        title: 'Архитектура Ansible и безагентный подход (Agentless)',
-        explanation: 'Ansible взаимодействует с узлами через стандартный SSH и встроенный Python. Playbook описывает желаемое состояние системы в формате YAML с соблюдением идемпотентности.',
+        "title": "Безагентная архитектура Ansible",
+        "explanation": "Ansible не требует установки специальных фоновых демонов на управляемые узлы — все операции выполняются через SSH с использованием встроенного Python. Переменные подключения указываются в /etc/ansible/hosts."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'BR-SRV',
-        title: 'Создание инвентаря и запуск ping-теста модулей',
-        explanation: 'Проверяем связь со всеми узлами инфраструктуры через ansible all -m ping.',
-        commands: `mkdir -p /opt/ansible
-cat << 'EOF' > /opt/ansible/hosts
-[routers]
-hq-rtr ansible_host=192.168.100.1
-br-rtr ansible_host=192.168.0.1
-[servers]
-hq-srv ansible_host=192.168.100.2
-br-srv ansible_host=127.0.0.1 ansible_connection=local
-EOF
-ansible -i /opt/ansible/hosts servers -m ping`,
+        "title": "Утилита sshpass и параметры ansible.cfg",
+        "explanation": "• sshpass: передает пароль в сессию SSH в неинтерактивном режиме;\n• host_key_checking = False: отключает запрос подтверждения отпечатков ключей (yes/no);\n• interpreter_python = /usr/bin/python3: задает целевой интерпретатор Python."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "HQ-RTR, BR-RTR, HQ-CLI",
+        "title": "Шаг 1: Предварительное включение SSH на порту 2026",
+        "explanation": "Добавляем Port 2026 в /etc/openssh/sshd_config, включаем автозапуск и перезапускаем службу sshd.",
+        "commands": "# Проверяем и добавляем Port 2026:\ngrep -q \"^Port 2026\" /etc/openssh/sshd_config || sed -i '1i Port 2026' /etc/openssh/sshd_config\nsystemctl enable --now sshd\nsystemctl restart sshd\nss -tlpn | grep 2026"
       },
+      {
+        "step_number": 2,
+        "node": "BR-SRV",
+        "title": "Шаг 2: Установка пакетов Ansible и sshpass",
+        "explanation": "Обновляем кэш и устанавливаем ansible и sshpass под root на BR-SRV.",
+        "commands": "apt-get update && apt-get install ansible sshpass -y"
+      },
+      {
+        "step_number": 3,
+        "node": "BR-SRV",
+        "title": "Шаг 3: Конфигурация /etc/ansible/ansible.cfg",
+        "explanation": "Создаём глобальный конфигурационный файл с отключением host_key_checking.",
+        "commands": "cp -r /etc/ansible/ansible.cfg /etc/ansible/ansible.cfg.back 2>/dev/null || true\ncat << 'EOF' > /etc/ansible/ansible.cfg\n[defaults]\nhost_key_checking = False\ninterpreter_python = /usr/bin/python3\ninventory = /etc/ansible/hosts\nEOF"
+      },
+      {
+        "step_number": 4,
+        "node": "BR-SRV",
+        "title": "Шаг 4: Формирование файла инвентаря /etc/ansible/hosts",
+        "explanation": "Прописываем параметры подключения для всех машин инфраструктуры по порту 2026.",
+        "commands": "cat << 'EOF' > /etc/ansible/hosts\nHQ-SRV ansible_user=user ansible_password=resu ansible_port=2026\nHQ-RTR ansible_user=net_admin ansible_password=P@ssw0rd ansible_port=2026\nBR-RTR ansible_user=net_admin ansible_password=P@ssw0rd ansible_port=2026\nHQ-CLI ansible_user=user ansible_password=resu ansible_port=2026\nEOF\ncat /etc/ansible/hosts"
+      },
+      {
+        "step_number": 5,
+        "node": "BR-SRV",
+        "title": "Шаг 5: Проверка доступности хостов через модуль ping",
+        "explanation": "Запускаем ad-hoc модуль ping. Все 4 узла должны вернуть SUCCESS и \"ping\": \"pong\"!",
+        "commands": "ansible all -m ping"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m2_t5.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какой формат используется для описания сценариев (playbooks) в Ansible?', placeholder: 'YAML' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m2_t5.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какая утилита позволяет Ansible передавать пароль в сессию SSH без генерации ssh-ключей и ручного ввода с терминала?",
+        "options": [
+          {
+            "id": "A",
+            "text": "sshpass"
+          },
+          {
+            "id": "B",
+            "text": "expect"
+          },
+          {
+            "id": "C",
+            "text": "sudo-auth"
+          },
+          {
+            "id": "D",
+            "text": "paramiko"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какая директива файла ansible.cfg отключает появление интерактивного запроса на подтверждение отпечатка SSH-ключа?",
+        "options": [
+          {
+            "id": "A",
+            "text": "strict_keys = off"
+          },
+          {
+            "id": "B",
+            "text": "host_key_checking = False"
+          },
+          {
+            "id": "C",
+            "text": "ignore_fingerprints = True"
+          },
+          {
+            "id": "D",
+            "text": "ssh_auto_accept = 1"
+          }
+        ],
+        "correct_answer": "B"
+      },
+      {
+        "id": "q3",
+        "text": "Что проверяет ad-hoc команда ansible all -m ping?",
+        "options": [
+          {
+            "id": "A",
+            "text": "Отправку стандартных пакетов ICMP Echo Request через протокол IP"
+          },
+          {
+            "id": "B",
+            "text": "Успешность SSH-подключения, доступность Python и возврат JSON-ответа \"ping\": \"pong\""
+          },
+          {
+            "id": "C",
+            "text": "Открытость сетевого сокета HTTP/HTTPS"
+          },
+          {
+            "id": "D",
+            "text": "Синхронизацию системного времени между хостами"
+          }
+        ],
+        "correct_answer": "B"
+      }
     ],
-    max_score: 5,
-    order_index: 16,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 16,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm2-task-6',
-    slug: 'm2-task-6',
-    module_id: 'module-2',
-    task_number: 6,
-    title: 'Веб-приложение в Docker на сервере BR-SRV',
-    module_code: 'Модуль 2',
-    description: 'Установка Docker Engine, запуск контейнера с изолированным сервисом через Docker Compose и проброс сетевых портов.',
-    nodes: ['BR-SRV'],
-    theory: [
+    "id": "m2-task-6",
+    "slug": "m2-task-6",
+    "module_id": "module-2",
+    "task_number": 6,
+    "title": "Веб-приложение в Docker на сервере BR-SRV",
+    "module_code": "Модуль 2",
+    "description": "Установка Docker Engine и Compose v2 на BR-SRV, монтирование оптического диска Additional.iso, импорт образов site:latest и mariadb:latest через docker load, создание манифеста docker-compose.yml (сервисы db и tespapp с портом 8080:8000), сохранение БД в том db_data и проверка персистентности данных.",
+    "nodes": [
+      "BR-SRV",
+      "HQ-CLI"
+    ],
+    "assignment": "### Задание №6: Веб-приложение в Docker на сервере BR-SRV\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на сервере филиала (**BR-SRV**) с помощью **Docker** и **Docker Compose v2** развёртывается двухзвенный стек контейнеров, состоящий из веб-приложения и реляционной СУБД **MariaDB**.\n\nОбразы контейнеров импортируются из архивов tar с подключаемого виртуального компакт-диска `Additional.iso` (`/dev/sr0`). База данных настраивается с сохранением данных в именованный том (**Docker Volume** `db_data`), обеспечивая персистентность записей при перезапуске или пересоздании контейнеров.\n\n> ⚠️ **Обратите внимание на имя контейнера**:\n> В конкурсном задании строго требуется: *«Основной контейнер testapp должен называться tespapp»* (с опечаткой). В манифесте `docker-compose.yml` директива `container_name: tespapp` строго соблюдает это условие.\n\n#### Узлы выполнения:\n* **BR-SRV** (`br-srv.au-team.irpo`) — хост Docker, монтирование ISO и запуск стека.\n* **HQ-CLI** — проверка доступности веб-интерфейса (`http://192.168.3.10:8080`).",
+    "theory": [
       {
-        title: 'Изоляция пространств имён Linux (Namespaces и Cgroups)',
-        explanation: 'Docker изолирует процессы на уровне ядра с помощью PID, NET, IPC и MNT namespaces. Декларативный файл compose.yaml упрощает запуск многоконтейнерных стеков.',
+        "title": "Архитектура двухзвенного стека в Docker Compose",
+        "explanation": "Стек включает два изолированных сервиса в общей виртуальной сети:\n• database (контейнер db): mariadb:latest, порт 3306:3306, том db_data:/var/lib/mysql;\n• app (контейнер tespapp): site:latest, внешний порт 8080 -> внутренний 8000, depends_on: database."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'BR-SRV',
-        title: 'Создание compose.yaml и запуск контейнера в фоне',
-        explanation: 'Запускаем контейнер Nginx на порту 8080.',
-        commands: `mkdir -p /opt/docker-app
-cat << 'EOF' > /opt/docker-app/docker-compose.yml
-services:
-  webapp:
-    image: nginx:alpine
-    container_name: br_web
-    restart: always
-    ports:
-      - "8080:80"
-EOF
-docker compose -f /opt/docker-app/docker-compose.yml up -d
-docker ps`,
+        "title": "Именованные тома (Docker Volumes) и персистентность",
+        "explanation": "Файлы СУБД сохраняются в томе db_data на файловой системе хоста. При принудительном удалении контейнеров (docker rm -f) данные не теряются и мгновенно восстанавливаются при повторном запуске docker compose up -d."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "BR-SRV",
+        "title": "Шаг 1: Установка пакетов Docker и Docker Compose",
+        "explanation": "Устанавливаем демон docker-engine и плагин docker-compose-v2, активируем службу docker.service.",
+        "commands": "apt-get update && apt-get install docker-engine docker-compose-v2 -y\nsystemctl enable --now docker.service"
       },
+      {
+        "step_number": 2,
+        "node": "BR-SRV",
+        "title": "Шаг 2: Монтирование диска Additional.iso и просмотр архивов",
+        "explanation": "Монтируем оптический диск /dev/sr0 в /mnt и проверяем содержимое директории docker.",
+        "commands": "mount -o loop /dev/sr0 /mnt/ -v\nls -l /mnt/docker/\ncat /mnt/docker/readme.txt"
+      },
+      {
+        "step_number": 3,
+        "node": "BR-SRV",
+        "title": "Шаг 3: Загрузка образов в локальное хранилище Docker",
+        "explanation": "Импортируем образы сайта и базы данных из tar-файлов через docker load.",
+        "commands": "docker load < /mnt/docker/site_latest.tar\ndocker load < /mnt/docker/mariadb_latest.tar\ndocker image ls"
+      },
+      {
+        "step_number": 4,
+        "node": "BR-SRV",
+        "title": "Шаг 4: Создание манифеста docker-compose.yml",
+        "explanation": "Формируем файл docker-compose.yml с сервисами database (db) и app (tespapp), портами и томом db_data.",
+        "commands": "cat << 'EOF' > docker-compose.yml\nservices:\n  database:\n    container_name: db\n    image: mariadb:latest\n    restart: always\n    ports: \n      - \"3306:3306\"\n    environment:\n      MARIADB_DATABASE: testdb\n      MARIADB_USER: testc\n      MARIADB_PASSWORD: P@ssw0rd\n      MARIADB_ROOT_PASSWORD: P@ssw0rd\n    volumes:\n      - db_data:/var/lib/mysql\n      \n  app:\n    container_name: tespapp\n    image: site:latest\n    restart: always\n    ports: \n      - \"8080:8000\"\n    environment: \n      DB_HOST: database\n      DB_PORT: 3306\n      DB_NAME: testdb\n      DB_USER: testc\n      DB_PASS: P@ssw0rd\n      DB_TYPE: maria\n    depends_on: \n      - database\n\nvolumes:\n  db_data:\nEOF"
+      },
+      {
+        "step_number": 5,
+        "node": "BR-SRV",
+        "title": "Шаг 5: Валидация и запуск стека контейнеров",
+        "explanation": "Проверяем синтаксис манифеста и запускаем сервисы в фоновом режиме (-d).",
+        "commands": "docker compose config\ndocker compose up -d\ndocker ps\nss -ltnp4 | grep 8080"
+      },
+      {
+        "step_number": 6,
+        "node": "HQ-CLI, BR-SRV",
+        "title": "Шаг 6: Проверка приложения и тестирование сохранности тома",
+        "explanation": "Проверяем доступ http://192.168.3.10:8080 с HQ-CLI, создаем запись, удаляем контейнеры и перезапускаем стек.",
+        "commands": "# 1. Проверяем в браузере на HQ-CLI: http://192.168.3.10:8080 и создаем тестовую запись.\n\n# 2. На BR-SRV принудительно удаляем контейнеры:\ndocker rm -f $(docker ps -qa)\ndocker ps\n\n# 3. Повторно поднимаем стек:\ndocker compose up -d\n\n# 4. Обновляем браузер на HQ-CLI — данные полностью сохранились!"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m2_t6.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какой флаг в команде docker compose up запускает контейнеры в фоновом режиме?', placeholder: '-d (--detach)' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m2_t6.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какое точное имя контейнера приложения регламентировано условием конкурсного задания?",
+        "options": [
+          {
+            "id": "A",
+            "text": "testapp"
+          },
+          {
+            "id": "B",
+            "text": "tespapp"
+          },
+          {
+            "id": "C",
+            "text": "site-web"
+          },
+          {
+            "id": "D",
+            "text": "app-frontend"
+          }
+        ],
+        "correct_answer": "B"
+      },
+      {
+        "id": "q2",
+        "text": "Какая команда используется для импорта Docker-образа из tar-архива в локальное хранилище?",
+        "options": [
+          {
+            "id": "A",
+            "text": "docker import"
+          },
+          {
+            "id": "B",
+            "text": "docker load < <файл.tar>"
+          },
+          {
+            "id": "C",
+            "text": "docker-compose build"
+          },
+          {
+            "id": "D",
+            "text": "docker pull --local"
+          }
+        ],
+        "correct_answer": "B"
+      },
+      {
+        "id": "q3",
+        "text": "Какой компонент Docker гарантирует сохранность данных СУБД MariaDB при удалении или пересоздании контейнера?",
+        "options": [
+          {
+            "id": "A",
+            "text": "Именованный том (Docker Volume db_data)"
+          },
+          {
+            "id": "B",
+            "text": "Внутренний кэш оперативной памяти"
+          },
+          {
+            "id": "C",
+            "text": "Переменная окружения RESTART=always"
+          },
+          {
+            "id": "D",
+            "text": "Служба systemd-journald"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 17,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 17,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm2-task-7',
-    slug: 'm2-task-7',
-    module_id: 'module-2',
-    task_number: 7,
-    title: 'Веб-приложение Apache + MariaDB на сервере HQ-SRV',
-    module_code: 'Модуль 2',
-    description: 'Развертывание веб-сервера Apache2 (httpd2) и сервера реляционных баз данных MariaDB, создание базы данных и пользователя.',
-    nodes: ['HQ-SRV'],
-    theory: [
+    "id": "m2-task-7",
+    "slug": "m2-task-7",
+    "module_id": "module-2",
+    "task_number": 7,
+    "title": "Веб-приложение Apache + MariaDB на сервере HQ-SRV",
+    "module_code": "Модуль 2",
+    "description": "Развёртывание стека LAMP (метапакет lamp-server: веб-сервер httpd2, СУБД MariaDB, PHP) на HQ-SRV, монтирование Additional.iso, копирование файлов сайта (index.php, logo.png) в /var/www/html, создание БД webdb и пользователя web, импорт дампа dump.sql и проверка работы приложения с HQ-CLI.",
+    "nodes": [
+      "HQ-SRV",
+      "HQ-CLI"
+    ],
+    "assignment": "### Задание №7: Веб-приложение Apache + MariaDB на сервере HQ-SRV\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на сервере центрального офиса (**HQ-SRV**) развёртывается классический стек веб-приложений **LAMP (Linux, Apache/httpd2, MariaDB, PHP)**.\n\nФайлы веб-приложения и дамп базы данных импортируются с подключаемого виртуального диска `Additional.iso` (`/dev/sr0`). В СУБД создаётся база данных `webdb` с пользователем `web` (`P@ssw0rd`), настраивается конфигурация подключения в сценарии `index.php` и запускается служба веб-сервера.\n\n#### Место выполнения:\n* **HQ-SRV** (`hq-srv.au-team.irpo`) — развёртывание стека LAMP и СУБД.\n* **HQ-CLI** — проверка сайта в браузере по адресу `http://192.168.1.10`.",
+    "theory": [
       {
-        title: 'Классический LAMP стек в ALT Linux',
-        explanation: 'В ALT Linux веб-сервер Apache имеет имя пакета и службы httpd2. Права доступа к директории /var/www/html/ управляются пользователем и группой _webserver.',
-      },
+        "title": "Стек LAMP в ALT Linux",
+        "explanation": "В дистрибутивах ALT Linux веб-сервер Apache имеет имя пакета и службы httpd2.service, а его корневая директория — /var/www/html/.\nМетапакет lamp-server одной командой устанавливает Apache2, PHP со всеми расширениями (включая mysqli) и СУБД MariaDB."
+      }
     ],
-    steps: [
+    "steps": [
       {
-        step_number: 1,
-        node: 'HQ-SRV',
-        title: 'Запуск httpd2 и MariaDB с созданием тестовой БД',
-        explanation: 'Создаем базу demo_db и пользователя webuser.',
-        commands: `systemctl enable --now httpd2 mariadb
-mysql -e "CREATE DATABASE demo_db; CREATE USER 'webuser'@'localhost' IDENTIFIED BY 'Secret123!'; GRANT ALL PRIVILEGES ON demo_db.* TO 'webuser'@'localhost';"
-echo "<h1>SudoStudy Portal HQ</h1>" > /var/www/html/index.html
-curl -s http://localhost/ | grep SudoStudy`,
+        "step_number": 1,
+        "node": "HQ-SRV",
+        "title": "Шаг 1: Монтирование диска Additional.iso",
+        "explanation": "Монтируем привод оптического диска /dev/sr0 в точку /mnt и проверяем директорию web.",
+        "commands": "mount -o loop /dev/sr0 /mnt/ -v\nls -l /mnt/web/"
       },
+      {
+        "step_number": 2,
+        "node": "HQ-SRV",
+        "title": "Шаг 2: Установка метапакета lamp-server",
+        "explanation": "Устанавливаем полный стек Apache2, PHP и MariaDB одной командой.",
+        "commands": "apt-get update && apt-get install lamp-server -y"
+      },
+      {
+        "step_number": 3,
+        "node": "HQ-SRV",
+        "title": "Шаг 3: Копирование файлов сайта в каталог веб-сервера",
+        "explanation": "Копируем скрипт index.php и логотип logo.png в корневую директорию /var/www/html/.",
+        "commands": "cp /mnt/web/index.php /var/www/html/\ncp /mnt/web/logo.png /var/www/html/\nls -la /var/www/html/"
+      },
+      {
+        "step_number": 4,
+        "node": "HQ-SRV",
+        "title": "Шаг 4: Запуск MariaDB, создание БД webdb и пользователя web",
+        "explanation": "Запускаем СУБД и создаём базу данных webdb с пользователем web (пароль P@ssw0rd).",
+        "commands": "systemctl enable --now mariadb\nmariadb -e \"CREATE DATABASE webdb;\"\nmariadb -e \"CREATE USER 'web'@'localhost' IDENTIFIED BY 'P@ssw0rd'; GRANT ALL PRIVILEGES ON webdb.* TO 'web'@'localhost'; FLUSH PRIVILEGES;\""
+      },
+      {
+        "step_number": 5,
+        "node": "HQ-SRV",
+        "title": "Шаг 5: Импорт структуры и данных из дампа dump.sql",
+        "explanation": "Импортируем таблицы из файла dump.sql в базу данных webdb.",
+        "commands": "mariadb webdb < /mnt/web/dump.sql\nmariadb -e \"USE webdb; SHOW TABLES;\""
+      },
+      {
+        "step_number": 6,
+        "node": "HQ-SRV",
+        "title": "Шаг 6: Конфигурация index.php и запуск Apache (httpd2)",
+        "explanation": "Проверяем параметры подключения в /var/www/html/index.php (localhost, web, P@ssw0rd, webdb) и запускаем веб-сервер.",
+        "commands": "# Настройки в /var/www/html/index.php:\n# $servername = \"localhost\"; $username = \"web\"; $password = \"P@ssw0rd\"; $dbname = \"webdb\";\nsystemctl enable --now httpd2.service\nsystemctl status httpd2.service\nss -ltnp | grep 80"
+      },
+      {
+        "step_number": 7,
+        "node": "HQ-CLI",
+        "title": "Шаг 7: Проверка веб-приложения с рабочей станции HQ-CLI",
+        "explanation": "Открываем браузер на HQ-CLI по адресу http://192.168.1.10. Должна отображаться веб-страница с логотипом и данными из БД.",
+        "commands": "curl -sI http://192.168.1.10 | grep \"HTTP/\"\n# В браузере: http://192.168.1.10"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m2_t7.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какое имя службы носит Apache в дистрибутиве ALT Linux?', placeholder: 'httpd2' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m2_t7.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какое имя службы и пакета носит веб-сервер Apache в дистрибутивах ALT Linux?",
+        "options": [
+          {
+            "id": "A",
+            "text": "apache2"
+          },
+          {
+            "id": "B",
+            "text": "httpd2"
+          },
+          {
+            "id": "C",
+            "text": "nginx"
+          },
+          {
+            "id": "D",
+            "text": "apache-server"
+          }
+        ],
+        "correct_answer": "B"
+      },
+      {
+        "id": "q2",
+        "text": "Какой метапакет ALT Linux устанавливает сразу веб-сервер, СУБД и среду PHP?",
+        "options": [
+          {
+            "id": "A",
+            "text": "lamp-server"
+          },
+          {
+            "id": "B",
+            "text": "web-stack"
+          },
+          {
+            "id": "C",
+            "text": "apache-php-mariadb"
+          },
+          {
+            "id": "D",
+            "text": "task-web"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "Какая утилита командной строки используется для импорта SQL-дампа в базу данных MariaDB?",
+        "options": [
+          {
+            "id": "A",
+            "text": "mariadb <имя_бд> < <дамп.sql>"
+          },
+          {
+            "id": "B",
+            "text": "sql-load --file <дамп.sql>"
+          },
+          {
+            "id": "C",
+            "text": "mysqldump --restore"
+          },
+          {
+            "id": "D",
+            "text": "db-import <дамп.sql>"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 18,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 18,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm2-task-8',
-    slug: 'm2-task-8',
-    module_id: 'module-2',
-    task_number: 8,
-    title: 'Статический проброс портов (DNAT) на роутерах',
-    module_code: 'Модуль 2',
-    description: 'Настройка правил PREROUTING в iptables для публикации внутренних веб-сервисов HQ-SRV и BR-SRV во внешнюю сеть.',
-    nodes: ['HQ-RTR', 'BR-RTR'],
-    theory: [
+    "id": "m2-task-8",
+    "slug": "m2-task-8",
+    "module_id": "module-2",
+    "task_number": 8,
+    "title": "Статический проброс портов (DNAT) на роутерах",
+    "module_code": "Модуль 2",
+    "description": "Настройка Destination NAT (DNAT / Port Forwarding) на базе nftables на пограничных маршрутизаторах: HQ-RTR транслирует внешний порт 8080 на 192.168.1.10:80 и порт 2026 на 192.168.1.10:2026; BR-RTR транслирует порты { 8080, 2026 } на 192.168.3.10. Сохранение правил в /etc/nftables/nftables.nft и проверка с узла ISP.",
+    "nodes": [
+      "HQ-RTR",
+      "BR-RTR",
+      "ISP"
+    ],
+    "assignment": "### Задание №8: Статический проброс портов (DNAT) на роутерах\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на пограничных маршрутизаторах главного офиса (**HQ-RTR**) и филиала (**BR-RTR**) настраивается статическая трансляция сетевых адресов назначения (**Destination NAT / Port Forwarding**) с помощью подсистемы **nftables**.\n\nПроброс портов позволяет внешним узлам (включая маршрутизатор ISP и будущий обратный прокси Nginx) обращаться к внутренним серверам филиалов, находящимся за NAT в приватных изолированных сетях:\n* Веб-приложение Apache на **HQ-SRV** публикуется снаружи через порт **8080** (8080 → 80).\n* Веб-приложение Docker tespapp на **BR-SRV** публикуется снаружи через порт **8080** (8080 → 8080).\n* Доступ к серверам по защищенному протоколу SSH транслируется через порт **2026** (2026 → 2026).\n\n#### Место выполнения:\n* **HQ-RTR** — публикация веб-сервера HQ-SRV (8080 → 80) и SSH (2026 → 2026).\n* **BR-RTR** — публикация Docker-приложения BR-SRV (8080 → 8080) и SSH (2026 → 2026).\n* **ISP** — внешняя проверка проброса портов через `curl` и `nc`.",
+    "theory": [
       {
-        title: 'Механизм Destination NAT (DNAT)',
-        explanation: 'DNAT переписывает адрес и порт назначения в заголовке входящего IP-пакета до принятия решения о маршрутизации (таблица nat, цепочка PREROUTING).',
-      },
+        "title": "Destination NAT (DNAT) в nftables",
+        "explanation": "DNAT срабатывает в цепочке prerouting таблицы nat (hook prerouting priority dstnat) до принятия решения о маршрутизации и подменяет IP-адрес и порт назначения пакета. Это позволяет перенаправлять входящий извне трафик на конкретные внутренние узлы."
+      }
     ],
-    steps: [
+    "steps": [
       {
-        step_number: 1,
-        node: 'HQ-RTR',
-        title: 'Проброс порта 80 внешнего интерфейса на веб-сервер HQ-SRV',
-        explanation: 'Перенаправляем порт 80 на 192.168.100.2:80.',
-        commands: `iptables -t nat -A PREROUTING -p tcp -d 172.16.1.2 --dport 80 -j DNAT --to-destination 192.168.100.2:80
-iptables-save > /etc/sysconfig/iptables`,
+        "step_number": 1,
+        "node": "HQ-RTR",
+        "title": "Шаг 1: Настройка DNAT на маршрутизаторе HQ-RTR",
+        "explanation": "Создаём цепочку prerouting, пробрасываем SSH (2026) и веб-сайт (8080 -> 192.168.1.10:80), сохраняем правила и перезапускаем службу.",
+        "commands": "nft add chain nat prerouting { type nat hook prerouting priority dstnat \\; }\nnft add rule nat prerouting iif \"enp7s1\" tcp dport 2026 dnat to 192.168.1.10\nnft add rule nat prerouting iif \"enp7s1\" tcp dport 8080 dnat to 192.168.1.10:80\nnft list ruleset > /etc/nftables/nftables.nft\nsystemctl restart nftables\nnft list ruleset"
       },
+      {
+        "step_number": 2,
+        "node": "BR-RTR",
+        "title": "Шаг 2: Настройка DNAT на маршрутизаторе BR-RTR",
+        "explanation": "Создаём цепочку prerouting, пробрасываем набор портов { 8080, 2026 } на 192.168.3.10, сохраняем в файл и перезапускаем.",
+        "commands": "nft add chain nat prerouting { type nat hook prerouting priority dstnat \\; }\nnft add rule nat prerouting iif \"enp7s1\" tcp dport { 8080, 2026 } dnat to 192.168.3.10\nnft list ruleset > /etc/nftables/nftables.nft\nsystemctl restart nftables\nnft list ruleset"
+      },
+      {
+        "step_number": 3,
+        "node": "ISP",
+        "title": "Шаг 3: Верификация проброса портов с узла ISP",
+        "explanation": "С внешнего маршрутизатора ISP проверяем ответы веб-серверов по HTTP 8080 и открытость портов SSH 2026.",
+        "commands": "# 1. Проверяем веб-приложение HQ-SRV через внешний IP HQ-RTR:\ncurl -I http://172.16.1.2:8080\n\n# 2. Проверяем Docker-приложение BR-SRV через внешний IP BR-RTR:\ncurl -I http://172.16.2.2:8080\n\n# 3. Проверяем доступность SSH HQ-SRV:\nnc -zv 172.16.1.2 2026\n\n# 4. Проверяем доступность SSH BR-SRV:\nnc -zv 172.16.2.2 2026"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m2_t8.sh | bash',
-    questions: [
-      { id: 'q1', text: 'В какой цепочке таблицы nat выполняется подмена адреса назначения (DNAT)?', placeholder: 'PREROUTING' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m2_t8.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "В какой цепочке и таблице подсистемы nftables выполняется трансляция адреса назначения (DNAT / Port Forwarding)?",
+        "options": [
+          {
+            "id": "A",
+            "text": "Таблица nat, цепочка prerouting"
+          },
+          {
+            "id": "B",
+            "text": "Таблица filter, цепочка forward"
+          },
+          {
+            "id": "C",
+            "text": "Таблица nat, цепочка postrouting"
+          },
+          {
+            "id": "D",
+            "text": "Таблица raw, цепочка output"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какой файл в ALT Linux хранит постоянные правила nftables, загружаемые при старте службы?",
+        "options": [
+          {
+            "id": "A",
+            "text": "/etc/nftables/nftables.nft"
+          },
+          {
+            "id": "B",
+            "text": "/etc/sysconfig/nftables"
+          },
+          {
+            "id": "C",
+            "text": "/etc/iptables.rules"
+          },
+          {
+            "id": "D",
+            "text": "/var/lib/nftables/save"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "С помощью какой утилиты можно быстро проверить открытость удаленного TCP-порта без установки соединения?",
+        "options": [
+          {
+            "id": "A",
+            "text": "nc -zv <хост> <порт>"
+          },
+          {
+            "id": "B",
+            "text": "ping -p <порт>"
+          },
+          {
+            "id": "C",
+            "text": "traceroute -p"
+          },
+          {
+            "id": "D",
+            "text": "ip route get"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 19,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 19,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm2-task-9',
-    slug: 'm2-task-9',
-    module_id: 'module-2',
-    task_number: 9,
-    title: 'Обратный прокси-сервер Nginx на ISP',
-    module_code: 'Модуль 2',
-    description: 'Настройка обратного прокси Nginx на маршрутизаторе ISP для балансировки и маршрутизации запросов к сервисам hq.au-team.irpo и br.au-team.irpo.',
-    nodes: ['ISP'],
-    theory: [
+    "id": "m2-task-9",
+    "slug": "m2-task-9",
+    "module_id": "module-2",
+    "task_number": 9,
+    "title": "Обратный прокси-сервер Nginx на ISP",
+    "module_code": "Модуль 2",
+    "description": "Развёртывание веб-сервера Nginx в режиме Reverse Proxy на маршрутизаторе ISP: приём HTTP-запросов на порт 80, маршрутизация по server_name (web.au-team.irpo -> 172.16.1.10:8080 с HTTP Basic Auth, docker.au-team.irpo -> 172.16.2.10:8080), активация виртуального хоста в sites-enabled.d/ и проверка с HQ-CLI.",
+    "nodes": [
+      "ISP",
+      "HQ-CLI"
+    ],
+    "assignment": "### Задание №9: Обратный прокси-сервер Nginx на ISP\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на пограничном маршрутизаторе провайдера (**ISP**) развёртывается высокопроизводительный веб-сервер **Nginx**, настроенный в режиме обратного прокси-сервера (**Reverse Proxy**).\n\nМаршрутизатор принимает HTTP-запросы из внешней сети на стандартный порт **80** и, анализируя доменное имя в заголовке `Host`, перенаправляет трафик на соответствующие внутренние филиалы через настроенный ранее проброс портов (DNAT):\n* При обращении к `web.au-team.irpo` — запрос перенаправляется на Apache-сервер центрального офиса (**HQ-SRV** через внешний порт **HQ-RTR:8080**) с защитой паролем (`auth_basic`).\n* При обращении к `docker.au-team.irpo` — запрос перенаправляется на Docker-приложение филиала (**BR-SRV** через внешний порт **BR-RTR:8080**).\n\n#### Место выполнения:\n* **ISP** (`isp.au-team.irpo`) — установка Nginx и конфигурация обратного прокси.\n* **HQ-CLI** — проверка доступности сайтов по доменным именам через порт 80.",
+    "theory": [
       {
-        title: 'Директивы proxy_pass и виртуальные хосты server_name',
-        explanation: 'Nginx принимает HTTP-запросы на одном внешнем IP и распределяет их по заголовку Host на соответствующие внутренние апстримы.',
+        "title": "Как работает Reverse Proxy в Nginx",
+        "explanation": "Nginx принимает входящие запросы на единый порт 80 и распределяет их по заголовку Host на целевые бэкенды через proxy_pass. Клиентам не нужно знать реальные приватные IP-адреса и нестандартные порты (8080) бэкендов."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'ISP',
-        title: 'Создание виртуального хоста в /etc/nginx/sites-available/',
-        explanation: 'Маршрутизируем запросы на hq-rtr и br-rtr.',
-        commands: `cat << 'EOF' > /etc/nginx/sites-available/reverse_proxy.conf
-server {
-    listen 80;
-    server_name hq.au-team.irpo;
-    location / {
-        proxy_pass http://172.16.1.2;
-        proxy_set_header Host $host;
-    }
-}
-EOF
-nginx -t && systemctl restart nginx`,
+        "title": "Директивы проксирования Nginx",
+        "explanation": "• proxy_pass: целевой адрес бэкенда;\n• proxy_set_header Host $host: передача исходного доменного имени бэкенду;\n• proxy_set_header X-Real-IP / X-Forwarded-For: фиксация реального IP-адреса клиента."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "ISP",
+        "title": "Шаг 1: Установка пакета Nginx",
+        "explanation": "Устанавливаем Nginx под пользователем root на маршрутизаторе ISP.",
+        "commands": "apt-get update && apt-get install nginx -y"
       },
+      {
+        "step_number": 2,
+        "node": "ISP",
+        "title": "Шаг 2: Создание конфигурации виртуальных хостов Reverse Proxy",
+        "explanation": "Создаём файл /etc/nginx/sites-available.d/r-proxy.conf с двумя блоками server для web.au-team.irpo и docker.au-team.irpo.",
+        "commands": "cat << 'EOF' > /etc/nginx/sites-available.d/r-proxy.conf\nserver {\n    listen 80;\n    server_name web.au-team.irpo;\n\n    location / {\n        proxy_pass http://172.16.1.10:8080;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-Forwarded-Proto $scheme;\n\n        auth_basic \"Restricted Access\";\n        auth_basic_user_file /etc/nginx/.htpasswd;\n    }\n}\n\nserver {\n    listen 80;\n    server_name docker.au-team.irpo;\n\n    location / {\n        proxy_pass http://172.16.2.10:8080;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-Forwarded-Proto $scheme;\n    }\n}\nEOF"
+      },
+      {
+        "step_number": 3,
+        "node": "ISP",
+        "title": "Шаг 3: Активация конфигурации, проверка и запуск Nginx",
+        "explanation": "Создаём символическую ссылку в sites-enabled.d/, проверяем синтаксис nginx -t и включаем службу.",
+        "commands": "ln -sf /etc/nginx/sites-available.d/r-proxy.conf /etc/nginx/sites-enabled.d/\nnginx -t\nsystemctl enable --now nginx\nsystemctl status nginx"
+      },
+      {
+        "step_number": 4,
+        "node": "HQ-CLI",
+        "title": "Шаг 4: Проверка работы Reverse Proxy с клиента HQ-CLI",
+        "explanation": "Проверяем разрешение DNS имен и открываем сайт http://docker.au-team.irpo в браузере (порт 80).",
+        "commands": "ping -c 2 docker.au-team.irpo\nping -c 2 web.au-team.irpo\n# В браузере: http://docker.au-team.irpo -> открывается сайт Docker контейнера\n# В браузере: http://web.au-team.irpo -> требует пароль HTTP Auth (настраивается в Задании 10)"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m2_t9.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какая команда проверяет синтаксис конфигурации Nginx?', placeholder: 'nginx -t' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m2_t9.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какая директива Nginx перенаправляет HTTP-запрос клиента на внутренний целевой сервер (бэкенд)?",
+        "options": [
+          {
+            "id": "A",
+            "text": "proxy_pass"
+          },
+          {
+            "id": "B",
+            "text": "forward_to"
+          },
+          {
+            "id": "C",
+            "text": "upstream_connect"
+          },
+          {
+            "id": "D",
+            "text": "redirect_internal"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какая команда используется для проверки синтаксиса файлов конфигурации Nginx перед перезапуском службы?",
+        "options": [
+          {
+            "id": "A",
+            "text": "nginx -t"
+          },
+          {
+            "id": "B",
+            "text": "systemctl test nginx"
+          },
+          {
+            "id": "C",
+            "text": "nginx --verify"
+          },
+          {
+            "id": "D",
+            "text": "apachectl configtest"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "Каким образом Nginx разделяет запросы к разным сайтам, обслуживаемым на одном общем IP-адресе и порту 80?",
+        "options": [
+          {
+            "id": "A",
+            "text": "По заголовку Host HTTP-запроса директивой server_name"
+          },
+          {
+            "id": "B",
+            "text": "По MAC-адресу сетевой карты клиента"
+          },
+          {
+            "id": "C",
+            "text": "По номеру исходного порта TCP"
+          },
+          {
+            "id": "D",
+            "text": "По значению User-Agent браузера"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 20,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 20,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm2-task-10',
-    slug: 'm2-task-10',
-    module_id: 'module-2',
-    task_number: 10,
-    title: 'Web-аутентификация в Nginx (.htpasswd)',
-    module_code: 'Модуль 2',
-    description: 'Защита служебной директории обратного прокси базовой HTTP-аутентификацией (HTTP Basic Auth) с использованием хэшированных паролей htpasswd.',
-    nodes: ['ISP'],
-    theory: [
+    "id": "m2-task-10",
+    "slug": "m2-task-10",
+    "module_id": "module-2",
+    "task_number": 10,
+    "title": "Web-аутентификация в Nginx (.htpasswd)",
+    "module_code": "Модуль 2",
+    "description": "Установка пакета apache2-htpasswd на ISP, генерация файла паролей /etc/nginx/.htpasswd для пользователя WEB с паролем P@ssw0rd, включение базовой HTTP-аутентификации (auth_basic) для сайта web.au-team.irpo и проверка авторизованного входа с рабочей станции HQ-CLI.",
+    "nodes": [
+      "ISP",
+      "HQ-CLI"
+    ],
+    "assignment": "### Задание №10: Web-аутентификация в Nginx (.htpasswd)\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на пограничном маршрутизаторе провайдера (**ISP**) настраивается механизм парольной защиты веб-ресурса **HTTP Basic Authentication (auth_basic)** для сайта `web.au-team.irpo`.\n\nДля хранения учётных данных генерируется файл `/etc/nginx/.htpasswd` с хэшированным паролем пользователя **WEB**. При попытке открыть сайт клиенту выводится стандартное системное окно ввода логина и пароля; доступ к страницам предоставляется только после успешной проверки реквизитов (**WEB / P@ssw0rd**). Сайт `docker.au-team.irpo` при этом остаётся общедоступным без авторизации.\n\n#### Место выполнения:\n* **ISP** (`isp.au-team.irpo`) — генерация файла `/etc/nginx/.htpasswd` и перезапуск Nginx.\n* **HQ-CLI** — проверка авторизации через браузер.",
+    "theory": [
       {
-        title: 'Механизм HTTP Basic Authentication и директивы auth_basic',
-        explanation: 'Директива auth_basic выдает клиенту 401 Unauthorized с заголовком WWW-Authenticate, если не передан правильный Authorization заголовок.',
+        "title": "Принцип работы HTTP Basic Authentication",
+        "explanation": "При отсутствии заголовка Authorization сервер отвечает кодом HTTP 401 Unauthorized с полем WWW-Authenticate: Basic realm=\"Restricted Access\". Браузер запрашивает логин/пароль и отправляет их в Base64. Nginx сверяет данные с файлом .htpasswd."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'ISP',
-        title: 'Генерация файла .htpasswd и подключение auth_basic в Nginx',
-        explanation: 'Создаем учетную запись webadmin.',
-        commands: `htpasswd -bc /etc/nginx/.htpasswd webadmin 'P@ssw0rd2026'
-chmod 640 /etc/nginx/.htpasswd
-chown root:nginx /etc/nginx/.htpasswd
-systemctl restart nginx`,
+        "title": "Утилита htpasswd в ALT Linux",
+        "explanation": "Утилита создания файлов паролей поставляется пакетом apache2-htpasswd. Флаг -c (Create) создает новый файл, а флаг -b (Batch) позволяет передать пароль напрямую в командной строке."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "ISP",
+        "title": "Шаг 1: Установка утилиты apache2-htpasswd",
+        "explanation": "Устанавливаем пакет с утилитой htpasswd на маршрутизаторе ISP.",
+        "commands": "apt-get update && apt-get install apache2-htpasswd -y"
       },
+      {
+        "step_number": 2,
+        "node": "ISP",
+        "title": "Шаг 2: Генерация файла /etc/nginx/.htpasswd",
+        "explanation": "Создаём файл паролей с пользователем WEB и паролем P@ssw0rd.",
+        "commands": "htpasswd -b -c /etc/nginx/.htpasswd WEB P@ssw0rd\ncat /etc/nginx/.htpasswd"
+      },
+      {
+        "step_number": 3,
+        "node": "ISP",
+        "title": "Шаг 3: Проверка синтаксиса и перезапуск Nginx",
+        "explanation": "Тестируем конфигурацию и перезапускаем службу Nginx для применения файла паролей.",
+        "commands": "nginx -t\nsystemctl restart nginx"
+      },
+      {
+        "step_number": 4,
+        "node": "HQ-CLI",
+        "title": "Шаг 4: Проверка авторизации на web.au-team.irpo и открытого доступа на docker.au-team.irpo",
+        "explanation": "В браузере на HQ-CLI открываем http://web.au-team.irpo (вводим логин WEB, пароль P@ssw0rd). Проверяем, что http://docker.au-team.irpo открывается свободно.",
+        "commands": "# Проверка защищенного сайта через curl (ожидаем 401, затем 200 при передаче логина/пароля):\ncurl -I http://web.au-team.irpo/\ncurl -I -u WEB:P@ssw0rd http://web.au-team.irpo/\n\n# Проверка общедоступного сайта:\ncurl -I http://docker.au-team.irpo/"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m2_t10.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какой HTTP статус возвращает сервер при отсутствии данных базовой аутентификации?', placeholder: '401 Unauthorized' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m2_t10.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какой пакет содержит утилиту htpasswd для работы с файлами паролей веб-серверов в ALT Linux?",
+        "options": [
+          {
+            "id": "A",
+            "text": "apache2-htpasswd"
+          },
+          {
+            "id": "B",
+            "text": "nginx-utils"
+          },
+          {
+            "id": "C",
+            "text": "http-auth-tools"
+          },
+          {
+            "id": "D",
+            "text": "password-generator"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какой HTTP статус возвращает Nginx при первой попытке обращения к ресурсу, закрытому auth_basic?",
+        "options": [
+          {
+            "id": "A",
+            "text": "401 Unauthorized"
+          },
+          {
+            "id": "B",
+            "text": "403 Forbidden"
+          },
+          {
+            "id": "C",
+            "text": "404 Not Found"
+          },
+          {
+            "id": "D",
+            "text": "500 Internal Server Error"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "Что делает ключ -c в команде htpasswd -c /etc/nginx/.htpasswd USER password?",
+        "options": [
+          {
+            "id": "A",
+            "text": "Создает новый файл паролей (перезаписывая его, если файл уже существовал)"
+          },
+          {
+            "id": "B",
+            "text": "Выбирает алгоритм хэширования SHA-256"
+          },
+          {
+            "id": "C",
+            "text": "Проверяет совпадение контрольной суммы"
+          },
+          {
+            "id": "D",
+            "text": "Шифрует пароль по протоколу SSL"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 21,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 21,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm2-task-11',
-    slug: 'm2-task-11',
-    module_id: 'module-2',
-    task_number: 11,
-    title: 'Установка Яндекс Браузера на HQ-CLI',
-    module_code: 'Модуль 2',
-    description: 'Подключение официального репозитория и установка отечественного веб-браузера на клиентскую рабочую станцию под управлением графической среды.',
-    nodes: ['HQ-CLI'],
-    theory: [
+    "id": "m2-task-11",
+    "slug": "m2-task-11",
+    "module_id": "module-2",
+    "task_number": 11,
+    "title": "Установка Яндекс Браузера на HQ-CLI",
+    "module_code": "Модуль 2",
+    "description": "Установка отечественного веб-браузера yandex-browser-stable на клиентскую рабочую станцию HQ-CLI через apt-get, проверка наличия RPM-пакета в базе системы, запуск из графической среды (меню Интернет) и подготовка обязательных материалов для экзаменационного отчёта.",
+    "nodes": [
+      "HQ-CLI"
+    ],
+    "assignment": "### Задание №11: Установка Яндекс Браузера на HQ-CLI\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на графическую рабочую станцию центрального офиса (**HQ-CLI**) устанавливается современный веб-браузер **«Яндекс Браузер»** (`yandex-browser-stable`).\n\nБраузер используется сотрудниками организации в качестве основного рабочего веб-обозревателя для доступа к внутренним корпоративным порталам (`web.au-team.irpo`, `docker.au-team.irpo`) и ресурсам глобальной сети Интернет.\n\n> 📝 **Что приложить в отчёт по требованию экспертов**:\n> По условию задания: *«Установку браузера отметьте в отчёте»*.\n> В итоговый экзаменационный протокол / отчёт вставьте:\n> 1. Текстовый вывод команды проверки пакета: `rpm -qa | grep yandex-browser`\n> 2. Скриншот открытого окна Яндекс Браузера со страницей «О программе» (Меню → Справка → О браузере) либо скриншот с открытым сайтом `http://web.au-team.irpo/`.\n\n#### Место выполнения:\nУстановка выполняется под пользователем **root** на рабочей станции **HQ-CLI** (`hq-cli.au-team.irpo`).",
+    "theory": [
       {
-        title: 'Управление пакетами в ALT Linux через APT-RPM',
-        explanation: 'ALT Linux использует гибридную пакетную систему APT поверх RPM-пакетов (/etc/apt/sources.list).',
-      },
+        "title": "Яндекс Браузер в ALT Linux",
+        "explanation": "В репозиториях ALT Linux стабильный выпуск браузера поставляется в пакете yandex-browser-stable. При установке создается ярлык запуска в категории «Интернет» меню приложений (XFCE/MATE) и регистрируются системные MIME-типы."
+      }
     ],
-    steps: [
+    "steps": [
       {
-        step_number: 1,
-        node: 'HQ-CLI',
-        title: 'Установка пакета yandex-browser-stable',
-        explanation: 'Обновляем списки пакетов и производим инсталляцию.',
-        commands: `apt-get update
-apt-get install -y yandex-browser-stable
-which yandex-browser`,
+        "step_number": 1,
+        "node": "HQ-CLI",
+        "title": "Шаг 1: Обновление репозиториев и установка браузера",
+        "explanation": "Переходим в режим root (su -), обновляем индекс пакетов и устанавливаем yandex-browser-stable.",
+        "commands": "apt-get update && apt-get install yandex-browser-stable -y"
       },
+      {
+        "step_number": 2,
+        "node": "HQ-CLI",
+        "title": "Шаг 2: Проверка наличия установленного RPM-пакета",
+        "explanation": "Проверяем регистрацию пакета в базе данных RPM системы.",
+        "commands": "rpm -qa | grep yandex-browser"
+      },
+      {
+        "step_number": 3,
+        "node": "HQ-CLI",
+        "title": "Шаг 3: Проверка пути и версии исполняемого файла",
+        "explanation": "Убеждаемся в наличии бинарного файла в $PATH и проверяем вывод версии.",
+        "commands": "which yandex-browser-stable\nyandex-browser-stable --version"
+      },
+      {
+        "step_number": 4,
+        "node": "HQ-CLI",
+        "title": "Шаг 4: Запуск браузера из графического интерфейса (GUI)",
+        "explanation": "На рабочем столе открываем Меню приложений -> Интернет (Сеть) -> Yandex Browser. Проверяем открытие корпоративных порталов http://web.au-team.irpo и http://docker.au-team.irpo.",
+        "commands": "# Запуск доступен из графического меню XFCE/MATE\n# Или из консоли от обычного пользователя user:\nyandex-browser-stable &"
+      },
+      {
+        "step_number": 5,
+        "node": "HQ-CLI",
+        "title": "Шаг 5: Фиксация материалов в экзаменационном отчёте",
+        "explanation": "Копируем текстовый вывод rpm -qa и делаем скриншот открытого окна Яндекс Браузера для итогового отчета.",
+        "commands": "rpm -qa | grep yandex-browser"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m2_t11.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какая утилита в ALT Linux управляет репозиториями и установкой пакетов?', placeholder: 'apt-get (apt-rpm)' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m2_t11.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какое официальное имя пакета Яндекс Браузера используется в репозиториях ALT Linux?",
+        "options": [
+          {
+            "id": "A",
+            "text": "yandex-browser-stable"
+          },
+          {
+            "id": "B",
+            "text": "yandex-browser"
+          },
+          {
+            "id": "C",
+            "text": "chromium-yandex"
+          },
+          {
+            "id": "D",
+            "text": "yandex-desktop"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "С помощью какой команды проверяется наличие установленного RPM-пакета в операционной системе?",
+        "options": [
+          {
+            "id": "A",
+            "text": "rpm -qa | grep <имя>"
+          },
+          {
+            "id": "B",
+            "text": "dpkg -l"
+          },
+          {
+            "id": "C",
+            "text": "apt check <имя>"
+          },
+          {
+            "id": "D",
+            "text": "yum list-installed"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "В какую категорию системного меню приложений помещается ярлык запуска браузера?",
+        "options": [
+          {
+            "id": "A",
+            "text": "Интернет (Сеть)"
+          },
+          {
+            "id": "B",
+            "text": "Офис"
+          },
+          {
+            "id": "C",
+            "text": "Система"
+          },
+          {
+            "id": "D",
+            "text": "Утилиты"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 22,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 22,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
 
   // =========================================================================

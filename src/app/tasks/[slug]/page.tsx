@@ -27,7 +27,7 @@ export default async function TaskDetailPage({ params }: PageProps) {
 
   const moduleInfo = db.getModuleById(task.module_id);
 
-  if (task.module_id === 'module-2' || task.module_id === 'module-3') {
+  if (task.module_id === 'module-3') {
     return (
       <div className="min-h-screen bg-zinc-950 flex flex-col">
         <Header user={session} />
