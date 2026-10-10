@@ -255,7 +255,7 @@ export default function LoginPage() {
                   <Input
                     type="text"
                     value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    onChange={e => setUsername(e.target.value)}
                     placeholder="ivanov"
                     required
                     isMono
@@ -281,7 +281,7 @@ export default function LoginPage() {
                         pattern="[0-9\s]*"
                         maxLength={7}
                         value={totpCode}
-                        onChange={(e) => setTotpCode(e.target.value.replace(/[^\d\s]/g, ''))}
+                        onChange={e => setTotpCode(e.target.value.replace(/[^\d\s]/g, ''))}
                         placeholder="123 456"
                         required
                         isMono
@@ -290,7 +290,8 @@ export default function LoginPage() {
                     </div>
 
                     <p className="text-[11px] font-mono text-zinc-400 leading-relaxed">
-                      Откройте <strong>Google Authenticator</strong> на телефоне и введите актуальный код подтверждения.
+                      Откройте <strong>Google Authenticator</strong> на телефоне и введите
+                      актуальный код подтверждения.
                     </p>
 
                     <Button type="submit" isLoading={isLoading} className="w-full mt-2">
@@ -308,7 +309,7 @@ export default function LoginPage() {
                       <Input
                         type="password"
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={e => setPassword(e.target.value)}
                         placeholder="••••••••••••"
                         required
                         isMono
@@ -316,7 +317,8 @@ export default function LoginPage() {
                     </div>
 
                     <p className="text-[11px] font-mono text-zinc-500 leading-relaxed">
-                      При первом входе система потребует обязательную привязку приложения Google Authenticator.
+                      При первом входе система потребует обязательную привязку приложения Google
+                      Authenticator.
                     </p>
 
                     <Button type="submit" isLoading={isLoading} className="w-full mt-2">
@@ -338,7 +340,9 @@ export default function LoginPage() {
                   Настройка Google Authenticator
                 </h2>
                 <p className="text-[11px] font-mono text-zinc-400 mt-1 leading-relaxed">
-                  Аккаунт <strong className="text-white">{setupData.username}</strong>: привяжите двухэтапную аутентификацию. В дальнейшем вход будет осуществляться только по логину и коду из приложения.
+                  Аккаунт <strong className="text-white">{setupData.username}</strong>: привяжите
+                  двухэтапную аутентификацию. В дальнейшем вход будет осуществляться только по
+                  логину и коду из приложения.
                 </p>
               </div>
 
@@ -396,7 +400,10 @@ export default function LoginPage() {
               </div>
 
               {/* Step 2: Verification Code Form */}
-              <form onSubmit={handleSetupSubmit} className="space-y-3 pt-2 border-t border-zinc-800">
+              <form
+                onSubmit={handleSetupSubmit}
+                className="space-y-3 pt-2 border-t border-zinc-800"
+              >
                 <div className="text-xs font-mono text-zinc-300 font-bold flex items-center gap-2">
                   <span className="w-5 h-5 rounded-full bg-zinc-800 border border-zinc-700 text-white flex items-center justify-center text-[10px]">
                     2
@@ -411,7 +418,7 @@ export default function LoginPage() {
                   pattern="[0-9\s]*"
                   maxLength={7}
                   value={verifyCode}
-                  onChange={(e) => setVerifyCode(e.target.value.replace(/[^\d\s]/g, ''))}
+                  onChange={e => setVerifyCode(e.target.value.replace(/[^\d\s]/g, ''))}
                   placeholder="000 000"
                   required
                   isMono

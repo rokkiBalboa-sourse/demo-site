@@ -1,13 +1,16 @@
 ## 1. Контекст, назначение и общие требования
+
 Платформа является вспомогательным инструментом для сайта с решениями Демонстрационного экзамена по специальности 09.02.06 «Сетевое и системное администрирование» (https://demo.sudostudy.dev/).
 
 ### Структура модулей и заданий экзамена:
+
 - **Модуль 1: Сетевая инфраструктура** — 11 заданий (1.1–1.11)
 - **Модуль 2: Службы каталога и сервисы** — 11 заданий (2.1–2.11)
 - **Модуль 3: Безопасность и администрирование** — 10 заданий (3.1–3.10)
-*Всего: 32 практических задания.*
+  _Всего: 32 практических задания._
 
 ### Пользовательский сценарий студента (Student Workflow):
+
 1. **Выбор модуля:** Студент видит 3 модуля с прогресс-барами и выбирает нужный.
 2. **Выбор задания:** Внутри модуля открывается список заданий со статусами выполнения.
 3. **Изучение описания и теории:** Студент читает контекст задачи и подробное объяснение принципа работы команд (архитектура etcnet, флаги утилит, системные вызовы).
@@ -16,12 +19,12 @@
 6. **Контрольные вопросы:** Ввод ответов на контрольные вопросы по заданию.
 7. **Загрузка логов и отправка:** Вставка сырого вывода из консоли в текстовое поле и отправка отчёта на проверку.
 
-
 ---
 
 ## 2. Архитектура и технологический стек
 
 ### 2.1. Компоненты системы
+
 1. **Frontend:** Next.js (App Router, React 19, TypeScript).
    - Библиотека компонентов: Kumo UI (строгий минимализм, контрастные границы, моноширинные элементы).
    - Иконки: Lucide React (минималистичные контурные иконки).
@@ -51,9 +54,9 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     ports:
-      - "127.0.0.1:5432:5432"
+      - '127.0.0.1:5432:5432'
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U sudostudy_user -d sudostudy_reports"]
+      test: ['CMD-SHELL', 'pg_isready -U sudostudy_user -d sudostudy_reports']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -75,7 +78,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_min_32_chars}
       NEXTAUTH_URL: ${APP_URL:-http://localhost:3000}
     ports:
-      - "3000:3000"
+      - '3000:3000'
     networks:
       - sudostudy_net
 
@@ -148,7 +151,7 @@ CREATE TABLE submissions (
     reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
     submitted_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     reviewed_at TIMESTAMPTZ,
-    
+
     -- Ограничение: 1 студент может сдать 1 отчёт по конкретному заданию
     CONSTRAINT uq_user_task UNIQUE (user_id, task_id)
 );
@@ -163,13 +166,14 @@ CREATE INDEX idx_submissions_task_id ON submissions(task_id);
 ## 4. Архитектура и структура интерфейсов (Kumo UI)
 
 ### 4.1. Общие принципы стилизации
+
 - **Цветовая палитра:**
   - Базовые: `#000000` (чёрный), `#FFFFFF` (белый), оттенки серого `#F4F4F5` (100), `#E4E4E7` (200), `#71717A` (500), `#18181B` (900).
   - Бордеры: `border border-zinc-200` (light) / `border-zinc-800` (dark).
   - Акценты статусов:
-    - *На проверке*: Нейтральный контрастный бейдж `bg-zinc-100 text-zinc-900 border border-zinc-300 font-mono text-xs`.
-    - *Зачтено*: `bg-black text-white font-mono text-xs` (или высококонтрастный строгий зеленый маркер).
-    - *Не зачтено*: `border border-black text-black font-mono text-xs`.
+    - _На проверке_: Нейтральный контрастный бейдж `bg-zinc-100 text-zinc-900 border border-zinc-300 font-mono text-xs`.
+    - _Зачтено_: `bg-black text-white font-mono text-xs` (или высококонтрастный строгий зеленый маркер).
+    - _Не зачтено_: `border border-black text-black font-mono text-xs`.
 - **Шрифты:**
   - Основной: `Inter` / `Geist Sans`
   - Код, логи, команды, статусы, бейджи: `JetBrains Mono` / `Geist Mono` (`font-mono`).
@@ -179,6 +183,7 @@ CREATE INDEX idx_submissions_task_id ON submissions(task_id);
 ### 4.2. Страница 1: `/login` (Аутентификация)
 
 #### Макет экрана (ASCII Wireframe)
+
 ```
 +--------------------------------------------------------------+
 |                         SUDOSTUDY                            |
@@ -201,6 +206,7 @@ CREATE INDEX idx_submissions_task_id ON submissions(task_id);
 ```
 
 #### Компоненты Kumo UI:
+
 - `Card`: Строгий прямоугольный контейнер без скруглений и теней (`rounded-none shadow-none border border-zinc-300`).
 - `Input`: Поле ввода с моноширинной подсказкой и тонкой границей.
 - `Button`: Кнопка первичного действия (`bg-black text-white hover:bg-zinc-800 rounded-none`).
@@ -211,6 +217,7 @@ CREATE INDEX idx_submissions_task_id ON submissions(task_id);
 ### 4.3. Страница 2: `/tasks/[id]` (Рабочая область студента)
 
 #### Макет экрана (ASCII Wireframe)
+
 ```
 +-------------------------------------------------------------------------------+
 | SUDOSTUDY / Задания / Модуль А: Настройка сетевых интерфейсов и VLAN          |
@@ -247,6 +254,7 @@ CREATE INDEX idx_submissions_task_id ON submissions(task_id);
 ```
 
 #### Компоненты Kumo UI:
+
 - `CodeBlock` / `Snippet`: Компонент с кнопкой быстрого копирования bash-команды в буфер обмена (`navigator.clipboard.writeText`).
 - `Textarea` (`font-mono`, фиксированная высота, скроллбар, отключено автоисправление): контейнер для вставки невалидированного сырого вывода Proxmox.
 - `Badge`: Отображение текущего статуса (`Черновик`, `На проверке`, `Зачтено`, `Требует доработки`).
@@ -257,6 +265,7 @@ CREATE INDEX idx_submissions_task_id ON submissions(task_id);
 ### 4.4. Страница 3: `/admin` (Дашборд проверки преподавателя)
 
 #### Макет экрана (ASCII Wireframe)
+
 ```
 +-------------------------------------------------------------------------------+
 | SUDOSTUDY ADMIN / Панель проверки отчётов                   [Экспорт в CSV]   |
@@ -276,6 +285,7 @@ CREATE INDEX idx_submissions_task_id ON submissions(task_id);
 ```
 
 #### Компоненты Kumo UI:
+
 - `Table`, `TableHeader`, `TableRow`, `TableCell`: Монохромная таблица с четким разделением строк (`border-b border-zinc-200`).
 - `Select` / `DropdownMenu`: Фильтрация по академическим группам и статусам.
 - `Button` (`variant="outline"`): Кнопка «Экспорт в CSV».
@@ -286,6 +296,7 @@ CREATE INDEX idx_submissions_task_id ON submissions(task_id);
 ### 4.5. Страница 4: `/admin/submissions/[id]` (Карточка проверки отчёта)
 
 #### Макет экрана (ASCII Wireframe)
+
 ```
 +-------------------------------------------------------------------------------+
 | [<- Назад к списку]   ПРОВЕРКА ОТЧЁТА: Иванов Иван Иванович (СА-41)           |
@@ -323,6 +334,7 @@ CREATE INDEX idx_submissions_task_id ON submissions(task_id);
 ```
 
 #### Компоненты Kumo UI:
+
 - `TerminalWindow` / `LogViewer`: Черный монохромный блок `bg-zinc-950 text-zinc-100 font-mono text-xs p-4 overflow-x-auto max-h-96 border border-zinc-800`.
 - `RadioGroup` / `ToggleGroup`: Переключение решения (Зачтено / На доработку).
 - `Input` (тип number): Ввод баллов.
@@ -333,6 +345,7 @@ CREATE INDEX idx_submissions_task_id ON submissions(task_id);
 ## 5. Спецификация экспорта результатов в CSV
 
 ### 5.1. Алгоритм формирования сводной ведомости
+
 1. Запрашиваются все активные студенты (`role = 'student'`), отсортированные по `group_name ASC, full_name ASC`.
 2. Запрашиваются все активные модули (`tasks`), отсортированные по `order_index ASC`.
 3. Строится сводная матрица (Pivot Table), где на пересечении строки студента и столбца задания подставляется:
@@ -353,4 +366,3 @@ CREATE INDEX idx_submissions_task_id ON submissions(task_id);
 Смирнов Кирилл Павлович;9СА-42;70 (Зачтено);Не зачтено (40);Не сдавал
 Федоров Роман Игоревич;9СА-42;На проверке;На проверке;Не сдавал
 ```
-

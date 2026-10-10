@@ -13,18 +13,12 @@ export async function POST(req: NextRequest) {
     const targetId = userId || studentId;
 
     if (!targetId) {
-      return NextResponse.json(
-        { error: 'Не указан ID пользователя' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Не указан ID пользователя' }, { status: 400 });
     }
 
     const user = await db.findUserById(targetId);
     if (!user) {
-      return NextResponse.json(
-        { error: 'Пользователь не найден' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Пользователь не найден' }, { status: 404 });
     }
 
     const updated = await db.resetUser2FA(targetId);
@@ -36,9 +30,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Reset 2FA error', error);
-    return NextResponse.json(
-      { error: 'Ошибка при сбросе 2FA' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Ошибка при сбросе 2FA' }, { status: 500 });
   }
 }

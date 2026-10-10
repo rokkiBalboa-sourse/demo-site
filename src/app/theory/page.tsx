@@ -11,4 +11,3 @@ export default async function TheoryPage() {
   // Временно скрыто по запросу
   redirect('/');
 }
-

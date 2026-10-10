@@ -90,7 +90,7 @@ export function ProxmoxOverviewContent() {
         >
           <div
             className="relative max-w-6xl max-h-[92vh] flex flex-col items-center bg-zinc-950 border border-zinc-800 p-2 rounded shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             <div className="w-full flex items-center justify-between pb-2 px-2 border-b border-zinc-800 mb-2">
               <span className="text-xs text-zinc-300 font-mono">{expandedImage.alt}</span>
@@ -124,11 +124,11 @@ export function ProxmoxOverviewContent() {
           <strong>Proxmox Virtual Environment (Proxmox VE)</strong> — платформа виртуализации
           корпоративного уровня с открытым исходным кодом, объединяющая технологии{' '}
           <strong className="text-white">KVM</strong> (Kernel-based Virtual Machine) и{' '}
-          <strong className="text-white">LXC</strong> (Linux Containers). Гипервизор работает на базе
-          операционной системы <strong className="text-white">Debian</strong>, что относит его ко
-          второму типу — между аппаратным обеспечением и Proxmox VE находится слой ОС. Это позволяет
-          гибко управлять ресурсами сервера, создавая виртуальные машины и контейнеры через единый
-          веб-интерфейс или командную строку.
+          <strong className="text-white">LXC</strong> (Linux Containers). Гипервизор работает на
+          базе операционной системы <strong className="text-white">Debian</strong>, что относит его
+          ко второму типу — между аппаратным обеспечением и Proxmox VE находится слой ОС. Это
+          позволяет гибко управлять ресурсами сервера, создавая виртуальные машины и контейнеры
+          через единый веб-интерфейс или командную строку.
         </p>
 
         <div className="border border-zinc-800 bg-zinc-950/80 p-4 space-y-3">
@@ -139,9 +139,10 @@ export function ProxmoxOverviewContent() {
           <p className="text-zinc-300 leading-relaxed">
             Основная цель Proxmox VE — упростить масштабирование IT-инфраструктуры без необходимости
             модернизации оборудования. Платформа поддерживает кластеризацию, что обеспечивает
-            отказоустойчивость и высокую доступность за счёт объединения нескольких серверов в единую
-            систему. Например, живая миграция виртуальных машин между узлами кластера выполняется без
-            прерывания их работы — уникальная функция, редко встречающаяся у конкурентов.
+            отказоустойчивость и высокую доступность за счёт объединения нескольких серверов в
+            единую систему. Например, живая миграция виртуальных машин между узлами кластера
+            выполняется без прерывания их работы — уникальная функция, редко встречающаяся у
+            конкурентов.
           </p>
 
           <div className="pt-2">
@@ -166,7 +167,8 @@ export function ProxmoxOverviewContent() {
                   <span>LXC</span>
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-relaxed">
-                  Контейнерная виртуализация, которая минимизирует накладные расходы на изоляцию процессов.
+                  Контейнерная виртуализация, которая минимизирует накладные расходы на изоляцию
+                  процессов.
                 </p>
               </div>
 
@@ -176,7 +178,8 @@ export function ProxmoxOverviewContent() {
                   <span>QEMU</span>
                 </div>
                 <p className="text-[11px] text-zinc-400 leading-relaxed">
-                  Эмулятор, расширяющий возможности KVM для работы с разнообразными аппаратными конфигурациями.
+                  Эмулятор, расширяющий возможности KVM для работы с разнообразными аппаратными
+                  конфигурациями.
                 </p>
               </div>
             </div>
@@ -202,7 +205,8 @@ export function ProxmoxOverviewContent() {
 
         <p className="text-zinc-300 leading-relaxed">
           Познакомимся с самим интерфейсом программы. В графическую оболочку вы попадаете
-          посредством перехода по IP-адресу вашего сервера, который вам назначил Proxmox (например, 192.168.195.136).
+          посредством перехода по IP-адресу вашего сервера, который вам назначил Proxmox (например,
+          192.168.195.136).
         </p>
 
         {/* Port Callout */}
@@ -216,8 +220,8 @@ export function ProxmoxOverviewContent() {
               https://ВАШ_IP_АДРЕС:8006/
             </div>
             <p className="text-[11px] text-sky-200/90 leading-relaxed">
-              Обратите внимание, что в конце обязательно указан порт <strong>:8006</strong>, без него
-              вы не попадёте в GUI!
+              Обратите внимание, что в конце обязательно указан порт <strong>:8006</strong>, без
+              него вы не попадёте в GUI!
             </p>
           </div>
         </div>
@@ -225,8 +229,8 @@ export function ProxmoxOverviewContent() {
         {/* SSL Warning */}
         <div className="space-y-3">
           <p className="text-zinc-300 leading-relaxed">
-            Нас предупреждает браузер о незащищённом подключении — это нормально, так как тестовый стенд
-            использует самоподписанный SSL-сертификат. Нажимаем кнопку{' '}
+            Нас предупреждает браузер о незащищённом подключении — это нормально, так как тестовый
+            стенд использует самоподписанный SSL-сертификат. Нажимаем кнопку{' '}
             <strong className="text-white">«Подробнее»</strong> (или «Дополнительные») и затем на
             ссылку <strong className="text-white">«Перейти на сайт…»</strong>:
           </p>
@@ -287,8 +291,8 @@ export function ProxmoxOverviewContent() {
                 <CopyableText text="toor" />.
               </p>
               <p>
-                • Исключение: на клиентском хосте <strong className="text-white">HQ-CLI</strong> дополнительно
-                настроена стандартная учетная запись пользователя с логином{' '}
+                • Исключение: на клиентском хосте <strong className="text-white">HQ-CLI</strong>{' '}
+                дополнительно настроена стандартная учетная запись пользователя с логином{' '}
                 <CopyableText text="user" /> и паролем <CopyableText text="resu" />.
               </p>
             </div>
@@ -306,13 +310,22 @@ export function ProxmoxOverviewContent() {
         </div>
 
         <p className="text-zinc-300 leading-relaxed">
-          В графической оболочке отображаются все наши виртуальные машины, с которыми мы будем работать,
-          а также вкладки для их сортировки. Мы сразу переключаемся на режим{' '}
-          <strong className="text-white">«Pool View»</strong>, (выподающий список под логотипом &quot;Proxmox&quot;) в котором стенды сгруппированы по
-          экзаменационным модулям: <code className="text-amber-300 font-bold bg-zinc-900 px-1 border border-zinc-800">Module1</code>,{' '}
-          <code className="text-amber-300 font-bold bg-zinc-900 px-1 border border-zinc-800">Module2</code> и{' '}
-          <code className="text-amber-300 font-bold bg-zinc-900 px-1 border border-zinc-800">Module3</code> (названия могут
-          незначительно отличаться, но суть остаётся прежней).
+          В графической оболочке отображаются все наши виртуальные машины, с которыми мы будем
+          работать, а также вкладки для их сортировки. Мы сразу переключаемся на режим{' '}
+          <strong className="text-white">«Pool View»</strong>, (выподающий список под логотипом
+          &quot;Proxmox&quot;) в котором стенды сгруппированы по экзаменационным модулям:{' '}
+          <code className="text-amber-300 font-bold bg-zinc-900 px-1 border border-zinc-800">
+            Module1
+          </code>
+          ,{' '}
+          <code className="text-amber-300 font-bold bg-zinc-900 px-1 border border-zinc-800">
+            Module2
+          </code>{' '}
+          и{' '}
+          <code className="text-amber-300 font-bold bg-zinc-900 px-1 border border-zinc-800">
+            Module3
+          </code>{' '}
+          (названия могут незначительно отличаться, но суть остаётся прежней).
         </p>
 
         <ScreenshotCard
@@ -332,8 +345,8 @@ export function ProxmoxOverviewContent() {
         </div>
 
         <p className="text-zinc-300 leading-relaxed">
-          Мы выбираем первую ВМ и нам открывается набор разделов для работы с машиной. Основные 3 раздела,
-          с которыми мы будем работать: <strong className="text-white">«Console»</strong>,{' '}
+          Мы выбираем первую ВМ и нам открывается набор разделов для работы с машиной. Основные 3
+          раздела, с которыми мы будем работать: <strong className="text-white">«Console»</strong>,{' '}
           <strong className="text-white">«Hardware»</strong> и{' '}
           <strong className="text-white">«Snapshots»</strong>.
         </p>
@@ -398,11 +411,13 @@ export function ProxmoxOverviewContent() {
           </div>
 
           <p className="text-zinc-300 leading-relaxed">
-            Перед началом работы обязательно нужно загрузить стартовый снапшот. Для этого переходим в
-            раздел <strong className="text-white">«Snapshots»</strong>, выбираем снапшот с именем{' '}
-            <code className="text-emerald-300 font-bold bg-zinc-900 px-1 border border-zinc-800">exstart</code>,
-            нажимаем кнопку <strong className="text-white">Rollback</strong> и подтверждаем выбор кнопкой{' '}
-            <strong className="text-white">Yes</strong>.
+            Перед началом работы обязательно нужно загрузить стартовый снапшот. Для этого переходим
+            в раздел <strong className="text-white">«Snapshots»</strong>, выбираем снапшот с именем{' '}
+            <code className="text-emerald-300 font-bold bg-zinc-900 px-1 border border-zinc-800">
+              exstart
+            </code>
+            , нажимаем кнопку <strong className="text-white">Rollback</strong> и подтверждаем выбор
+            кнопкой <strong className="text-white">Yes</strong>.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
@@ -428,8 +443,8 @@ export function ProxmoxOverviewContent() {
 
           <p className="text-zinc-300 leading-relaxed">
             Для создания новой контрольной точки нажмите кнопку{' '}
-            <strong className="text-white">Take Snapshot</strong>, задайте имя снапшота и описание (по
-            желанию), после чего дождитесь завершения его создания:
+            <strong className="text-white">Take Snapshot</strong>, задайте имя снапшота и описание
+            (по желанию), после чего дождитесь завершения его создания:
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
@@ -509,9 +524,13 @@ export function ProxmoxOverviewContent() {
                 Внимание! Особенность работы в xterm.js:
               </span>
               <p className="text-[11px] leading-relaxed">
-                Работа в <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-800">xterm.js</code> не всегда
-                стабильна — могут возникать артефакты символов и графические баги в полноэкранных текстовых редакторах (например, Nano или Vim).
-                Если таковые наблюдаются, настоятельно рекомендуется переключиться обратно и продолжить работу в{' '}
+                Работа в{' '}
+                <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-800">
+                  xterm.js
+                </code>{' '}
+                не всегда стабильна — могут возникать артефакты символов и графические баги в
+                полноэкранных текстовых редакторах (например, Nano или Vim). Если таковые
+                наблюдаются, настоятельно рекомендуется переключиться обратно и продолжить работу в{' '}
                 <strong className="text-white">noVNC</strong>.
               </p>
             </div>

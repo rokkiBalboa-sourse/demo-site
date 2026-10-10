@@ -12,8 +12,7 @@ export function Badge({ children, variant = 'default', className = '' }: BadgePr
   let variantStyles = 'bg-zinc-900 text-zinc-300 border-zinc-800';
 
   if (variant === 'pending') {
-    variantStyles =
-      'bg-zinc-900/90 text-zinc-300 border-zinc-700 font-medium';
+    variantStyles = 'bg-zinc-900/90 text-zinc-300 border-zinc-700 font-medium';
   } else if (variant === 'reviewed') {
     variantStyles =
       'bg-emerald-950/80 text-emerald-300 border-emerald-500 shadow-[0_0_14px_rgba(16,185,129,0.45)] ring-1 ring-emerald-500/50 font-bold tracking-wider';

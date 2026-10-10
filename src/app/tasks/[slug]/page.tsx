@@ -6,7 +6,17 @@ import { Header } from '@/components/Header';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { TaskSubmitForm } from './TaskSubmitForm';
-import { ChevronLeft, Clock, CheckCircle2, AlertTriangle, ExternalLink, Server, BookOpen, Lock, ArrowRight } from 'lucide-react';
+import {
+  ChevronLeft,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+  ExternalLink,
+  Server,
+  BookOpen,
+  Lock,
+  ArrowRight,
+} from 'lucide-react';
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -27,7 +37,6 @@ export default async function TaskDetailPage({ params }: PageProps) {
 
   const moduleInfo = db.getModuleById(task.module_id);
 
-
   const initialSubmission = await db.getSubmissionByUserAndTask(session.id, task.id);
 
   let statusBadge = <Badge variant="neutral">НЕ СДАВАЛ</Badge>;
@@ -42,7 +51,12 @@ export default async function TaskDetailPage({ params }: PageProps) {
     statusBadge = (
       <Badge variant="reviewed" className="flex items-center gap-1.5">
         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-        <span>ПРОВЕРЕНО {initialSubmission.score !== null ? `(${initialSubmission.score}/${task.max_score} б.)` : ''}</span>
+        <span>
+          ПРОВЕРЕНО{' '}
+          {initialSubmission.score !== null
+            ? `(${initialSubmission.score}/${task.max_score} б.)`
+            : ''}
+        </span>
       </Badge>
     );
   } else if (initialSubmission?.status === 'rejected') {
@@ -146,59 +160,60 @@ export default async function TaskDetailPage({ params }: PageProps) {
           )}
 
           {/* Teacher Feedback Banner */}
-          {initialSubmission?.feedback && (() => {
-            const isApproved =
-              initialSubmission.status === 'reviewed' || initialSubmission.is_passed === true;
-            const isRejected =
-              initialSubmission.status === 'rejected' || initialSubmission.is_passed === false;
+          {initialSubmission?.feedback &&
+            (() => {
+              const isApproved =
+                initialSubmission.status === 'reviewed' || initialSubmission.is_passed === true;
+              const isRejected =
+                initialSubmission.status === 'rejected' || initialSubmission.is_passed === false;
 
-            return (
-              <div
-                className={`mt-4 p-4 text-xs font-mono border transition-all ${
-                  isApproved
-                    ? 'border-emerald-500 bg-emerald-950/40 text-emerald-100 shadow-[0_0_16px_rgba(16,185,129,0.35)] ring-1 ring-emerald-500/50'
-                    : isRejected
-                    ? 'border-amber-500 bg-amber-950/40 text-amber-100 shadow-[0_0_16px_rgba(245,158,11,0.35)] ring-1 ring-amber-500/50'
-                    : 'border-zinc-700 bg-zinc-900 text-zinc-300'
-                }`}
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2 pb-2 mb-2 border-b border-current/20">
-                  <div className="font-bold flex items-center gap-2">
-                    {isApproved ? (
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                    ) : isRejected ? (
-                      <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
-                    ) : null}
-                    <span className="uppercase tracking-wider">
-                      {isApproved
-                        ? 'Рецензия преподавателя (Работа принята)'
-                        : isRejected
-                        ? 'Замечания преподавателя (На доработку)'
-                        : 'Рецензия преподавателя'}
-                    </span>
+              return (
+                <div
+                  className={`mt-4 p-4 text-xs font-mono border transition-all ${
+                    isApproved
+                      ? 'border-emerald-500 bg-emerald-950/40 text-emerald-100 shadow-[0_0_16px_rgba(16,185,129,0.35)] ring-1 ring-emerald-500/50'
+                      : isRejected
+                        ? 'border-amber-500 bg-amber-950/40 text-amber-100 shadow-[0_0_16px_rgba(245,158,11,0.35)] ring-1 ring-amber-500/50'
+                        : 'border-zinc-700 bg-zinc-900 text-zinc-300'
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2 mb-2 border-b border-current/20">
+                    <div className="font-bold flex items-center gap-2">
+                      {isApproved ? (
+                        <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+                      ) : isRejected ? (
+                        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0" />
+                      ) : null}
+                      <span className="uppercase tracking-wider">
+                        {isApproved
+                          ? 'Рецензия преподавателя (Работа принята)'
+                          : isRejected
+                            ? 'Замечания преподавателя (На доработку)'
+                            : 'Рецензия преподавателя'}
+                      </span>
+                    </div>
+
+                    {initialSubmission.score !== null && (
+                      <span
+                        className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
+                          isApproved
+                            ? 'bg-emerald-400 text-zinc-950 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
+                            : isRejected
+                              ? 'bg-amber-400 text-zinc-950 shadow-[0_0_10px_rgba(245,158,11,0.5)]'
+                              : 'bg-white text-zinc-950'
+                        }`}
+                      >
+                        Оценка: {initialSubmission.score} / {task.max_score} б.
+                      </span>
+                    )}
                   </div>
 
-                  {initialSubmission.score !== null && (
-                    <span
-                      className={`px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${
-                        isApproved
-                          ? 'bg-emerald-400 text-zinc-950 shadow-[0_0_10px_rgba(16,185,129,0.5)]'
-                          : isRejected
-                          ? 'bg-amber-400 text-zinc-950 shadow-[0_0_10px_rgba(245,158,11,0.5)]'
-                          : 'bg-white text-zinc-950'
-                      }`}
-                    >
-                      Оценка: {initialSubmission.score} / {task.max_score} б.
-                    </span>
-                  )}
+                  <div className="whitespace-pre-wrap leading-relaxed text-xs">
+                    {initialSubmission.feedback}
+                  </div>
                 </div>
-
-                <div className="whitespace-pre-wrap leading-relaxed text-xs">
-                  {initialSubmission.feedback}
-                </div>
-              </div>
-            );
-          })()}
+              );
+            })()}
         </div>
 
         {/* Interactive Task Form */}

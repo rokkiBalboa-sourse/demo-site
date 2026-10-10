@@ -132,7 +132,7 @@ function extractTargetFiles(commands?: string, explanation?: string): string[] {
   const regex = /\/(?:etc|var|proc|opt)\/[a-zA-Z0-9_\-\.\/\{\},]+/g;
   const matches = text.match(regex) || [];
   const unique = Array.from(new Set(matches)).filter(
-    (p) => !p.endsWith('/...') && p.length > 4 && !p.includes('*')
+    p => !p.endsWith('/...') && p.length > 4 && !p.includes('*')
   );
   return unique.slice(0, 4);
 }
@@ -240,7 +240,9 @@ function Task2StepContent({ stepNumber }: { stepNumber: number }) {
               <span className="px-2 py-0.5 bg-amber-500/10 border border-amber-500/30 text-amber-300 text-[10px] uppercase font-bold">
                 Быстрый способ
               </span>
-              <span className="text-zinc-300 font-medium">Как сделать это одной командой без редактора:</span>
+              <span className="text-zinc-300 font-medium">
+                Как сделать это одной командой без редактора:
+              </span>
             </div>
             <InlineCopyButton text='echo "net.ipv4.ip_forward = 1" >> /etc/net/sysctl.conf' />
           </div>
@@ -325,7 +327,9 @@ table ip nat {
             <InlineCopyButton text="apt-get update && apt-get install nftables nano -y" />
           </div>
           <p className="text-zinc-400">
-            Обновляем кэш репозиториев и устанавливаем пакет <code className="text-zinc-200">nftables</code> и текстовый редактор <code className="text-zinc-200">nano</code>:
+            Обновляем кэш репозиториев и устанавливаем пакет{' '}
+            <code className="text-zinc-200">nftables</code> и текстовый редактор{' '}
+            <code className="text-zinc-200">nano</code>:
           </p>
           <div className="bg-zinc-900 px-3 py-2 border border-zinc-800 text-emerald-300 font-mono text-xs">
             apt-get update &amp;&amp; apt-get install nftables nano -y
@@ -336,13 +340,16 @@ table ip nat {
         <div className="border border-zinc-800 bg-zinc-950/80 p-4 space-y-4">
           <div className="flex items-center justify-between gap-2 flex-wrap">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-amber-300 text-xs">2.2. Создание файла с правилами трансляции (NAT)</span>
+              <span className="font-bold text-amber-300 text-xs">
+                2.2. Создание файла с правилами трансляции (NAT)
+              </span>
             </div>
             <InlineCopyButton text="nano /etc/nftables/nftables.nft" />
           </div>
 
           <p className="text-zinc-400">
-            Создаём конфигурационный файл правил <code className="text-zinc-200">/etc/nftables/nftables.nft</code>:
+            Создаём конфигурационный файл правил{' '}
+            <code className="text-zinc-200">/etc/nftables/nftables.nft</code>:
           </p>
           <div className="bg-zinc-900 px-3 py-2 border border-zinc-800 text-zinc-200 font-mono text-xs">
             nano /etc/nftables/nftables.nft
@@ -352,7 +359,8 @@ table ip nat {
           <div className="border border-amber-500/40 bg-amber-500/10 p-3 flex items-start gap-2.5">
             <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             <div className="text-amber-200 leading-relaxed text-[11px]">
-              <strong className="text-amber-300 uppercase">Важно:</strong> Если в файле присутствует любая другая предварительная конфигурация, полностью её удалите перед вставкой!
+              <strong className="text-amber-300 uppercase">Важно:</strong> Если в файле присутствует
+              любая другая предварительная конфигурация, полностью её удалите перед вставкой!
             </div>
           </div>
 
@@ -394,13 +402,16 @@ table ip nat {
         {/* 2.3 */}
         <div className="border border-zinc-800 bg-zinc-950/80 p-4 space-y-3">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-amber-300 text-xs">2.3. Запуск и добавление в автозагрузку</span>
+            <span className="font-bold text-amber-300 text-xs">
+              2.3. Запуск и добавление в автозагрузку
+            </span>
           </div>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <span className="text-zinc-300">
-                Чтобы правила не слетели после перезагрузки машины на экзамене, настраиваем автозапуск службы:
+                Чтобы правила не слетели после перезагрузки машины на экзамене, настраиваем
+                автозапуск службы:
               </span>
               <InlineCopyButton text="systemctl enable --now nftables" />
             </div>
@@ -414,7 +425,7 @@ table ip nat {
               <span className="text-zinc-300">
                 Принудительно очищаем текущие правила и загружаем наш файл:
               </span>
-              <InlineCopyButton text={"nft flush ruleset\nnft -f /etc/nftables/nftables.nft"} />
+              <InlineCopyButton text={'nft flush ruleset\nnft -f /etc/nftables/nftables.nft'} />
             </div>
             <div className="bg-zinc-900 px-3 py-2 border border-zinc-800 text-emerald-300 font-mono text-xs space-y-1">
               <div>nft flush ruleset</div>
@@ -428,7 +439,12 @@ table ip nat {
             <div className="text-sky-200 text-[11px] leading-relaxed">
               <strong className="text-sky-300">Что делает ключ nft -f?</strong>
               <p className="mt-0.5">
-                Ключ <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-700">-f</code> (file) компилирует и мгновенно загружает набор правил из указанного текстового файла прямо в ядро Linux.
+                Ключ{' '}
+                <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-700">
+                  -f
+                </code>{' '}
+                (file) компилирует и мгновенно загружает набор правил из указанного текстового файла
+                прямо в ядро Linux.
               </p>
             </div>
           </div>
@@ -471,7 +487,13 @@ table ip nat {
               <pre className="whitespace-pre leading-relaxed">{expectedNftRuleset}</pre>
             </div>
             <p className="text-zinc-300 text-[11px] leading-relaxed">
-              Консоль выведет блок <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-800">table ip nat</code> ровно с теми строками, которые мы внесли в файл. Если вывод пустой — файл не применился через <code className="text-white bg-zinc-900 px-1 border border-zinc-800">nft -f</code>.
+              Консоль выведет блок{' '}
+              <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-800">
+                table ip nat
+              </code>{' '}
+              ровно с теми строками, которые мы внесли в файл. Если вывод пустой — файл не
+              применился через{' '}
+              <code className="text-white bg-zinc-900 px-1 border border-zinc-800">nft -f</code>.
             </p>
           </div>
         </div>
@@ -518,7 +540,11 @@ table ip nat {
               4 packets transmitted, 4 received, 0% packet loss
             </div>
             <p className="text-zinc-300 text-[11px] leading-relaxed">
-              Это подтверждает, что интерфейс <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-800">enp7s1</code> получил IP по DHCP и DNS-резолвинг работает штатно.
+              Это подтверждает, что интерфейс{' '}
+              <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-800">
+                enp7s1
+              </code>{' '}
+              получил IP по DHCP и DNS-резолвинг работает штатно.
             </p>
           </div>
         </div>
@@ -534,16 +560,22 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
     return (
       <div className="space-y-4 font-mono text-xs">
         <div className="bg-zinc-900/60 border border-zinc-800 p-3.5 text-zinc-300 leading-relaxed">
-          На обоих серверах создаётся пользователь <strong className="text-white">sshuser</strong> с идентификатором <code className="text-amber-300 font-bold">2026</code> и беспарольным sudo.
+          На обоих серверах создаётся пользователь <strong className="text-white">sshuser</strong> с
+          идентификатором <code className="text-amber-300 font-bold">2026</code> и беспарольным
+          sudo.
         </div>
 
         {/* Notice */}
         <div className="border border-sky-500/30 bg-sky-500/10 p-3 flex items-start gap-2.5">
           <Info className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
           <div className="text-sky-200 text-[11px] leading-relaxed">
-            <strong className="text-sky-300 uppercase">Команды идентичны для обоих серверов:</strong>
+            <strong className="text-sky-300 uppercase">
+              Команды идентичны для обоих серверов:
+            </strong>
             <p className="mt-0.5">
-              Выполните приведённый блок последовательно сначала на узле <strong className="text-white">HQ-SRV</strong>, а затем на узле <strong className="text-white">BR-SRV</strong>.
+              Выполните приведённый блок последовательно сначала на узле{' '}
+              <strong className="text-white">HQ-SRV</strong>, а затем на узле{' '}
+              <strong className="text-white">BR-SRV</strong>.
             </p>
           </div>
         </div>
@@ -603,7 +635,7 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
               <span className="text-zinc-300 font-bold">
                 5-7. Проверяем вход, статус суперпользователя и выходим:
               </span>
-              <InlineCopyButton text={"su -l sshuser\nsudo id\nexit"} />
+              <InlineCopyButton text={'su -l sshuser\nsudo id\nexit'} />
             </div>
             <div className="bg-zinc-900 px-3 py-2 border border-zinc-800 text-emerald-300 font-mono text-xs space-y-1">
               <div>su -l sshuser</div>
@@ -619,7 +651,17 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
           <div className="text-sky-200 text-[11px] leading-relaxed">
             <strong className="text-sky-300">Что делает su -l sshuser?</strong>
             <p className="mt-0.5 text-zinc-300">
-              Параметр <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-700">-l</code> (или просто дефис <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-700">-</code>) запускает полноценную <strong>login-оболочку</strong>: переходит в домашний каталог пользователя (<code className="text-amber-300">/home/sshuser</code>) и подгружает все его системные переменные окружения.
+              Параметр{' '}
+              <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-700">
+                -l
+              </code>{' '}
+              (или просто дефис{' '}
+              <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-700">
+                -
+              </code>
+              ) запускает полноценную <strong>login-оболочку</strong>: переходит в домашний каталог
+              пользователя (<code className="text-amber-300">/home/sshuser</code>) и подгружает все
+              его системные переменные окружения.
             </p>
           </div>
         </div>
@@ -631,7 +673,8 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
     return (
       <div className="space-y-4 font-mono text-xs">
         <div className="bg-zinc-900/60 border border-zinc-800 p-3.5 text-zinc-300 leading-relaxed">
-          На маршрутизаторах создаётся пользователь <strong className="text-white">net_admin</strong> с правами суперпользователя.
+          На маршрутизаторах создаётся пользователь{' '}
+          <strong className="text-white">net_admin</strong> с правами суперпользователя.
         </div>
 
         {/* Warning Callout */}
@@ -640,7 +683,16 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
           <div className="text-amber-200 text-[11px] leading-relaxed">
             <strong className="text-amber-300 uppercase">Важно для маршрутизаторов:</strong>
             <p className="mt-0.5">
-              На сетевых/маршрутизаторных сборках ALT Linux утилита <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-700">sudo</code> часто отсутствует по умолчанию. Поэтому перед настройкой прав обязательно устанавливаем пакет <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-700">sudo</code>.
+              На сетевых/маршрутизаторных сборках ALT Linux утилита{' '}
+              <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-700">
+                sudo
+              </code>{' '}
+              часто отсутствует по умолчанию. Поэтому перед настройкой прав обязательно
+              устанавливаем пакет{' '}
+              <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-700">
+                sudo
+              </code>
+              .
             </p>
           </div>
         </div>
@@ -649,9 +701,13 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
         <div className="border border-sky-500/30 bg-sky-500/10 p-3 flex items-start gap-2.5">
           <Info className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
           <div className="text-sky-200 text-[11px] leading-relaxed">
-            <strong className="text-sky-300 uppercase">Команды идентичны для обоих маршрутизаторов:</strong>
+            <strong className="text-sky-300 uppercase">
+              Команды идентичны для обоих маршрутизаторов:
+            </strong>
             <p className="mt-0.5">
-              Выполните приведённый блок последовательно сначала на узле <strong className="text-white">HQ-RTR</strong>, а затем на узле <strong className="text-white">BR-RTR</strong>.
+              Выполните приведённый блок последовательно сначала на узле{' '}
+              <strong className="text-white">HQ-RTR</strong>, а затем на узле{' '}
+              <strong className="text-white">BR-RTR</strong>.
             </p>
           </div>
         </div>
@@ -660,9 +716,7 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
         <div className="space-y-3">
           <div className="border border-zinc-800 bg-zinc-950/80 p-3.5 space-y-2">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <span className="text-zinc-300 font-bold">
-                1. Создаем пользователя net_admin:
-              </span>
+              <span className="text-zinc-300 font-bold">1. Создаем пользователя net_admin:</span>
               <InlineCopyButton text="useradd net_admin" />
             </div>
             <div className="bg-zinc-900 px-3 py-1.5 border border-zinc-800 text-emerald-300 font-mono text-xs">
@@ -672,9 +726,7 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
 
           <div className="border border-zinc-800 bg-zinc-950/80 p-3.5 space-y-2">
             <div className="flex items-center justify-between gap-2 flex-wrap">
-              <span className="text-zinc-300 font-bold">
-                2. Назначаем пароль P@ssw0rd:
-              </span>
+              <span className="text-zinc-300 font-bold">2. Назначаем пароль P@ssw0rd:</span>
               <InlineCopyButton text='echo "net_admin:P@ssw0rd" | chpasswd' />
             </div>
             <div className="bg-zinc-900 px-3 py-1.5 border border-zinc-800 text-emerald-300 font-mono text-xs">
@@ -723,7 +775,7 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
               <span className="text-zinc-300 font-bold">
                 6-8. Входим под net_admin, проверяем привилегии и выходим:
               </span>
-              <InlineCopyButton text={"su -l net_admin\nsudo id\nexit"} />
+              <InlineCopyButton text={'su -l net_admin\nsudo id\nexit'} />
             </div>
             <div className="bg-zinc-900 px-3 py-2 border border-zinc-800 text-emerald-300 font-mono text-xs space-y-1">
               <div>su -l net_admin</div>
@@ -741,11 +793,19 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
       <div className="space-y-4 font-mono text-xs">
         <div className="bg-zinc-900/60 border border-zinc-800 p-3.5 text-zinc-300 leading-relaxed space-y-1.5">
           <p className="font-bold text-white">
-            При выполнении команды <code className="text-amber-300">sudo id</code> под учётными записями <code className="text-amber-300">sshuser</code> и <code className="text-amber-300">net_admin</code>:
+            При выполнении команды <code className="text-amber-300">sudo id</code> под учётными
+            записями <code className="text-amber-300">sshuser</code> и{' '}
+            <code className="text-amber-300">net_admin</code>:
           </p>
           <ul className="list-disc list-inside space-y-1 text-zinc-300 text-[11px]">
-            <li>Система <strong className="text-emerald-400">НЕ должна</strong> запрашивать ввод пароля.</li>
-            <li>В консоли должен отобразиться идентификатор суперпользователя: <code className="text-emerald-300">uid=0(root) gid=0(root) groups=0(root)...</code></li>
+            <li>
+              Система <strong className="text-emerald-400">НЕ должна</strong> запрашивать ввод
+              пароля.
+            </li>
+            <li>
+              В консоли должен отобразиться идентификатор суперпользователя:{' '}
+              <code className="text-emerald-300">uid=0(root) gid=0(root) groups=0(root)...</code>
+            </li>
           </ul>
         </div>
 
@@ -755,7 +815,7 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
             <span className="font-bold text-amber-300 text-xs">
               1. Проверка на серверах (HQ-SRV, BR-SRV):
             </span>
-            <InlineCopyButton text={"id sshuser\nsu -l sshuser -c \"sudo id\""} />
+            <InlineCopyButton text={'id sshuser\nsu -l sshuser -c "sudo id"'} />
           </div>
           <div className="bg-zinc-900 px-3 py-2 border border-zinc-800 text-emerald-300 font-mono text-xs space-y-1">
             <div>id sshuser</div>
@@ -771,7 +831,15 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
               <div>uid=0(root) gid=0(root) groups=0(root)</div>
             </div>
             <p className="text-zinc-300 text-[11px] leading-relaxed">
-              Команда <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-800">id sshuser</code> возвращает точный <strong className="text-white">UID 2026</strong>, а вызов <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-800">sudo id</code> срабатывает мгновенно без запроса пароля.
+              Команда{' '}
+              <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-800">
+                id sshuser
+              </code>{' '}
+              возвращает точный <strong className="text-white">UID 2026</strong>, а вызов{' '}
+              <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-800">
+                sudo id
+              </code>{' '}
+              срабатывает мгновенно без запроса пароля.
             </p>
           </div>
         </div>
@@ -782,7 +850,7 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
             <span className="font-bold text-amber-300 text-xs">
               2. Проверка на маршрутизаторах (HQ-RTR, BR-RTR):
             </span>
-            <InlineCopyButton text={"id net_admin\nsu -l net_admin -c \"sudo id\""} />
+            <InlineCopyButton text={'id net_admin\nsu -l net_admin -c "sudo id"'} />
           </div>
           <div className="bg-zinc-900 px-3 py-2 border border-zinc-800 text-emerald-300 font-mono text-xs space-y-1">
             <div>id net_admin</div>
@@ -798,7 +866,11 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
               <div>uid=0(root) gid=0(root) groups=0(root)</div>
             </div>
             <p className="text-zinc-300 text-[11px] leading-relaxed">
-              Пользователь входит в группу <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-800">wheel(10)</code>, права суперпользователя через sudo работают без запроса пароля.
+              Пользователь входит в группу{' '}
+              <code className="text-white font-bold bg-zinc-900 px-1 border border-zinc-800">
+                wheel(10)
+              </code>
+              , права суперпользователя через sudo работают без запроса пароля.
             </p>
           </div>
         </div>
@@ -812,9 +884,7 @@ function Task3StepContent({ stepNumber }: { stepNumber: number }) {
 export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps) {
   const router = useRouter();
   const [logOutput, setLogOutput] = useState(initialSubmission?.log_output || '');
-  const [answers, setAnswers] = useState<Record<string, string>>(
-    initialSubmission?.answers || {}
-  );
+  const [answers, setAnswers] = useState<Record<string, string>>(initialSubmission?.answers || {});
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -837,7 +907,8 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
 
   // Разрешено редактирование, если нет сдачи, статус 'rejected' или включен режим пересдачи (при условии отсутствия блокировки)
   const [isRetaking, setIsRetaking] = useState(false);
-  const canEdit = (!initialSubmission || isRejected || (isRetaking && !isRetakeBlocked)) && !isRetakeBlocked;
+  const canEdit =
+    (!initialSubmission || isRejected || (isRetaking && !isRetakeBlocked)) && !isRetakeBlocked;
 
   const handleCopyDiag = async (stepNum: number, diagCmd: string) => {
     try {
@@ -851,7 +922,7 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
 
   const handleAnswerChange = (questionId: string, value: string) => {
     if (!canEdit) return;
-    setAnswers((prev) => ({ ...prev, [questionId]: value }));
+    setAnswers(prev => ({ ...prev, [questionId]: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -913,8 +984,10 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
             <span>Режим осознанного обучения и практикума ALT Linux</span>
           </div>
           <p className="text-zinc-300 leading-relaxed">
-            Для каждого шага задания ниже приведён <strong>полный разбор команд, функций и флагов</strong>.
-            Не копируйте команды вслепую: изучайте таблицы параметров, разбирайтесь в логике работы подсистем ОС и контролируйте правильность настройки встроенными командами самопроверки.
+            Для каждого шага задания ниже приведён{' '}
+            <strong>полный разбор команд, функций и флагов</strong>. Не копируйте команды вслепую:
+            изучайте таблицы параметров, разбирайтесь в логике работы подсистем ОС и контролируйте
+            правильность настройки встроенными командами самопроверки.
           </p>
         </div>
       </div>
@@ -933,10 +1006,10 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                   {task.id === 'm1-task-3'
                     ? '3. Локальные учётные записи и sudo'
                     : task.id === 'm1-task-2'
-                    ? '2. Доступ к сети Интернет на ISP'
-                    : task.id === 'm1-task-1'
-                    ? '1. Базовая настройка устройств и адресация'
-                    : `${task.task_number}. ${task.title}`}
+                      ? '2. Доступ к сети Интернет на ISP'
+                      : task.id === 'm1-task-1'
+                        ? '1. Базовая настройка устройств и адресация'
+                        : `${task.task_number}. ${task.title}`}
                 </span>
               </h2>
             </div>
@@ -976,7 +1049,9 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                   Описание задачи:
                 </div>
                 <p className="text-zinc-300">
-                  В данном задании настраивается интернет-провайдер (ISP). Его задача — принимать трафик из локальных сетей офисов (HQ и BR) и выпускать их в глобальную сеть через динамическую трансляцию адресов (NAT / Masquerade).
+                  В данном задании настраивается интернет-провайдер (ISP). Его задача — принимать
+                  трафик из локальных сетей офисов (HQ и BR) и выпускать их в глобальную сеть через
+                  динамическую трансляцию адресов (NAT / Masquerade).
                 </p>
               </div>
 
@@ -1003,7 +1078,18 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                     <span>Зачем нужен ip_forward = 1?</span>
                   </div>
                   <p className="text-zinc-300 leading-relaxed">
-                    По умолчанию ядро Linux настроено как обычный компьютер: если на его сетевую карту приходит пакет, адресованный не ему, ядро его просто отбрасывает. Включение директивы <code className="text-zinc-100 bg-zinc-950 px-1 border border-zinc-800 font-bold">net.ipv4.ip_forward = 1</code> сообщает ядру: <em>«Ты теперь маршрутизатор, пересылай транзитные пакеты между разными интерфейсами»</em>.
+                    По умолчанию ядро Linux настроено как обычный компьютер: если на его сетевую
+                    карту приходит пакет, адресованный не ему, ядро его просто отбрасывает.
+                    Включение директивы{' '}
+                    <code className="text-zinc-100 bg-zinc-950 px-1 border border-zinc-800 font-bold">
+                      net.ipv4.ip_forward = 1
+                    </code>{' '}
+                    сообщает ядру:{' '}
+                    <em>
+                      «Ты теперь маршрутизатор, пересылай транзитные пакеты между разными
+                      интерфейсами»
+                    </em>
+                    .
                   </p>
                 </div>
 
@@ -1013,7 +1099,8 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                     <span>Зачем нужен NAT Masquerade?</span>
                   </div>
                   <p className="text-zinc-300 leading-relaxed">
-                    Сети наших офисов (172.16.1.0/28, 172.16.2.0/28, 192.168.x.x) относятся к приватным диапазонам{' '}
+                    Сети наших офисов (172.16.1.0/28, 172.16.2.0/28, 192.168.x.x) относятся к
+                    приватным диапазонам{' '}
                     <a
                       href="https://datatracker.ietf.org/doc/html/rfc1918"
                       target="_blank"
@@ -1022,7 +1109,15 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                     >
                       <span>RFC 1918</span>
                       <ExternalLink className="w-3 h-3" />
-                    </a>. В открытом Интернете эти адреса не маршрутизируются. Механизм Masquerade («Маскарад») подменяет обратный серый адрес пакета на реальный IP-адрес внешнего интерфейса <code className="text-zinc-100 bg-zinc-950 px-1 border border-zinc-800 font-bold">enp7s1</code>, полученный от магистрального провайдера. Когда из Интернета приходит ответ, ISP возвращает пакет обратно нужному офисному серверу.
+                    </a>
+                    . В открытом Интернете эти адреса не маршрутизируются. Механизм Masquerade
+                    («Маскарад») подменяет обратный серый адрес пакета на реальный IP-адрес внешнего
+                    интерфейса{' '}
+                    <code className="text-zinc-100 bg-zinc-950 px-1 border border-zinc-800 font-bold">
+                      enp7s1
+                    </code>
+                    , полученный от магистрального провайдера. Когда из Интернета приходит ответ,
+                    ISP возвращает пакет обратно нужному офисному серверу.
                   </p>
                 </div>
               </div>
@@ -1058,7 +1153,9 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                   Описание задачи:
                 </div>
                 <p className="text-zinc-300">
-                  В данном задании настраиваются системные административные пользователи на серверах и маршрутизаторах с правом выполнения команд суперпользователя (sudo) без ввода пароля.
+                  В данном задании настраиваются системные административные пользователи на серверах
+                  и маршрутизаторах с правом выполнения команд суперпользователя (sudo) без ввода
+                  пароля.
                 </p>
               </div>
 
@@ -1068,10 +1165,18 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                 </div>
                 <p className="text-zinc-300 flex items-center gap-2 flex-wrap">
                   <span>Команды выполняются на виртуальных машинах:</span>
-                  <span className="bg-zinc-900 border border-zinc-800 px-2 py-0.5 font-bold text-amber-300">HQ-SRV</span>
-                  <span className="bg-zinc-900 border border-zinc-800 px-2 py-0.5 font-bold text-amber-300">BR-SRV</span>
-                  <span className="bg-zinc-900 border border-zinc-800 px-2 py-0.5 font-bold text-sky-300">HQ-RTR</span>
-                  <span className="bg-zinc-900 border border-zinc-800 px-2 py-0.5 font-bold text-sky-300">BR-RTR</span>
+                  <span className="bg-zinc-900 border border-zinc-800 px-2 py-0.5 font-bold text-amber-300">
+                    HQ-SRV
+                  </span>
+                  <span className="bg-zinc-900 border border-zinc-800 px-2 py-0.5 font-bold text-amber-300">
+                    BR-SRV
+                  </span>
+                  <span className="bg-zinc-900 border border-zinc-800 px-2 py-0.5 font-bold text-sky-300">
+                    HQ-RTR
+                  </span>
+                  <span className="bg-zinc-900 border border-zinc-800 px-2 py-0.5 font-bold text-sky-300">
+                    BR-RTR
+                  </span>
                 </p>
               </div>
 
@@ -1086,7 +1191,13 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                     <span>1. Что такое UID (-u 2026)?</span>
                   </div>
                   <p className="text-zinc-300 leading-relaxed">
-                    В Linux операционная система различает пользователей не по их текстовым логинам, а по уникальным числовым идентификаторам — UID (User Identifier). По заданию требуется назначить конкретный UID 2026. Параметр <code className="text-zinc-100 bg-zinc-950 px-1 border border-zinc-800 font-bold">-u</code> принудительно задаёт этот номер при создании пользователя.
+                    В Linux операционная система различает пользователей не по их текстовым логинам,
+                    а по уникальным числовым идентификаторам — UID (User Identifier). По заданию
+                    требуется назначить конкретный UID 2026. Параметр{' '}
+                    <code className="text-zinc-100 bg-zinc-950 px-1 border border-zinc-800 font-bold">
+                      -u
+                    </code>{' '}
+                    принудительно задаёт этот номер при создании пользователя.
                   </p>
                 </div>
 
@@ -1096,7 +1207,13 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                     <span>2. Зачем нужна утилита chpasswd?</span>
                   </div>
                   <p className="text-zinc-300 leading-relaxed">
-                    Команда passwd в консоли требует интерактивного ввода и повторного подтверждения пароля. Конструкция <code className="text-zinc-100 bg-zinc-950 px-1 border border-zinc-800 font-bold">echo &quot;user:pass&quot; | chpasswd</code> позволяет задать пароль в одну строчку без лишних диалогов, что критически экономит время на экзамене.
+                    Команда passwd в консоли требует интерактивного ввода и повторного подтверждения
+                    пароля. Конструкция{' '}
+                    <code className="text-zinc-100 bg-zinc-950 px-1 border border-zinc-800 font-bold">
+                      echo &quot;user:pass&quot; | chpasswd
+                    </code>{' '}
+                    позволяет задать пароль в одну строчку без лишних диалогов, что критически
+                    экономит время на экзамене.
                   </p>
                 </div>
 
@@ -1106,11 +1223,17 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                     <span>3. Что такое группа wheel?</span>
                   </div>
                   <p className="text-zinc-300 leading-relaxed">
-                    В дистрибутивах семейства ALT Linux (как и в RHEL/CentOS) исторически используется системная группа wheel. Члены этой группы наделяются правом повышать свои привилегии до root. Флаг <code className="text-zinc-100 bg-zinc-950 px-1 border border-zinc-800 font-bold">-aG</code> в usermod расшифровывается как:
-                    <br />
-                    • <strong className="text-white">-a (append)</strong> — добавить в группу, не удаляя пользователя из остальных его групп;
-                    <br />
-                    • <strong className="text-white">-G (supplementary Group)</strong> — указать дополнительную группу.
+                    В дистрибутивах семейства ALT Linux (как и в RHEL/CentOS) исторически
+                    используется системная группа wheel. Члены этой группы наделяются правом
+                    повышать свои привилегии до root. Флаг{' '}
+                    <code className="text-zinc-100 bg-zinc-950 px-1 border border-zinc-800 font-bold">
+                      -aG
+                    </code>{' '}
+                    в usermod расшифровывается как:
+                    <br />• <strong className="text-white">-a (append)</strong> — добавить в группу,
+                    не удаляя пользователя из остальных его групп;
+                    <br />• <strong className="text-white">-G (supplementary Group)</strong> —
+                    указать дополнительную группу.
                   </p>
                 </div>
 
@@ -1120,13 +1243,18 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                     <span>4. Почему каталог /etc/sudoers.d/, а не файл /etc/sudoers?</span>
                   </div>
                   <p className="text-zinc-300 leading-relaxed">
-                    Вместо небезопасного прямого редактирования основного файла /etc/sudoers принято создавать отдельные файлы в каталоге /etc/sudoers.d/. Директива <code className="text-zinc-100 bg-zinc-950 px-1 border border-zinc-800 font-bold">WHEEL_USERS ALL=(ALL:ALL) NOPASSWD: ALL</code> означает:
-                    <br />
-                    • <strong className="text-white">WHEEL_USERS</strong> — все участники группы wheel;
-                    <br />
-                    • <strong className="text-white">ALL=(ALL:ALL)</strong> — на всех хостах, от имени любого пользователя и любой группы;
-                    <br />
-                    • <strong className="text-white">NOPASSWD: ALL</strong> — запуск любых команд через sudo без запроса пароля.
+                    Вместо небезопасного прямого редактирования основного файла /etc/sudoers принято
+                    создавать отдельные файлы в каталоге /etc/sudoers.d/. Директива{' '}
+                    <code className="text-zinc-100 bg-zinc-950 px-1 border border-zinc-800 font-bold">
+                      WHEEL_USERS ALL=(ALL:ALL) NOPASSWD: ALL
+                    </code>{' '}
+                    означает:
+                    <br />• <strong className="text-white">WHEEL_USERS</strong> — все участники
+                    группы wheel;
+                    <br />• <strong className="text-white">ALL=(ALL:ALL)</strong> — на всех хостах,
+                    от имени любого пользователя и любой группы;
+                    <br />• <strong className="text-white">NOPASSWD: ALL</strong> — запуск любых
+                    команд через sudo без запроса пароля.
                   </p>
                 </div>
               </div>
@@ -1162,7 +1290,9 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                 <h3 className="text-xs font-mono font-bold text-white uppercase tracking-wide">
                   {item.title}
                 </h3>
-                <p className="text-xs text-zinc-300 font-mono leading-relaxed">{item.explanation}</p>
+                <p className="text-xs text-zinc-300 font-mono leading-relaxed">
+                  {item.explanation}
+                </p>
                 {item.details && item.details.length > 0 && (
                   <ul className="list-disc list-inside text-xs font-mono text-zinc-400 space-y-1 pl-1 pt-1">
                     {item.details.map((d, dIdx) => (
@@ -1198,12 +1328,12 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
             {(() => {
               const explainedToolsAcrossSteps = new Set<string>();
 
-              return task.steps.map((st) => {
+              return task.steps.map(st => {
                 const diagCommand = extractDiagnosticCommand(st.commands, st.title);
                 const targetFiles = extractTargetFiles(st.commands, st.explanation);
 
                 const allBreakdowns = analyzeCommandBlock(st.commands);
-                const commandBreakdowns = allBreakdowns.filter((cmd) => {
+                const commandBreakdowns = allBreakdowns.filter(cmd => {
                   if (explainedToolsAcrossSteps.has(cmd.binary)) {
                     return false;
                   }
@@ -1275,7 +1405,10 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
 
                             <div className="space-y-3">
                               {commandBreakdowns.map((cmd, cIdx) => (
-                                <div key={cIdx} className="bg-zinc-950/80 border border-zinc-800 p-3 space-y-2.5">
+                                <div
+                                  key={cIdx}
+                                  className="bg-zinc-950/80 border border-zinc-800 p-3 space-y-2.5"
+                                >
                                   <div className="flex items-start justify-between gap-2 flex-wrap border-b border-zinc-800/80 pb-2">
                                     <code className="text-[11px] font-mono font-bold text-amber-300 bg-zinc-900 px-2 py-0.5 border border-zinc-800">
                                       {cmd.raw}
@@ -1291,7 +1424,9 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                                   </div>
 
                                   <div className="text-[11px] font-mono text-zinc-400 leading-relaxed bg-zinc-900/40 p-2 border border-zinc-800/60">
-                                    <strong className="text-zinc-200">Механизм работы в ОС: </strong>
+                                    <strong className="text-zinc-200">
+                                      Механизм работы в ОС:{' '}
+                                    </strong>
                                     {cmd.howItWorks}
                                   </div>
 
@@ -1304,8 +1439,12 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                                         <table className="w-full text-left text-[11px] font-mono border-collapse">
                                           <thead>
                                             <tr className="border-b border-zinc-800 bg-zinc-900 text-zinc-300">
-                                              <th className="p-2 border-r border-zinc-800 w-1/4">Флаг / Аргумент</th>
-                                              <th className="p-2 border-r border-zinc-800 w-1/3">Значение и роль</th>
+                                              <th className="p-2 border-r border-zinc-800 w-1/4">
+                                                Флаг / Аргумент
+                                              </th>
+                                              <th className="p-2 border-r border-zinc-800 w-1/3">
+                                                Значение и роль
+                                              </th>
                                               <th className="p-2">Почему именно так</th>
                                             </tr>
                                           </thead>
@@ -1318,9 +1457,7 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                                                 <td className="p-2 border-r border-zinc-800 text-zinc-300">
                                                   {f.description}
                                                 </td>
-                                                <td className="p-2 text-zinc-400">
-                                                  {f.whyNeeded}
-                                                </td>
+                                                <td className="p-2 text-zinc-400">{f.whyNeeded}</td>
                                               </tr>
                                             ))}
                                           </tbody>
@@ -1407,7 +1544,8 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
           <p className="text-zinc-400">
-            После завершения настройки запустите однострочный проверочный скрипт в консоли Proxmox VE (Server View &rarr; pve &rarr; Shell):
+            После завершения настройки запустите однострочный проверочный скрипт в консоли Proxmox
+            VE (Server View &rarr; pve &rarr; Shell):
           </p>
           <Link
             href="/preparation/report-guide"
@@ -1428,9 +1566,7 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
         <section className="border border-zinc-800 bg-zinc-900/60 p-6 space-y-3 font-mono">
           <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-zinc-800">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-bold bg-white text-zinc-950 px-2 py-0.5">
-                ЭТАП 4
-              </span>
+              <span className="text-xs font-bold bg-white text-zinc-950 px-2 py-0.5">ЭТАП 4</span>
               <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
                 <Terminal className="w-4 h-4 text-zinc-300" />
                 <span>Загрузка отчёта из консоли (RAW Terminal Output)</span>
@@ -1438,7 +1574,9 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
             </div>
 
             <div className="flex items-center gap-2">
-              {!initialSubmission && <span className="text-[11px] text-zinc-500">Без валидации</span>}
+              {!initialSubmission && (
+                <span className="text-[11px] text-zinc-500">Без валидации</span>
+              )}
               {isPending && (
                 <span className="text-[11px] text-amber-400 font-bold flex items-center gap-1.5">
                   <Lock className="w-3.5 h-3.5 text-amber-400" />
@@ -1480,7 +1618,7 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
 
           <Textarea
             value={logOutput}
-            onChange={(e) => canEdit && setLogOutput(e.target.value)}
+            onChange={e => canEdit && setLogOutput(e.target.value)}
             rows={10}
             isMono
             readOnly={!canEdit}
@@ -1496,9 +1634,7 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
 
           {initialSubmission?.log_output && (
             <div className="mt-4 pt-4 border-t border-zinc-800">
-              <div className="text-xs text-zinc-400 mb-1.5">
-                Ранее сохранённый лог консоли:
-              </div>
+              <div className="text-xs text-zinc-400 mb-1.5">Ранее сохранённый лог консоли:</div>
               <TerminalLog content={initialSubmission.log_output} maxHeight="max-h-48" />
             </div>
           )}
@@ -1518,7 +1654,8 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
             </div>
 
             <p className="text-xs text-zinc-400 font-mono">
-              Выберите правильные варианты ответа на контрольные вопросы в соответствии с выполненной конфигурацией:
+              Выберите правильные варианты ответа на контрольные вопросы в соответствии с
+              выполненной конфигурацией:
             </p>
 
             <div className="space-y-4">
@@ -1530,7 +1667,7 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
 
                   {q.options && q.options.length > 0 ? (
                     <div className="grid grid-cols-1 gap-2 pt-1 font-mono text-xs">
-                      {q.options.map((opt) => {
+                      {q.options.map(opt => {
                         const isSelected = answers[q.id] === opt.id;
                         return (
                           <button
@@ -1544,8 +1681,8 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                               isSelected
                                 ? 'bg-zinc-800 text-white border-zinc-300 shadow-[0_0_12px_rgba(255,255,255,0.15)] ring-1 ring-zinc-300'
                                 : !canEdit
-                                ? 'bg-zinc-950/60 text-zinc-500 border-zinc-900 opacity-60'
-                                : 'bg-zinc-950/80 text-zinc-300 border-zinc-800/90 hover:border-zinc-700 hover:bg-zinc-900/90'
+                                  ? 'bg-zinc-950/60 text-zinc-500 border-zinc-900 opacity-60'
+                                  : 'bg-zinc-950/80 text-zinc-300 border-zinc-800/90 hover:border-zinc-700 hover:bg-zinc-900/90'
                             }`}
                           >
                             <span
@@ -1557,7 +1694,9 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                             >
                               {opt.id}
                             </span>
-                            <span className="leading-relaxed flex-1 text-[11px] pt-0.5">{opt.text}</span>
+                            <span className="leading-relaxed flex-1 text-[11px] pt-0.5">
+                              {opt.text}
+                            </span>
                           </button>
                         );
                       })}
@@ -1566,7 +1705,7 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                     <Input
                       type="text"
                       value={answers[q.id] || ''}
-                      onChange={(e) => canEdit && handleAnswerChange(q.id, e.target.value)}
+                      onChange={e => canEdit && handleAnswerChange(q.id, e.target.value)}
                       placeholder={q.placeholder || 'Ваш ответ...'}
                       readOnly={!canEdit}
                       disabled={!canEdit}
@@ -1603,7 +1742,12 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
               <div className="text-xs font-mono text-zinc-400">
                 Отчёт поступит в журнал преподавателя для рецензирования и выставления баллов.
               </div>
-              <Button type="submit" isLoading={isLoading} size="lg" className="flex items-center gap-2 shrink-0">
+              <Button
+                type="submit"
+                isLoading={isLoading}
+                size="lg"
+                className="flex items-center gap-2 shrink-0"
+              >
                 <Send className="w-4 h-4" />
                 <span>Отправить отчёт на проверку</span>
               </Button>
@@ -1624,8 +1768,10 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                     </span>
                   </div>
                   <p className="text-zinc-400 leading-relaxed">
-                    Вы сдали отчёт {new Date(initialSubmission.submitted_at).toLocaleString('ru-RU')}.
-                    Если вам требуется внести исправления в лог или пересдать тест, нажмите кнопку «Пройти повторно / Внести исправления».
+                    Вы сдали отчёт{' '}
+                    {new Date(initialSubmission.submitted_at).toLocaleString('ru-RU')}. Если вам
+                    требуется внести исправления в лог или пересдать тест, нажмите кнопку «Пройти
+                    повторно / Внести исправления».
                   </p>
                 </div>
               </div>
@@ -1655,15 +1801,23 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                   <div className="font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-2">
                     <span>Отчёт проверен и успешно принят</span>
                     <span className="bg-emerald-400 text-zinc-950 font-bold px-2 py-0.5 text-[10px]">
-                      {initialSubmission.score !== null ? `${initialSubmission.score} / ${task.max_score} б.` : 'Зачтено'}
+                      {initialSubmission.score !== null
+                        ? `${initialSubmission.score} / ${task.max_score} б.`
+                        : 'Зачтено'}
                     </span>
                   </div>
                   <p className="text-zinc-300 leading-relaxed">
-                    Работа проверена преподавателем {initialSubmission.reviewed_at ? new Date(initialSubmission.reviewed_at).toLocaleString('ru-RU') : ''}.
+                    Работа проверена преподавателем{' '}
+                    {initialSubmission.reviewed_at
+                      ? new Date(initialSubmission.reviewed_at).toLocaleString('ru-RU')
+                      : ''}
+                    .
                   </p>
                   {initialSubmission.feedback && (
                     <div className="mt-2 p-2.5 bg-black/60 border border-emerald-500/40 text-emerald-200 text-xs">
-                      <span className="font-bold block text-emerald-300 mb-0.5">Рецензия преподавателя:</span>
+                      <span className="font-bold block text-emerald-300 mb-0.5">
+                        Рецензия преподавателя:
+                      </span>
                       <span>{initialSubmission.feedback}</span>
                     </div>
                   )}
@@ -1684,7 +1838,9 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                       </span>
                     </div>
                     <p className="text-zinc-400 leading-relaxed text-[11px]">
-                      Вы уже получили оценку {initialSubmission.score} (от 3 до 5). Повторное прохождение задания для улучшения оценки возможно только по согласованию с преподавателем.
+                      Вы уже получили оценку {initialSubmission.score} (от 3 до 5). Повторное
+                      прохождение задания для улучшения оценки возможно только по согласованию с
+                      преподавателем.
                     </p>
                   </div>
                 </div>
@@ -1701,7 +1857,8 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                         Преподаватель разрешил пересдачу
                       </div>
                       <p className="text-zinc-300 leading-relaxed text-[11px]">
-                        Вам открыт доступ на повторное прохождение задания (текущая оценка: {initialSubmission.score}). Вы можете обновить лог и контрольные вопросы.
+                        Вам открыт доступ на повторное прохождение задания (текущая оценка:{' '}
+                        {initialSubmission.score}). Вы можете обновить лог и контрольные вопросы.
                       </p>
                     </div>
                   </div>
@@ -1749,7 +1906,9 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                     Режим перепрохождения / внесения правок
                   </div>
                   <p className="text-zinc-300 leading-relaxed">
-                    Вы можете выбрать новые ответы на вопросы и обновить лог проверки в полях выше. При отправке новые ответы будут записаны в систему, а работа снова поступит в журнал преподавателя на проверку.
+                    Вы можете выбрать новые ответы на вопросы и обновить лог проверки в полях выше.
+                    При отправке новые ответы будут записаны в систему, а работа снова поступит в
+                    журнал преподавателя на проверку.
                   </p>
                 </div>
               </div>
@@ -1791,11 +1950,14 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                     </span>
                   </div>
                   <p className="text-zinc-200 leading-relaxed">
-                    Администратор отправил отчёт на доработку. Вы можете исправить данные в полях этапов 4 и 5 выше и отправить обновлённый отчёт на повторную проверку.
+                    Администратор отправил отчёт на доработку. Вы можете исправить данные в полях
+                    этапов 4 и 5 выше и отправить обновлённый отчёт на повторную проверку.
                   </p>
                   {initialSubmission.feedback && (
                     <div className="mt-2 p-2.5 bg-black/60 border border-amber-500/40 text-amber-200 text-xs">
-                      <span className="font-bold block text-amber-300 mb-0.5">Замечание проверяющего:</span>
+                      <span className="font-bold block text-amber-300 mb-0.5">
+                        Замечание проверяющего:
+                      </span>
                       <span>{initialSubmission.feedback}</span>
                     </div>
                   )}
@@ -1804,7 +1966,8 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="text-xs font-mono text-amber-400/90">
-                  После отправки статус изменится на «НА ПРОВЕРКЕ» и работа поступит в очередь на повторную проверку.
+                  После отправки статус изменится на «НА ПРОВЕРКЕ» и работа поступит в очередь на
+                  повторную проверку.
                 </div>
 
                 <Button

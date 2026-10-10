@@ -135,8 +135,8 @@ export function StandInstallationContent() {
                 поддержкой аппаратной виртуализации (Intel VT-x / AMD-V), включенной в BIOS/UEFI.
               </li>
               <li>
-                <strong className="text-white">Оперативная память (RAM):</strong> от 16 ГБ (рекомендуется
-                выделить виртуальной машине стенда не менее 12–14 ГБ).
+                <strong className="text-white">Оперативная память (RAM):</strong> от 16 ГБ
+                (рекомендуется выделить виртуальной машине стенда не менее 12–14 ГБ).
               </li>
               <li>
                 <strong className="text-white">Накопитель:</strong> от 60 ГБ свободного места
@@ -154,14 +154,15 @@ export function StandInstallationContent() {
               <li className="flex items-start gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
                 <div>
-                  <strong className="text-white">VMware Workstation Pro</strong> (версии 17+ или 25H2) — дистрибутив размещен в облачной папке стенда.
+                  <strong className="text-white">VMware Workstation Pro</strong> (версии 17+ или
+                  25H2) — дистрибутив размещен в облачной папке стенда.
                 </div>
               </li>
               <li className="flex items-start gap-1.5">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
                 <div>
-                  <strong className="text-white">Архиватор 7-Zip</strong> — для корректной распаковки
-                  архива без повреждения файлов виртуальных дисков.
+                  <strong className="text-white">Архиватор 7-Zip</strong> — для корректной
+                  распаковки архива без повреждения файлов виртуальных дисков.
                 </div>
               </li>
               <li className="flex items-start gap-1.5">
@@ -195,14 +196,24 @@ export function StandInstallationContent() {
 
         <div className="space-y-3 text-zinc-300 leading-relaxed">
           <p>
-            1. Распакуйте скачанный архив <code className="text-white font-bold bg-zinc-950 px-1 border border-zinc-800">DemoExam.7z</code> с
-            помощью 7-Zip в отдельную постоянную папку на быстром SSD (например, <code className="text-zinc-200">D:\VMs\DemoExam\</code>).
+            1. Распакуйте скачанный архив{' '}
+            <code className="text-white font-bold bg-zinc-950 px-1 border border-zinc-800">
+              DemoExam.7z
+            </code>{' '}
+            с помощью 7-Zip в отдельную постоянную папку на быстром SSD (например,{' '}
+            <code className="text-zinc-200">D:\VMs\DemoExam\</code>).
           </p>
           <p>
-            2. Запустите VMware Workstation и нажмите кнопку <strong className="text-white">«Open a Virtual Machine»</strong> (или через верхнее меню <em>File → Open</em>).
+            2. Запустите VMware Workstation и нажмите кнопку{' '}
+            <strong className="text-white">«Open a Virtual Machine»</strong> (или через верхнее меню{' '}
+            <em>File → Open</em>).
           </p>
           <p>
-            3. Перейдите в распакованную папку и выберите файл виртуальной машины <code className="text-amber-300 font-bold bg-zinc-950 px-1.5 py-0.5 border border-zinc-800">DemoExam.vmx</code>.
+            3. Перейдите в распакованную папку и выберите файл виртуальной машины{' '}
+            <code className="text-amber-300 font-bold bg-zinc-950 px-1.5 py-0.5 border border-zinc-800">
+              DemoExam.vmx
+            </code>
+            .
           </p>
         </div>
 
@@ -217,8 +228,8 @@ export function StandInstallationContent() {
             <div className="bg-zinc-900/80 border border-zinc-800 p-2.5 flex items-start gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
               <div>
-                <strong className="text-white">Memory (Оперативная память):</strong> выделите 16 ГБ (или
-                максимум доступного объема, но не менее 12 ГБ).
+                <strong className="text-white">Memory (Оперативная память):</strong> выделите 16 ГБ
+                (или максимум доступного объема, но не менее 12 ГБ).
               </div>
             </div>
 
@@ -232,21 +243,22 @@ export function StandInstallationContent() {
             <div className="bg-amber-500/10 border border-amber-500/30 p-2.5 flex items-start gap-2">
               <AlertTriangle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
               <div className="text-amber-200">
-                <strong className="text-amber-300 uppercase">Критически важный параметр:</strong> обязательно
-                включите флаг{' '}
+                <strong className="text-amber-300 uppercase">Критически важный параметр:</strong>{' '}
+                обязательно включите флаг{' '}
                 <strong className="text-white underline">
                   ☑ Virtualize Intel VT-x/EPT or AMD-V/RVI
-                </strong>. Без включенной вложенной виртуализации гипервизор Proxmox внутри машины не
-                сможет запустить вложенные операционные системы!
+                </strong>
+                . Без включенной вложенной виртуализации гипервизор Proxmox внутри машины не сможет
+                запустить вложенные операционные системы!
               </div>
             </div>
 
             <div className="bg-zinc-900/80 border border-zinc-800 p-2.5 flex items-start gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 mt-1.5 shrink-0" />
               <div>
-                <strong className="text-white">Network Adapter (Сетевой адаптер):</strong> установите в
-                режим <strong className="text-white">NAT</strong>, чтобы Proxmox получал доступ в Интернет
-                и IP-адрес через встроенный DHCP-сервер VMware.
+                <strong className="text-white">Network Adapter (Сетевой адаптер):</strong>{' '}
+                установите в режим <strong className="text-white">NAT</strong>, чтобы Proxmox
+                получал доступ в Интернет и IP-адрес через встроенный DHCP-сервер VMware.
               </div>
             </div>
           </div>
@@ -275,10 +287,10 @@ export function StandInstallationContent() {
               Внимание: обязательная смена IP-адреса стенда!
             </div>
             <p className="text-xs leading-relaxed text-red-200/90">
-              Поскольку вы разворачиваете стенд на новом ПК, IP-адрес из образа автора не совпадает с
-              вашей локальной подсетью VMware NAT. Вам необходимо <strong>ОБЯЗАТЕЛЬНО</strong> получить
-              новый IP-адрес через DHCP и зафиксировать его в файле конфигурации сети, чтобы в
-              дальнейшем не запрашивать IP заново при каждой перезагрузке.
+              Поскольку вы разворачиваете стенд на новом ПК, IP-адрес из образа автора не совпадает
+              с вашей локальной подсетью VMware NAT. Вам необходимо <strong>ОБЯЗАТЕЛЬНО</strong>{' '}
+              получить новый IP-адрес через DHCP и зафиксировать его в файле конфигурации сети,
+              чтобы в дальнейшем не запрашивать IP заново при каждой перезагрузке.
             </p>
           </div>
         </div>
@@ -287,9 +299,7 @@ export function StandInstallationContent() {
         <div className="space-y-3 pt-2">
           {/* Substep 3.1: Console login */}
           <div className="border border-zinc-800 bg-zinc-950 p-3.5 space-y-2">
-            <div className="text-white font-bold text-xs">
-              3.1. Вход в консоль Proxmox VE:
-            </div>
+            <div className="text-white font-bold text-xs">3.1. Вход в консоль Proxmox VE:</div>
             <p className="text-zinc-400">
               Кликните внутри окна виртуальной машины и авторизуйтесь под суперпользователем:
             </p>
@@ -330,13 +340,15 @@ export function StandInstallationContent() {
               <CopyButton text="ip -c --br a show vmbr0" />
             </div>
             <p className="text-zinc-400">
-              Смотрим, какой IP-адрес был выдан сетевому мосту <code className="text-zinc-200">vmbr0</code>:
+              Смотрим, какой IP-адрес был выдан сетевому мосту{' '}
+              <code className="text-zinc-200">vmbr0</code>:
             </p>
             <div className="bg-zinc-900 px-3 py-1.5 border border-zinc-800 text-emerald-300 font-mono text-xs">
               ip -c --br a show vmbr0
             </div>
             <p className="text-zinc-500 text-[11px]">
-              Запомните этот IP-адрес (например, <code className="text-zinc-300">192.168.237.133</code> или похожий из вашей подсети).
+              Запомните этот IP-адрес (например,{' '}
+              <code className="text-zinc-300">192.168.237.133</code> или похожий из вашей подсети).
             </p>
           </div>
 
@@ -356,12 +368,26 @@ export function StandInstallationContent() {
               nano /etc/network/interfaces
             </div>
             <p className="text-zinc-300 text-[11px] leading-relaxed">
-              В блоке <code className="text-amber-300">iface vmbr0 inet static</code> меняем значение{' '}
-              <code className="text-white">address</code> на ваш свежеполученный IP-адрес, а параметр{' '}
-              <code className="text-white">gateway</code> — на шлюз вашей подсети (как правило, с оканчивающимся на .2, например <code className="text-zinc-300">192.168.x.2</code>).
+              В блоке <code className="text-amber-300">iface vmbr0 inet static</code> меняем
+              значение <code className="text-white">address</code> на ваш свежеполученный IP-адрес,
+              а параметр <code className="text-white">gateway</code> — на шлюз вашей подсети (как
+              правило, с оканчивающимся на .2, например{' '}
+              <code className="text-zinc-300">192.168.x.2</code>).
             </p>
             <div className="text-zinc-500 text-[11px]">
-              Для сохранения в nano: нажмите <kbd className="px-1 bg-zinc-800 border border-zinc-700 text-white rounded">Ctrl+O</kbd>, затем <kbd className="px-1 bg-zinc-800 border border-zinc-700 text-white rounded">Enter</kbd>, для выхода — <kbd className="px-1 bg-zinc-800 border border-zinc-700 text-white rounded">Ctrl+X</kbd>.
+              Для сохранения в nano: нажмите{' '}
+              <kbd className="px-1 bg-zinc-800 border border-zinc-700 text-white rounded">
+                Ctrl+O
+              </kbd>
+              , затем{' '}
+              <kbd className="px-1 bg-zinc-800 border border-zinc-700 text-white rounded">
+                Enter
+              </kbd>
+              , для выхода —{' '}
+              <kbd className="px-1 bg-zinc-800 border border-zinc-700 text-white rounded">
+                Ctrl+X
+              </kbd>
+              .
             </div>
           </div>
 
@@ -381,7 +407,8 @@ export function StandInstallationContent() {
               <div>ip a show vmbr0</div>
             </div>
             <p className="text-zinc-300 text-[11px]">
-              После успешного перезапуска сетевой службы можно переходить к подключению через веб-интерфейс!
+              После успешного перезапуска сетевой службы можно переходить к подключению через
+              веб-интерфейс!
             </p>
           </div>
         </div>
@@ -398,7 +425,8 @@ export function StandInstallationContent() {
 
         <div className="space-y-3 text-zinc-300 leading-relaxed">
           <p>
-            1. Откройте любой веб-браузер на вашем основном компьютере (Chrome, Firefox, Яндекс.Браузер).
+            1. Откройте любой веб-браузер на вашем основном компьютере (Chrome, Firefox,
+            Яндекс.Браузер).
           </p>
           <p>
             2. Введите в адресную строку URL с портом <strong className="text-white">:8006</strong>:
@@ -411,9 +439,7 @@ export function StandInstallationContent() {
             <strong className="text-white">«Дополнительно»</strong> (или «Подробнее») и выберите{' '}
             <strong className="text-white">«Перейти на сайт...»</strong>.
           </p>
-          <p>
-            3. В окне авторизации Proxmox введите учетные данные:
-          </p>
+          <p>3. В окне авторизации Proxmox введите учетные данные:</p>
           <div className="flex flex-wrap gap-4 text-xs pt-1">
             <div className="bg-zinc-900 border border-zinc-800 px-3 py-2 flex items-center gap-2">
               <span className="text-zinc-400">User name:</span>
@@ -442,8 +468,8 @@ export function StandInstallationContent() {
 
         <p className="text-zinc-300 leading-relaxed">
           Чтобы убедиться, что гипервизор Proxmox имеет полноценный доступ в сеть для скачивания
-          пакетов и обновлений, открываем консоль ноды (<strong className="text-white">pve → Shell</strong>)
-          и выполняем диагностическую команду:
+          пакетов и обновлений, открываем консоль ноды (
+          <strong className="text-white">pve → Shell</strong>) и выполняем диагностическую команду:
         </p>
 
         <div className="border border-zinc-800 bg-zinc-950 p-4 space-y-3">
@@ -464,8 +490,9 @@ export function StandInstallationContent() {
               4 packets transmitted, 4 received, 0% packet loss
             </div>
             <p className="text-zinc-300 text-[11px] leading-relaxed">
-              Успешное прохождение 4 пакетов без потерь подтверждает, что маршрутизация, DNS-резолвинг
-              и сетевой мост гипервизора работают корректно. Стенд готов к выполнению экзаменационных заданий!
+              Успешное прохождение 4 пакетов без потерь подтверждает, что маршрутизация,
+              DNS-резолвинг и сетевой мост гипервизора работают корректно. Стенд готов к выполнению
+              экзаменационных заданий!
             </p>
           </div>
         </div>

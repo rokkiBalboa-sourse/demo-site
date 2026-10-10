@@ -77,7 +77,9 @@ export function AdminSettingsClient() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Ошибка сброса 2FA');
       setAdmin2FAEnabled(false);
-      setReset2FASuccess('2FA администратора успешно сброшена! При следующем входе по паролю система предложит настроить её заново.');
+      setReset2FASuccess(
+        '2FA администратора успешно сброшена! При следующем входе по паролю система предложит настроить её заново.'
+      );
       setTimeout(() => setReset2FASuccess(null), 6000);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Ошибка сброса 2FA');
@@ -158,7 +160,11 @@ export function AdminSettingsClient() {
       return;
     }
 
-    if (!confirm('Вы уверены, что хотите восстановить базу данных? Текущие данные будут заменены содержимым из файла.')) {
+    if (
+      !confirm(
+        'Вы уверены, что хотите восстановить базу данных? Текущие данные будут заменены содержимым из файла.'
+      )
+    ) {
       return;
     }
 
@@ -227,7 +233,7 @@ export function AdminSettingsClient() {
             <label className="text-xs text-zinc-300">Логин администратора:</label>
             <Input
               value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              onChange={e => setUsername(e.target.value)}
               placeholder="admin"
               required
               className="bg-zinc-950 text-white border-zinc-700"
@@ -238,7 +244,7 @@ export function AdminSettingsClient() {
             <label className="text-xs text-zinc-300">ФИО / Отображаемое имя:</label>
             <Input
               value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
+              onChange={e => setFullName(e.target.value)}
               placeholder="Кузнецов Валерий Сергеевич"
               required
               className="bg-zinc-950 text-white border-zinc-700"
@@ -253,7 +259,7 @@ export function AdminSettingsClient() {
               <Input
                 type={showPassword ? 'text' : 'password'}
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                onChange={e => setNewPassword(e.target.value)}
                 placeholder="Введите новый пароль"
                 className="bg-zinc-950 text-white border-zinc-700 pr-10"
               />
@@ -289,7 +295,9 @@ export function AdminSettingsClient() {
         <div className="p-3.5 bg-zinc-950 border border-zinc-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="space-y-0.5">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-zinc-200">Двухэтапная аутентификация (Google Authenticator):</span>
+              <span className="font-bold text-zinc-200">
+                Двухэтапная аутентификация (Google Authenticator):
+              </span>
               <span
                 className={`px-2 py-0.5 text-[10px] font-bold border ${
                   admin2FAEnabled
@@ -325,15 +333,17 @@ export function AdminSettingsClient() {
             <span>Альтернативный способ через файл .env:</span>
           </div>
           <p className="leading-relaxed">
-            Вы также можете задать учётные данные на сервере в файле <code className="text-cyan-300 bg-zinc-900 px-1 py-0.5">/opt/demo-practics/.env</code>:
+            Вы также можете задать учётные данные на сервере в файле{' '}
+            <code className="text-cyan-300 bg-zinc-900 px-1 py-0.5">/opt/demo-practics/.env</code>:
           </p>
           <pre className="p-2 bg-zinc-900 border border-zinc-800 text-cyan-300 text-[11px] overflow-x-auto">
-{`ADMIN_USERNAME=admin
+            {`ADMIN_USERNAME=admin
 ADMIN_PASSWORD=ваш_надежный_пароль
 ADMIN_NAME="Кузнецов Валерий Сергеевич"`}
           </pre>
           <p className="text-[11px] text-zinc-500">
-            При запуске контейнера система автоматически синхронизирует учётную запись с этими переменными.
+            При запуске контейнера система автоматически синхронизирует учётную запись с этими
+            переменными.
           </p>
         </div>
       </div>
@@ -376,7 +386,8 @@ ADMIN_NAME="Кузнецов Валерий Сергеевич"`}
               <span>1. Скачать резервную копию</span>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Выгружает актуальный снимок всей базы (учётные записи студентов, их группы, пароли, отправленные отчёты и рецензии) в JSON-файл на ваш компьютер.
+              Выгружает актуальный снимок всей базы (учётные записи студентов, их группы, пароли,
+              отправленные отчёты и рецензии) в JSON-файл на ваш компьютер.
             </p>
             <Button
               type="button"
@@ -396,7 +407,8 @@ ADMIN_NAME="Кузнецов Валерий Сергеевич"`}
               <span>2. Восстановить базу из файла</span>
             </div>
             <p className="text-xs text-zinc-400 leading-relaxed">
-              Восстанавливает базу данных из ранее сохранённого JSON-файла. Перед перезаписью на сервере автоматически создаётся страховочный файл бэкапа.
+              Восстанавливает базу данных из ранее сохранённого JSON-файла. Перед перезаписью на
+              сервере автоматически создаётся страховочный файл бэкапа.
             </p>
             <div className="space-y-2">
               <input
@@ -426,11 +438,21 @@ ADMIN_NAME="Кузнецов Валерий Сергеевич"`}
             <span>Защита данных от стирания при пересборке</span>
           </div>
           <p className="leading-relaxed text-zinc-300">
-            Теперь файл базы данных <code className="text-emerald-300 bg-black/50 px-1 py-0.5">.data/store.json</code> полностью <strong>исключён из Git-репозитория</strong> (добавлен в .gitignore).
+            Теперь файл базы данных{' '}
+            <code className="text-emerald-300 bg-black/50 px-1 py-0.5">.data/store.json</code>{' '}
+            полностью <strong>исключён из Git-репозитория</strong> (добавлен в .gitignore).
           </p>
           <ul className="list-disc list-inside space-y-1 text-zinc-400">
-            <li>Команды <code className="text-zinc-200">git pull</code> и <code className="text-zinc-200">git reset --hard</code> на сервере больше <strong>никогда не перезапишут</strong> вашу базу данных.</li>
-            <li>Каталог <code className="text-zinc-200">/opt/demo-practics/.data</code> примонтирован в Docker volume <code className="text-zinc-200">./.data:/app/.data</code>, поэтому пересборка контейнеров сохраняет 100% данных на диске сервера.</li>
+            <li>
+              Команды <code className="text-zinc-200">git pull</code> и{' '}
+              <code className="text-zinc-200">git reset --hard</code> на сервере больше{' '}
+              <strong>никогда не перезапишут</strong> вашу базу данных.
+            </li>
+            <li>
+              Каталог <code className="text-zinc-200">/opt/demo-practics/.data</code> примонтирован
+              в Docker volume <code className="text-zinc-200">./.data:/app/.data</code>, поэтому
+              пересборка контейнеров сохраняет 100% данных на диске сервера.
+            </li>
           </ul>
         </div>
       </div>

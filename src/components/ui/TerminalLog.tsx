@@ -59,9 +59,7 @@ export function TerminalLog({
       <div className={`p-3 overflow-auto text-xs leading-relaxed ${maxHeight}`}>
         <div className="table w-full">
           {lines.map((rawLine, idx) => {
-            const line = rawLine
-              .replace(/\x1b\[[0-9;]*m/g, '')
-              .replace(/\\033\[[0-9;]*m/g, '');
+            const line = rawLine.replace(/\x1b\[[0-9;]*m/g, '').replace(/\\033\[[0-9;]*m/g, '');
 
             let lineClass = 'text-zinc-300';
             if (/\[\s*FAIL\s*\]|\bFAIL\b/i.test(line)) {
@@ -79,9 +77,7 @@ export function TerminalLog({
                 <span className="table-cell pr-4 text-right text-zinc-600 select-none w-8">
                   {idx + 1}
                 </span>
-                <span className={`table-cell whitespace-pre ${lineClass}`}>
-                  {line || ' '}
-                </span>
+                <span className={`table-cell whitespace-pre ${lineClass}`}>{line || ' '}</span>
               </div>
             );
           })}

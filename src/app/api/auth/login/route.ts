@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { setSession, createSessionToken, SESSION_COOKIE_NAME, getSessionCookieOptions } from '@/lib/auth';
+import {
+  setSession,
+  createSessionToken,
+  SESSION_COOKIE_NAME,
+  getSessionCookieOptions,
+} from '@/lib/auth';
 import { generateTotpSecret, generateTotpQRCode, verifyTotpCode } from '@/lib/totp';
 
 export async function POST(req: NextRequest) {
@@ -9,10 +14,7 @@ export async function POST(req: NextRequest) {
     const { username, password, totpCode } = body;
 
     if (!username || typeof username !== 'string') {
-      return NextResponse.json(
-        { error: 'Укажите логин' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Укажите логин' }, { status: 400 });
     }
 
     const cleanUsername = username.trim();
@@ -55,17 +57,11 @@ export async function POST(req: NextRequest) {
 
     // СЦЕНАРИЙ 2: Вход по логину и паролю (первичный вход или настройка)
     if (!password) {
-      return NextResponse.json(
-        { error: 'Укажите пароль' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Укажите пароль' }, { status: 400 });
     }
 
     if (!user || user.password_hash !== password) {
-      return NextResponse.json(
-        { error: 'Логин или пароль неверны' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Логин или пароль неверны' }, { status: 401 });
     }
 
     // Если 2FA уже привязана, сообщаем клиенту, что нужен 6-значный код
@@ -100,9 +96,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Login error', error);
-    return NextResponse.json(
-      { error: 'Внутренняя ошибка сервера' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Внутренняя ошибка сервера' }, { status: 500 });
   }
 }

@@ -5,9 +5,7 @@ import { SessionUser } from './types';
 export const SESSION_COOKIE_NAME = 'sudostudy_session';
 
 export function createSessionToken(userId: string): string {
-  return Buffer.from(
-    JSON.stringify({ userId, timestamp: Date.now() })
-  ).toString('base64');
+  return Buffer.from(JSON.stringify({ userId, timestamp: Date.now() })).toString('base64');
 }
 
 export function getSessionCookieOptions() {

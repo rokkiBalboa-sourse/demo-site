@@ -20,9 +20,7 @@ export function ReviewForm({ submission }: ReviewFormProps) {
     submission.is_passed !== null ? submission.is_passed : true
   );
   const [feedback, setFeedback] = useState<string>(submission.feedback || '');
-  const [allowRetake, setAllowRetake] = useState<boolean>(
-    Boolean(submission.allow_retake)
-  );
+  const [allowRetake, setAllowRetake] = useState<boolean>(Boolean(submission.allow_retake));
   const [isLoading, setIsLoading] = useState(false);
   const [isTogglingRetake, setIsTogglingRetake] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -109,7 +107,9 @@ export function ReviewForm({ submission }: ReviewFormProps) {
           >
             <div className="flex items-center gap-2">
               <Check className={`w-4 h-4 ${isPassed ? 'text-emerald-400' : 'text-zinc-500'}`} />
-              <span className="font-mono text-xs font-bold uppercase tracking-wider">Проверено</span>
+              <span className="font-mono text-xs font-bold uppercase tracking-wider">
+                Проверено
+              </span>
             </div>
             <span className="text-[11px] font-mono opacity-80">Работа принята</span>
           </button>
@@ -125,7 +125,9 @@ export function ReviewForm({ submission }: ReviewFormProps) {
           >
             <div className="flex items-center gap-2">
               <X className={`w-4 h-4 ${!isPassed ? 'text-amber-400' : 'text-zinc-500'}`} />
-              <span className="font-mono text-xs font-bold uppercase tracking-wider">На доработку</span>
+              <span className="font-mono text-xs font-bold uppercase tracking-wider">
+                На доработку
+              </span>
             </div>
             <span className="text-[11px] font-mono opacity-80">Требуются исправления</span>
           </button>
@@ -179,7 +181,7 @@ export function ReviewForm({ submission }: ReviewFormProps) {
               activeClass:
                 'bg-rose-950/80 text-rose-300 border-rose-500 shadow-[0_0_15px_rgba(244,63,94,0.35)] ring-1 ring-rose-500/50 font-bold',
             },
-          ].map((grade) => {
+          ].map(grade => {
             const isSelected = score === grade.value;
             return (
               <button
@@ -209,7 +211,7 @@ export function ReviewForm({ submission }: ReviewFormProps) {
         </label>
         <Textarea
           value={feedback}
-          onChange={(e) => setFeedback(e.target.value)}
+          onChange={e => setFeedback(e.target.value)}
           rows={4}
           placeholder="Укажите, что настроено правильно, и опишите найденные недочёты или ошибки в конфигурации..."
           className="text-xs bg-zinc-950 border-zinc-800 text-zinc-100 resize-y"
@@ -245,8 +247,8 @@ export function ReviewForm({ submission }: ReviewFormProps) {
           {Number(score) >= 3
             ? 'Студент с оценкой 3–5 не может пересдать задание самостоятельно. Включите разрешение, если студент запросил пересдачу для исправления работы.'
             : Number(score) === 2 || !isPassed
-            ? 'При оценке 2 (или «На доработку») студент может отправить исправления повторно.'
-            : 'По умолчанию положительная оценка (3, 4, 5) блокирует повторное прохождение задания студентом.'}
+              ? 'При оценке 2 (или «На доработку») студент может отправить исправления повторно.'
+              : 'По умолчанию положительная оценка (3, 4, 5) блокирует повторное прохождение задания студентом.'}
         </p>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-zinc-800/80">
@@ -254,7 +256,7 @@ export function ReviewForm({ submission }: ReviewFormProps) {
             <input
               type="checkbox"
               checked={allowRetake}
-              onChange={(e) => setAllowRetake(e.target.checked)}
+              onChange={e => setAllowRetake(e.target.checked)}
               className="w-4 h-4 rounded bg-zinc-900 border-zinc-700 text-emerald-500 focus:ring-0 cursor-pointer"
             />
             <span className="text-[11px]">Разрешить пересдачу при сохранении</span>

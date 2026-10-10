@@ -6,7 +6,16 @@ import { Header } from '@/components/Header';
 import { Badge } from '@/components/ui/Badge';
 import { TerminalLog } from '@/components/ui/TerminalLog';
 import { ReviewForm } from './ReviewForm';
-import { ChevronLeft, User, Calendar, BookOpen, Clock, CheckCircle2, AlertTriangle, Server } from 'lucide-react';
+import {
+  ChevronLeft,
+  User,
+  Calendar,
+  BookOpen,
+  Clock,
+  CheckCircle2,
+  AlertTriangle,
+  Server,
+} from 'lucide-react';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -185,9 +194,9 @@ export default async function SubmissionReviewPage({ params }: PageProps) {
                               <strong className="text-white bg-zinc-800 px-1.5 py-0.5 border border-zinc-700 mr-1.5">
                                 {answer}
                               </strong>
-                              {q.options.find((o) => o.id === answer) && (
+                              {q.options.find(o => o.id === answer) && (
                                 <span className="text-zinc-300">
-                                  {q.options.find((o) => o.id === answer)?.text}
+                                  {q.options.find(o => o.id === answer)?.text}
                                 </span>
                               )}
                             </span>
@@ -223,7 +232,9 @@ export default async function SubmissionReviewPage({ params }: PageProps) {
               })}
             </div>
           ) : (
-            <p className="text-xs font-mono text-zinc-500">К данному заданию нет контрольных вопросов.</p>
+            <p className="text-xs font-mono text-zinc-500">
+              К данному заданию нет контрольных вопросов.
+            </p>
           )}
         </div>
 

@@ -15,7 +15,8 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Не указан ID отчёта' }, { status: 400 });
     }
 
-    const parsedScore = score === '' || score === null || score === undefined ? null : Number(score);
+    const parsedScore =
+      score === '' || score === null || score === undefined ? null : Number(score);
 
     const updated = await db.reviewSubmission(submissionId, session.id, {
       score: parsedScore,
@@ -31,9 +32,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, submission: updated });
   } catch (error) {
     console.error('Review error', error);
-    return NextResponse.json(
-      { error: 'Ошибка сохранения проверки' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Ошибка сохранения проверки' }, { status: 500 });
   }
 }

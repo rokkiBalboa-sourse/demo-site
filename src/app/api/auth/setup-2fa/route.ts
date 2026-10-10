@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { setSession, createSessionToken, SESSION_COOKIE_NAME, getSessionCookieOptions } from '@/lib/auth';
+import {
+  setSession,
+  createSessionToken,
+  SESSION_COOKIE_NAME,
+  getSessionCookieOptions,
+} from '@/lib/auth';
 import { verifyTotpCode } from '@/lib/totp';
 
 export async function POST(req: NextRequest) {
@@ -20,10 +25,7 @@ export async function POST(req: NextRequest) {
       const decoded = Buffer.from(setupToken, 'base64').toString('utf-8');
       payload = JSON.parse(decoded);
     } catch {
-      return NextResponse.json(
-        { error: 'Некорректный токен настройки 2FA' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Некорректный токен настройки 2FA' }, { status: 400 });
     }
 
     if (Date.now() > payload.exp) {
@@ -44,7 +46,10 @@ export async function POST(req: NextRequest) {
     const isValid = verifyTotpCode(user.two_factor_temp_secret, code, user.username);
     if (!isValid) {
       return NextResponse.json(
-        { error: 'Неверный 6-значный код. Убедитесь, что время на телефоне точное, и введите код ещё раз.' },
+        {
+          error:
+            'Неверный 6-значный код. Убедитесь, что время на телефоне точное, и введите код ещё раз.',
+        },
         { status: 400 }
       );
     }
@@ -77,9 +82,6 @@ export async function POST(req: NextRequest) {
     return response;
   } catch (error) {
     console.error('Setup 2FA error', error);
-    return NextResponse.json(
-      { error: 'Внутренняя ошибка при привязке 2FA' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Внутренняя ошибка при привязке 2FA' }, { status: 500 });
   }
 }

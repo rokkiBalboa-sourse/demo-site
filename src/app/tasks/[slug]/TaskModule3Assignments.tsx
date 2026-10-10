@@ -1,5 +1,21 @@
 import React from 'react';
-import { ExternalLink, CheckCircle2, AlertTriangle, Shield, Network, Clock, Server, Globe, HardDrive, Printer, Activity, Terminal, Lock, Archive, Key } from 'lucide-react';
+import {
+  ExternalLink,
+  CheckCircle2,
+  AlertTriangle,
+  Shield,
+  Network,
+  Clock,
+  Server,
+  Globe,
+  HardDrive,
+  Printer,
+  Activity,
+  Terminal,
+  Lock,
+  Archive,
+  Key,
+} from 'lucide-react';
 import { Task } from '@/lib/types';
 
 interface TaskProps {
@@ -41,9 +57,19 @@ export function VimCheatsheet() {
         <span>Памятка по работе в текстовом редакторе Vim</span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] pt-1">
-        <div>• Вход в режим вставки: клавиша <kbd className="text-amber-300 bg-zinc-900 px-1 border border-zinc-700">i</kbd></div>
-        <div>• Выход в командный режим: клавиша <kbd className="text-amber-300 bg-zinc-900 px-1 border border-zinc-700">Esc</kbd></div>
-        <div>• Сохранить и выйти: команда <kbd className="text-emerald-300 bg-zinc-900 px-1 border border-zinc-700">:wq</kbd> + Enter</div>
+        <div>
+          • Вход в режим вставки: клавиша{' '}
+          <kbd className="text-amber-300 bg-zinc-900 px-1 border border-zinc-700">i</kbd>
+        </div>
+        <div>
+          • Выход в командный режим: клавиша{' '}
+          <kbd className="text-amber-300 bg-zinc-900 px-1 border border-zinc-700">Esc</kbd>
+        </div>
+        <div>
+          • Сохранить и выйти: команда{' '}
+          <kbd className="text-emerald-300 bg-zinc-900 px-1 border border-zinc-700">:wq</kbd> +
+          Enter
+        </div>
       </div>
     </div>
   );
@@ -65,10 +91,21 @@ export function Task1Module3Assignment({ task }: TaskProps) {
           <span>Описание задачи:</span>
         </div>
         <p className="text-zinc-300">
-          В данном задании на контроллере домена (<strong className="text-white">BR-SRV</strong>) выполняется автоматизированный импорт пользователей из файла <code className="text-amber-300 font-bold bg-zinc-900 px-1 border border-zinc-800">Users.csv</code>, находящегося на подключаемом компакт-диске <code className="text-sky-300 font-bold">Additional.iso</code>.
+          В данном задании на контроллере домена (<strong className="text-white">BR-SRV</strong>)
+          выполняется автоматизированный импорт пользователей из файла{' '}
+          <code className="text-amber-300 font-bold bg-zinc-900 px-1 border border-zinc-800">
+            Users.csv
+          </code>
+          , находящегося на подключаемом компакт-диске{' '}
+          <code className="text-sky-300 font-bold">Additional.iso</code>.
         </p>
         <p className="text-zinc-300">
-          Скрипт формирует логины пользователей в формате <code className="text-amber-300 font-bold">фамилия.первая_буква_имени</code> в нижнем регистре (например, <code className="text-sky-300">ivanov.i</code>), задаёт пароль <code className="text-emerald-300 font-bold">P@ssw0rd1</code>, заполняет атрибуты учетных записей (имя, фамилия, должность, телефон), автоматически создаёт подразделения (OU) и перемещает пользователей в соответствующие подразделения.
+          Скрипт формирует логины пользователей в формате{' '}
+          <code className="text-amber-300 font-bold">фамилия.первая_буква_имени</code> в нижнем
+          регистре (например, <code className="text-sky-300">ivanov.i</code>), задаёт пароль{' '}
+          <code className="text-emerald-300 font-bold">P@ssw0rd1</code>, заполняет атрибуты учетных
+          записей (имя, фамилия, должность, телефон), автоматически создаёт подразделения (OU) и
+          перемещает пользователей в соответствующие подразделения.
         </p>
       </div>
 
@@ -79,11 +116,17 @@ export function Task1Module3Assignment({ task }: TaskProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div className="bg-zinc-900/70 border border-zinc-800 p-3 space-y-1">
             <span className="font-bold text-amber-300 block">BR-SRV (Контроллер домена)</span>
-            <span className="text-zinc-400 text-[11px]">Монтирование диска Additional.iso, нормализация кодировки через iconv, написание и выполнение скрипта import.sh.</span>
+            <span className="text-zinc-400 text-[11px]">
+              Монтирование диска Additional.iso, нормализация кодировки через iconv, написание и
+              выполнение скрипта import.sh.
+            </span>
           </div>
           <div className="bg-zinc-900/70 border border-zinc-800 p-3 space-y-1">
             <span className="font-bold text-emerald-300 block">HQ-CLI (Рабочая станция)</span>
-            <span className="text-zinc-400 text-[11px]">Проверка интерактивного входа через GUI под созданным пользователем (ivanov.i / P@ssw0rd1).</span>
+            <span className="text-zinc-400 text-[11px]">
+              Проверка интерактивного входа через GUI под созданным пользователем (ivanov.i /
+              P@ssw0rd1).
+            </span>
           </div>
         </div>
       </div>
@@ -132,10 +175,19 @@ export function Task2Module3Assignment({ task }: TaskProps) {
           <span>Описание задачи:</span>
         </div>
         <p className="text-zinc-300">
-          В данном задании на узле <strong className="text-white">ISP</strong> настраивается Центр сертификации с использованием отечественных криптографических алгоритмов ГОСТ (<code className="text-amber-300 font-bold">openssl-gost-engine</code>).
+          В данном задании на узле <strong className="text-white">ISP</strong> настраивается Центр
+          сертификации с использованием отечественных криптографических алгоритмов ГОСТ (
+          <code className="text-amber-300 font-bold">openssl-gost-engine</code>).
         </p>
         <p className="text-zinc-300">
-          Выпускаются сертификаты со сроком действия ровно <strong className="text-white">30 дней</strong> для доменных имён <code className="text-sky-300 font-bold">web.au-team.irpo</code> и <code className="text-sky-300 font-bold">docker.au-team.irpo</code>. Реверсивный прокси-сервер Nginx переводится на протокол HTTPS (порт 443) с ГОСТ-шифрованием. На рабочей станции <strong className="text-white">HQ-CLI</strong> устанавливается СКЗИ КриптоПро CSP, импортируется корневой сертификат и проверяется защищённый доступ без предупреждений безопасности.
+          Выпускаются сертификаты со сроком действия ровно{' '}
+          <strong className="text-white">30 дней</strong> для доменных имён{' '}
+          <code className="text-sky-300 font-bold">web.au-team.irpo</code> и{' '}
+          <code className="text-sky-300 font-bold">docker.au-team.irpo</code>. Реверсивный
+          прокси-сервер Nginx переводится на протокол HTTPS (порт 443) с ГОСТ-шифрованием. На
+          рабочей станции <strong className="text-white">HQ-CLI</strong> устанавливается СКЗИ
+          КриптоПро CSP, импортируется корневой сертификат и проверяется защищённый доступ без
+          предупреждений безопасности.
         </p>
       </div>
 
@@ -199,10 +251,18 @@ export function Task3Module3Assignment({ task }: TaskProps) {
           <span>Описание задачи:</span>
         </div>
         <p className="text-zinc-300">
-          В данном задании базовый незашифрованный туннель GRE между маршрутизаторами <strong className="text-white">HQ-RTR</strong> и <strong className="text-white">BR-RTR</strong> заменяется на защищённый шифрованный туннель на базе <strong className="text-white">OpenVPN</strong> с использованием статического ключа шифрования (Static Key) и шифра <code className="text-amber-300 font-bold">AES-256-CBC</code>.
+          В данном задании базовый незашифрованный туннель GRE между маршрутизаторами{' '}
+          <strong className="text-white">HQ-RTR</strong> и{' '}
+          <strong className="text-white">BR-RTR</strong> заменяется на защищённый шифрованный
+          туннель на базе <strong className="text-white">OpenVPN</strong> с использованием
+          статического ключа шифрования (Static Key) и шифра{' '}
+          <code className="text-amber-300 font-bold">AES-256-CBC</code>.
         </p>
         <p className="text-zinc-300">
-          Интерфейс старого туннеля <code className="text-rose-400">gre1</code> удаляется, а в конфигурации службы динамической маршрутизации FRR (OSPF) интерфейс переключается на <code className="text-emerald-300 font-bold">tun0</code>, восстанавливая связность и обмен маршрутами между офисами.
+          Интерфейс старого туннеля <code className="text-rose-400">gre1</code> удаляется, а в
+          конфигурации службы динамической маршрутизации FRR (OSPF) интерфейс переключается на{' '}
+          <code className="text-emerald-300 font-bold">tun0</code>, восстанавливая связность и обмен
+          маршрутами между офисами.
         </p>
       </div>
 
@@ -249,10 +309,19 @@ export function Task4Module3Assignment({ task }: TaskProps) {
           <span>Описание задачи:</span>
         </div>
         <p className="text-zinc-300">
-          В данном задании на пограничных маршрутизаторах <strong className="text-white">HQ-RTR</strong> и <strong className="text-white">BR-RTR</strong> настраивается межсетевой экран на базе <strong className="text-white">nftables</strong>.
+          В данном задании на пограничных маршрутизаторах{' '}
+          <strong className="text-white">HQ-RTR</strong> и{' '}
+          <strong className="text-white">BR-RTR</strong> настраивается межсетевой экран на базе{' '}
+          <strong className="text-white">nftables</strong>.
         </p>
         <p className="text-zinc-300">
-          В конфигурационный файл добавляется таблица <code className="text-amber-300 font-bold">inet filter</code> с цепочкой <code className="text-amber-300 font-bold">input</code>, разрешающей прохождение сетевых протоколов (DNS, HTTP, HTTPS, NTP, ICMP, GRE, OSPF, UDP 500), доступ из внутренних доверенных офисных подсетей и установленные соединения, а весь остальной входящий IPv4-трафик со стороны внешней сети сбрасывается (<code className="text-rose-400 font-bold">ip version 4 drop</code>).
+          В конфигурационный файл добавляется таблица{' '}
+          <code className="text-amber-300 font-bold">inet filter</code> с цепочкой{' '}
+          <code className="text-amber-300 font-bold">input</code>, разрешающей прохождение сетевых
+          протоколов (DNS, HTTP, HTTPS, NTP, ICMP, GRE, OSPF, UDP 500), доступ из внутренних
+          доверенных офисных подсетей и установленные соединения, а весь остальной входящий
+          IPv4-трафик со стороны внешней сети сбрасывается (
+          <code className="text-rose-400 font-bold">ip version 4 drop</code>).
         </p>
       </div>
 
@@ -262,7 +331,9 @@ export function Task4Module3Assignment({ task }: TaskProps) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
           <div className="bg-zinc-900/80 border border-zinc-800 p-2.5 space-y-1">
-            <span className="text-emerald-400 font-bold block">✓ Разрешённые службы и протоколы:</span>
+            <span className="text-emerald-400 font-bold block">
+              ✓ Разрешённые службы и протоколы:
+            </span>
             <ul className="text-zinc-400 space-y-0.5 text-[10px]">
               <li>• UDP 53 (DNS) | TCP 80 (HTTP) | TCP 443 (HTTPS)</li>
               <li>• TCP 123 (NTP) | UDP 500 (ISAKMP/IKE)</li>
@@ -271,12 +342,16 @@ export function Task4Module3Assignment({ task }: TaskProps) {
             </ul>
           </div>
           <div className="bg-zinc-900/80 border border-zinc-800 p-2.5 space-y-1">
-            <span className="text-sky-400 font-bold block">✓ Доверенные подсети и действие по умолчанию:</span>
+            <span className="text-sky-400 font-bold block">
+              ✓ Доверенные подсети и действие по умолчанию:
+            </span>
             <ul className="text-zinc-400 space-y-0.5 text-[10px]">
               <li>• 192.168.100.0/27 (Серверный сегмент HQ-SRV)</li>
               <li>• 192.168.200.0/28 (Клиентский сегмент HQ-CLI)</li>
               <li>• 192.168.30.0/28 (Сегмент филиала BR-SRV)</li>
-              <li className="text-rose-400 font-bold pt-1">• Запрет внешнего трафика: ip version 4 drop;</li>
+              <li className="text-rose-400 font-bold pt-1">
+                • Запрет внешнего трафика: ip version 4 drop;
+              </li>
             </ul>
           </div>
         </div>
@@ -302,10 +377,16 @@ export function Task5Module3Assignment({ task }: TaskProps) {
           <span>Описание задачи:</span>
         </div>
         <p className="text-zinc-300">
-          В данном задании на сервере центрального офиса (<strong className="text-white">HQ-SRV</strong>) настраивается служба печати <strong className="text-white">CUPS</strong> и модуль виртуального PDF-принтера <strong className="text-white">cups-pdf</strong>.
+          В данном задании на сервере центрального офиса (
+          <strong className="text-white">HQ-SRV</strong>) настраивается служба печати{' '}
+          <strong className="text-white">CUPS</strong> и модуль виртуального PDF-принтера{' '}
+          <strong className="text-white">cups-pdf</strong>.
         </p>
         <p className="text-zinc-300">
-          В конфигурационном файле разрешается удалённый доступ к принтерам и администрированию, после чего на клиентской машине <strong className="text-white">HQ-CLI</strong> через графическую панель параметров печати выполняется поиск и подключение опубликованного сетевого принтера.
+          В конфигурационном файле разрешается удалённый доступ к принтерам и администрированию,
+          после чего на клиентской машине <strong className="text-white">HQ-CLI</strong> через
+          графическую панель параметров печати выполняется поиск и подключение опубликованного
+          сетевого принтера.
         </p>
       </div>
 
@@ -314,9 +395,22 @@ export function Task5Module3Assignment({ task }: TaskProps) {
           Ключевые директивы /etc/cups/cupsd.conf:
         </div>
         <div className="bg-zinc-900/90 border border-zinc-800 p-3 space-y-1.5 text-[11px]">
-          <div><code className="text-emerald-300 font-bold">Listen 192.168.1.10:631</code> — привязка демона к сетевому IP-адресу сервера</div>
-          <div><code className="text-sky-300 font-bold">&lt;Location /&gt; Allow all &lt;/Location&gt;</code> — общий доступ клиентов к очередям печати</div>
-          <div><code className="text-amber-300 font-bold">&lt;Location /admin&gt; Allow all &lt;/Location&gt;</code> — доступ к веб-консоли администрирования</div>
+          <div>
+            <code className="text-emerald-300 font-bold">Listen 192.168.1.10:631</code> — привязка
+            демона к сетевому IP-адресу сервера
+          </div>
+          <div>
+            <code className="text-sky-300 font-bold">
+              &lt;Location /&gt; Allow all &lt;/Location&gt;
+            </code>{' '}
+            — общий доступ клиентов к очередям печати
+          </div>
+          <div>
+            <code className="text-amber-300 font-bold">
+              &lt;Location /admin&gt; Allow all &lt;/Location&gt;
+            </code>{' '}
+            — доступ к веб-консоли администрирования
+          </div>
         </div>
       </div>
     </div>
@@ -340,10 +434,21 @@ export function Task6Module3Assignment({ task }: TaskProps) {
           <span>Описание задачи:</span>
         </div>
         <p className="text-zinc-300">
-          В данном задании на сервере главного офиса (<strong className="text-white">HQ-SRV</strong>) настраивается централизованный приём системных журналов с помощью <strong className="text-white">rsyslog</strong>.
+          В данном задании на сервере главного офиса (<strong className="text-white">HQ-SRV</strong>
+          ) настраивается централизованный приём системных журналов с помощью{' '}
+          <strong className="text-white">rsyslog</strong>.
         </p>
         <p className="text-zinc-300">
-          На клиентских узлах (<strong className="text-white">HQ-RTR, BR-RTR, BR-SRV</strong>) включается пересылка событий из <code className="text-sky-300 font-bold">systemd-journald</code> в rsyslog с фильтром важности не ниже warning (<code className="text-amber-300 font-bold">*.warn @192.168.1.10</code>). Приходящие логи на сервере автоматически сохраняются в поддиректории <code className="text-emerald-300 font-bold">/opt/%HOSTNAME%/</code>. Сам сервер изолирован от записи собственных логов в эти каталоги. Для архивации журналов настраивается <strong className="text-white">logrotate</strong> с еженедельным запуском через cron.
+          На клиентских узлах (<strong className="text-white">HQ-RTR, BR-RTR, BR-SRV</strong>)
+          включается пересылка событий из{' '}
+          <code className="text-sky-300 font-bold">systemd-journald</code> в rsyslog с фильтром
+          важности не ниже warning (
+          <code className="text-amber-300 font-bold">*.warn @192.168.1.10</code>). Приходящие логи
+          на сервере автоматически сохраняются в поддиректории{' '}
+          <code className="text-emerald-300 font-bold">/opt/%HOSTNAME%/</code>. Сам сервер
+          изолирован от записи собственных логов в эти каталоги. Для архивации журналов
+          настраивается <strong className="text-white">logrotate</strong> с еженедельным запуском
+          через cron.
         </p>
       </div>
 
@@ -353,12 +458,21 @@ export function Task6Module3Assignment({ task }: TaskProps) {
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[11px]">
           <div className="bg-zinc-900/80 border border-zinc-800 p-2.5 space-y-1">
-            <span className="text-amber-400 font-bold block">Клиенты (HQ-RTR, BR-RTR, BR-SRV):</span>
-            <span className="text-zinc-400 block text-[10px]">ForwardToSyslog=yes, MaxLevelSyslog=warning, *.warn @192.168.1.10</span>
+            <span className="text-amber-400 font-bold block">
+              Клиенты (HQ-RTR, BR-RTR, BR-SRV):
+            </span>
+            <span className="text-zinc-400 block text-[10px]">
+              ForwardToSyslog=yes, MaxLevelSyslog=warning, *.warn @192.168.1.10
+            </span>
           </div>
           <div className="bg-zinc-900/80 border border-zinc-800 p-2.5 space-y-1">
-            <span className="text-emerald-400 font-bold block">Сервер сбора и ротации (HQ-SRV):</span>
-            <span className="text-zinc-400 block text-[10px]">Шаблон /opt/%HOSTNAME%/%PROGRAMNAME%.log, отключен imuxsock, logrotate weekly minsize 10M</span>
+            <span className="text-emerald-400 font-bold block">
+              Сервер сбора и ротации (HQ-SRV):
+            </span>
+            <span className="text-zinc-400 block text-[10px]">
+              Шаблон /opt/%HOSTNAME%/%PROGRAMNAME%.log, отключен imuxsock, logrotate weekly minsize
+              10M
+            </span>
           </div>
         </div>
       </div>
@@ -383,10 +497,20 @@ export function Task7Module3Assignment({ task }: TaskProps) {
           <span>Описание задачи:</span>
         </div>
         <p className="text-zinc-300">
-          В данном задании на сервере главного офиса (<strong className="text-white">HQ-SRV</strong>) развёртывается стек мониторинга на базе <strong className="text-white">Prometheus</strong>, агентов <strong className="text-white">Node Exporter</strong> и системы визуализации <strong className="text-white">Grafana</strong>.
+          В данном задании на сервере главного офиса (<strong className="text-white">HQ-SRV</strong>
+          ) развёртывается стек мониторинга на базе{' '}
+          <strong className="text-white">Prometheus</strong>, агентов{' '}
+          <strong className="text-white">Node Exporter</strong> и системы визуализации{' '}
+          <strong className="text-white">Grafana</strong>.
         </p>
         <p className="text-zinc-300">
-          На контроллере домена (<strong className="text-white">BR-SRV</strong>) создаётся DNS-запись CNAME <code className="text-amber-300 font-bold">mon</code> для перенаправления на <code className="text-sky-300 font-bold">hq-srv.au-team.irpo</code>. На сервере HQ-SRV настраивается сбор метрик с серверов HQ-SRV (порт 9100) и BR-SRV (порт 9100), в Grafana подключается источник данных Prometheus, импортируется дашборд <code className="text-emerald-300 font-bold">1860</code>, а пароль администратора меняется на <code className="text-emerald-300 font-bold">P@ssw0rd</code>.
+          На контроллере домена (<strong className="text-white">BR-SRV</strong>) создаётся
+          DNS-запись CNAME <code className="text-amber-300 font-bold">mon</code> для перенаправления
+          на <code className="text-sky-300 font-bold">hq-srv.au-team.irpo</code>. На сервере HQ-SRV
+          настраивается сбор метрик с серверов HQ-SRV (порт 9100) и BR-SRV (порт 9100), в Grafana
+          подключается источник данных Prometheus, импортируется дашборд{' '}
+          <code className="text-emerald-300 font-bold">1860</code>, а пароль администратора меняется
+          на <code className="text-emerald-300 font-bold">P@ssw0rd</code>.
         </p>
       </div>
 
@@ -433,10 +557,21 @@ export function Task8Module3Assignment({ task }: TaskProps) {
           <span>Описание задачи:</span>
         </div>
         <p className="text-zinc-300">
-          В данном задании на сервере управления <strong className="text-white">BR-SRV</strong> настраивается автоматизированная инвентаризация сетевых узлов <strong className="text-white">HQ-SRV</strong> и <strong className="text-white">HQ-CLI</strong> с помощью инструмента автоматизации <strong className="text-white">Ansible</strong>.
+          В данном задании на сервере управления <strong className="text-white">BR-SRV</strong>{' '}
+          настраивается автоматизированная инвентаризация сетевых узлов{' '}
+          <strong className="text-white">HQ-SRV</strong> и{' '}
+          <strong className="text-white">HQ-CLI</strong> с помощью инструмента автоматизации{' '}
+          <strong className="text-white">Ansible</strong>.
         </p>
         <p className="text-zinc-300">
-          Плейбук <code className="text-amber-300 font-bold">get_hostname_address.yml</code> копируется с диска Additional.iso. При выполнении плейбук опрашивает целевые машины через сбор фактов <code className="text-sky-300 font-bold">gather_facts: true</code> и сохраняет отчёты в формате <code className="text-emerald-300 font-bold">.yml</code> в каталог <code className="text-white bg-zinc-900 px-1 border border-zinc-800">/etc/ansible/PC-INFO/</code> с именами компьютеров, фиксируя имя хоста (Hostname) и его сетевой IP-адрес (IP_Address).
+          Плейбук <code className="text-amber-300 font-bold">get_hostname_address.yml</code>{' '}
+          копируется с диска Additional.iso. При выполнении плейбук опрашивает целевые машины через
+          сбор фактов <code className="text-sky-300 font-bold">gather_facts: true</code> и сохраняет
+          отчёты в формате <code className="text-emerald-300 font-bold">.yml</code> в каталог{' '}
+          <code className="text-white bg-zinc-900 px-1 border border-zinc-800">
+            /etc/ansible/PC-INFO/
+          </code>{' '}
+          с именами компьютеров, фиксируя имя хоста (Hostname) и его сетевой IP-адрес (IP_Address).
         </p>
       </div>
 
@@ -447,11 +582,19 @@ export function Task8Module3Assignment({ task }: TaskProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px]">
           <div className="bg-zinc-900/90 border border-zinc-800 p-2.5">
             <span className="text-amber-300 block font-bold">/etc/ansible/PC-INFO/hq-srv.yml</span>
-            <code className="text-zinc-400 block text-[10px] pt-1">Hostname: hq-srv<br />IP_Address: 192.168.1.10</code>
+            <code className="text-zinc-400 block text-[10px] pt-1">
+              Hostname: hq-srv
+              <br />
+              IP_Address: 192.168.1.10
+            </code>
           </div>
           <div className="bg-zinc-900/90 border border-zinc-800 p-2.5">
             <span className="text-sky-300 block font-bold">/etc/ansible/PC-INFO/hq-cli.yml</span>
-            <code className="text-zinc-400 block text-[10px] pt-1">Hostname: hq-cli<br />IP_Address: 192.168.2.10</code>
+            <code className="text-zinc-400 block text-[10px] pt-1">
+              Hostname: hq-cli
+              <br />
+              IP_Address: 192.168.2.10
+            </code>
           </div>
         </div>
       </div>
@@ -475,10 +618,16 @@ export function Task9Module3Assignment({ task }: TaskProps) {
           <span>Описание задачи:</span>
         </div>
         <p className="text-zinc-300">
-          В данном задании на сервере главного офиса (<strong className="text-white">HQ-SRV</strong>) настраивается система предотвращения вторжений <strong className="text-white">Fail2ban</strong> для защиты службы OpenSSH, работающей на нестандартном порту <code className="text-amber-300 font-bold">2026</code>.
+          В данном задании на сервере главного офиса (<strong className="text-white">HQ-SRV</strong>
+          ) настраивается система предотвращения вторжений{' '}
+          <strong className="text-white">Fail2ban</strong> для защиты службы OpenSSH, работающей на
+          нестандартном порту <code className="text-amber-300 font-bold">2026</code>.
         </p>
         <p className="text-zinc-300">
-          Для считывания событий журнала используется модуль интеграции с systemd (<code className="text-sky-300 font-bold">python3-module-systemd</code>). При обнаружении 3 неудачных попыток аутентификации подряд IP-адрес клиента автоматически блокируется на 1 минуту (<code className="text-rose-400 font-bold">bantime = 1m</code>).
+          Для считывания событий журнала используется модуль интеграции с systemd (
+          <code className="text-sky-300 font-bold">python3-module-systemd</code>). При обнаружении 3
+          неудачных попыток аутентификации подряд IP-адрес клиента автоматически блокируется на 1
+          минуту (<code className="text-rose-400 font-bold">bantime = 1m</code>).
         </p>
       </div>
 
@@ -526,10 +675,22 @@ export function Task10Module3Assignment({ task }: TaskProps) {
           <span>Описание задачи:</span>
         </div>
         <p className="text-zinc-300">
-          В данном задании на сервере главного офиса (<strong className="text-white">HQ-SRV</strong>) развёртывается сервер управления отечественной системы резервного копирования <strong className="text-white">«Кибер Бэкап»</strong> (версия 17.4) со встроенным агентом для Linux и модулем резервного копирования СУБД MySQL/MariaDB.
+          В данном задании на сервере главного офиса (<strong className="text-white">HQ-SRV</strong>
+          ) развёртывается сервер управления отечественной системы резервного копирования{' '}
+          <strong className="text-white">«Кибер Бэкап»</strong> (версия 17.4) со встроенным агентом
+          для Linux и модулем резервного копирования СУБД MySQL/MariaDB.
         </p>
         <p className="text-zinc-300">
-          На клиентской машине (<strong className="text-white">HQ-CLI</strong>) устанавливается <strong className="text-white">Узел хранения (Storage Node)</strong>. В веб-консоли создаётся организация <code className="text-sky-300 font-bold">irpo</code>, учетная запись администратора <code className="text-sky-300 font-bold">irpoadmin</code> (пароль <code className="text-emerald-300 font-bold">P@ssw0rd</code>), настраивается хранилище <code className="text-amber-300 font-bold">backup_dir</code> в каталоге <code className="text-zinc-100">/backup</code> и выполняются два плана резервного копирования: системной директории <code className="text-zinc-100">/etc</code> (<code className="text-emerald-300">etc_backup</code>) и базы данных MariaDB (<code className="text-emerald-300">webdb_backup</code>).
+          На клиентской машине (<strong className="text-white">HQ-CLI</strong>) устанавливается{' '}
+          <strong className="text-white">Узел хранения (Storage Node)</strong>. В веб-консоли
+          создаётся организация <code className="text-sky-300 font-bold">irpo</code>, учетная запись
+          администратора <code className="text-sky-300 font-bold">irpoadmin</code> (пароль{' '}
+          <code className="text-emerald-300 font-bold">P@ssw0rd</code>), настраивается хранилище{' '}
+          <code className="text-amber-300 font-bold">backup_dir</code> в каталоге{' '}
+          <code className="text-zinc-100">/backup</code> и выполняются два плана резервного
+          копирования: системной директории <code className="text-zinc-100">/etc</code> (
+          <code className="text-emerald-300">etc_backup</code>) и базы данных MariaDB (
+          <code className="text-emerald-300">webdb_backup</code>).
         </p>
       </div>
 

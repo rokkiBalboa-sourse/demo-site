@@ -34,10 +34,12 @@ export function Button({
       variantStyles = 'bg-zinc-800 text-zinc-100 hover:bg-zinc-700 border border-zinc-700';
       break;
     case 'outline':
-      variantStyles = 'bg-zinc-900/80 text-zinc-300 hover:bg-zinc-800 hover:text-white border border-zinc-800';
+      variantStyles =
+        'bg-zinc-900/80 text-zinc-300 hover:bg-zinc-800 hover:text-white border border-zinc-800';
       break;
     case 'ghost':
-      variantStyles = 'hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 border border-transparent';
+      variantStyles =
+        'hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 border border-transparent';
       break;
     case 'danger':
       variantStyles = 'bg-zinc-900 text-zinc-200 hover:bg-zinc-800 border border-zinc-700';

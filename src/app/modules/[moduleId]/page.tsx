@@ -38,12 +38,11 @@ export default async function ModuleDetailPage({ params }: ModulePageProps) {
     notFound();
   }
 
-
   const tasks = await db.getTasksByModule(moduleId);
   const submissions = await db.getUserSubmissions(session.id);
-  const subMap = new Map(submissions.map((s) => [s.task_id, s]));
+  const subMap = new Map(submissions.map(s => [s.task_id, s]));
 
-  const passedCount = tasks.filter((t) => {
+  const passedCount = tasks.filter(t => {
     const s = subMap.get(t.id);
     return s?.status === 'reviewed' && s?.is_passed;
   }).length;
@@ -106,7 +105,7 @@ export default async function ModuleDetailPage({ params }: ModulePageProps) {
           </div>
 
           <div className="divide-y divide-zinc-800 border border-zinc-800 bg-zinc-900/40">
-            {tasks.map((task) => {
+            {tasks.map(task => {
               const sub = subMap.get(task.id);
               let statusBadge = <Badge variant="neutral">НЕ СДАВАЛ</Badge>;
 
@@ -167,33 +166,38 @@ export default async function ModuleDetailPage({ params }: ModulePageProps) {
                       {task.description}
                     </p>
 
-                    {sub?.feedback && (() => {
-                      const isApproved = sub.status === 'reviewed' || sub.is_passed === true;
-                      const isRejected = sub.status === 'rejected' || sub.is_passed === false;
+                    {sub?.feedback &&
+                      (() => {
+                        const isApproved = sub.status === 'reviewed' || sub.is_passed === true;
+                        const isRejected = sub.status === 'rejected' || sub.is_passed === false;
 
-                      return (
-                        <div
-                          className={`mt-2.5 p-2.5 text-xs font-mono border transition-all ${
-                            isApproved
-                              ? 'border-emerald-500 bg-emerald-950/40 text-emerald-100 shadow-[0_0_12px_rgba(16,185,129,0.3)] ring-1 ring-emerald-500/50'
-                              : isRejected
-                              ? 'border-amber-500 bg-amber-950/40 text-amber-100 shadow-[0_0_12px_rgba(245,158,11,0.3)] ring-1 ring-amber-500/50'
-                              : 'border-zinc-700 bg-zinc-900 text-zinc-300'
-                          }`}
-                        >
-                          <div className="font-bold flex items-center gap-1.5 uppercase text-[10px] tracking-wider mb-1">
-                            {isApproved ? (
-                              <span className="text-emerald-400">✓ Рецензия преподавателя (Принято):</span>
-                            ) : isRejected ? (
-                              <span className="text-amber-400">⚠ Замечания преподавателя (На доработку):</span>
-                            ) : (
-                              <span className="text-white">Преподаватель:</span>
-                            )}
+                        return (
+                          <div
+                            className={`mt-2.5 p-2.5 text-xs font-mono border transition-all ${
+                              isApproved
+                                ? 'border-emerald-500 bg-emerald-950/40 text-emerald-100 shadow-[0_0_12px_rgba(16,185,129,0.3)] ring-1 ring-emerald-500/50'
+                                : isRejected
+                                  ? 'border-amber-500 bg-amber-950/40 text-amber-100 shadow-[0_0_12px_rgba(245,158,11,0.3)] ring-1 ring-amber-500/50'
+                                  : 'border-zinc-700 bg-zinc-900 text-zinc-300'
+                            }`}
+                          >
+                            <div className="font-bold flex items-center gap-1.5 uppercase text-[10px] tracking-wider mb-1">
+                              {isApproved ? (
+                                <span className="text-emerald-400">
+                                  ✓ Рецензия преподавателя (Принято):
+                                </span>
+                              ) : isRejected ? (
+                                <span className="text-amber-400">
+                                  ⚠ Замечания преподавателя (На доработку):
+                                </span>
+                              ) : (
+                                <span className="text-white">Преподаватель:</span>
+                              )}
+                            </div>
+                            <div className="leading-relaxed">{sub.feedback}</div>
                           </div>
-                          <div className="leading-relaxed">{sub.feedback}</div>
-                        </div>
-                      );
-                    })()}
+                        );
+                      })()}
                   </div>
 
                   <div className="shrink-0 flex items-center">

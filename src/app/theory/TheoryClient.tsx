@@ -4,14 +4,7 @@ import React, { useState } from 'react';
 import { ALT_LINUX_THEORY } from '@/lib/theory-data';
 import { Button } from '@/components/ui/Button';
 import { CodeSnippet } from '@/components/ui/CodeSnippet';
-import {
-  Search,
-  ChevronRight,
-  Terminal,
-  ArrowRight,
-  AlertTriangle,
-  Info,
-} from 'lucide-react';
+import { Search, ChevronRight, Terminal, ArrowRight, AlertTriangle, Info } from 'lucide-react';
 import Link from 'next/link';
 
 // Inline text formatter for **bold** and `code`
@@ -81,22 +74,28 @@ function MarkdownContent({ content }: { content: string }) {
         const headerRow = tableLines[0]
           .split('|')
           .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1)
-          .map((c) => c.trim());
+          .map(c => c.trim());
         // Skip separator row (tableLines[1])
-        const dataRows = tableLines.slice(2).map((rowStr) =>
+        const dataRows = tableLines.slice(2).map(rowStr =>
           rowStr
             .split('|')
             .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1)
-            .map((c) => c.trim())
+            .map(c => c.trim())
         );
 
         elements.push(
-          <div key={`table-${i}`} className="overflow-x-auto my-3 border border-zinc-800 bg-zinc-950/60">
+          <div
+            key={`table-${i}`}
+            className="overflow-x-auto my-3 border border-zinc-800 bg-zinc-950/60"
+          >
             <table className="w-full text-left text-xs font-mono border-collapse">
               <thead>
                 <tr className="border-b border-zinc-800 bg-zinc-900/90 text-zinc-200">
                   {headerRow.map((h, hIdx) => (
-                    <th key={hIdx} className="p-2.5 font-bold border-r border-zinc-800 last:border-r-0">
+                    <th
+                      key={hIdx}
+                      className="p-2.5 font-bold border-r border-zinc-800 last:border-r-0"
+                    >
                       {formatInline(h)}
                     </th>
                   ))}
@@ -106,7 +105,10 @@ function MarkdownContent({ content }: { content: string }) {
                 {dataRows.map((r, rIdx) => (
                   <tr key={rIdx} className="hover:bg-zinc-900/40">
                     {r.map((c, cIdx) => (
-                      <td key={cIdx} className="p-2.5 border-r border-zinc-800/80 last:border-r-0 text-zinc-300">
+                      <td
+                        key={cIdx}
+                        className="p-2.5 border-r border-zinc-800/80 last:border-r-0 text-zinc-300"
+                      >
                         {formatInline(c)}
                       </td>
                     ))}
@@ -189,10 +191,7 @@ function MarkdownContent({ content }: { content: string }) {
     }
     if (trimmed.startsWith('##### ')) {
       elements.push(
-        <h5
-          key={`h5-${i}`}
-          className="text-xs font-semibold text-zinc-400 font-mono mt-2 mb-1"
-        >
+        <h5 key={`h5-${i}`} className="text-xs font-semibold text-zinc-400 font-mono mt-2 mb-1">
           {formatInline(trimmed.slice(6))}
         </h5>
       );
@@ -211,7 +210,10 @@ function MarkdownContent({ content }: { content: string }) {
     if (trimmed.startsWith('* ') || trimmed.startsWith('- ') || trimmed.startsWith('• ')) {
       const listContent = trimmed.slice(2);
       elements.push(
-        <div key={`li-${i}`} className="flex items-start gap-2 text-xs font-mono text-zinc-300 pl-2 my-1 leading-relaxed">
+        <div
+          key={`li-${i}`}
+          className="flex items-start gap-2 text-xs font-mono text-zinc-300 pl-2 my-1 leading-relaxed"
+        >
           <span className="text-zinc-500 shrink-0">•</span>
           <div>{formatInline(listContent)}</div>
         </div>
@@ -241,12 +243,13 @@ function MarkdownContent({ content }: { content: string }) {
 export function TheoryClient() {
   const [activeSectionId, setActiveSectionId] = useState<string>(ALT_LINUX_THEORY[0].id);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedModule, setSelectedModule] = useState<'all' | 'module-1' | 'module-2' | 'module-3'>('all');
+  const [selectedModule, setSelectedModule] = useState<
+    'all' | 'module-1' | 'module-2' | 'module-3'
+  >('all');
 
-  const activeSection =
-    ALT_LINUX_THEORY.find((s) => s.id === activeSectionId) || ALT_LINUX_THEORY[0];
+  const activeSection = ALT_LINUX_THEORY.find(s => s.id === activeSectionId) || ALT_LINUX_THEORY[0];
 
-  const filteredSections = ALT_LINUX_THEORY.filter((s) => {
+  const filteredSections = ALT_LINUX_THEORY.filter(s => {
     if (selectedModule !== 'all' && s.module !== selectedModule) {
       return false;
     }
@@ -276,8 +279,9 @@ export function TheoryClient() {
             Теоретическая часть: Архитектура и администрирование ALT Linux
           </h1>
           <p className="text-xs text-zinc-400 font-mono mt-1 max-w-3xl leading-relaxed">
-            Разделы документации строго соответствуют структуре экзаменационных заданий Модулей 1, 2 и 3.
-            Здесь собрана вся необходимая теоретическая база для понимания и самостоятельного выполнения каждого пункта.
+            Разделы документации строго соответствуют структуре экзаменационных заданий Модулей 1, 2
+            и 3. Здесь собрана вся необходимая теоретическая база для понимания и самостоятельного
+            выполнения каждого пункта.
           </p>
         </div>
 
@@ -346,7 +350,7 @@ export function TheoryClient() {
             <input
               type="text"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               placeholder="Поиск по теории (etcnet, OSPF, NAT, RAID...)..."
               className="w-full h-9 bg-zinc-900 border border-zinc-800 px-3 text-xs font-mono text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-zinc-400"
             />
@@ -355,7 +359,7 @@ export function TheoryClient() {
 
           {/* Section Items */}
           <div className="border border-zinc-800 bg-zinc-900/40 divide-y divide-zinc-800 max-h-[calc(100vh-280px)] overflow-y-auto scrollbar-thin">
-            {filteredSections.map((sec) => {
+            {filteredSections.map(sec => {
               const isActive = sec.id === activeSectionId;
               return (
                 <button
@@ -407,14 +411,14 @@ export function TheoryClient() {
                   <span>/</span>
                   <span>Задание №{activeSection.taskNumber} из 11</span>
                   <span>•</span>
-                  <span>Раздел {activeSection.number} из {ALT_LINUX_THEORY.length}</span>
+                  <span>
+                    Раздел {activeSection.number} из {ALT_LINUX_THEORY.length}
+                  </span>
                 </div>
                 <h2 className="text-lg sm:text-xl font-bold text-white font-mono">
                   {activeSection.title}
                 </h2>
-                <p className="text-xs font-mono text-zinc-400 mt-1">
-                  {activeSection.summary}
-                </p>
+                <p className="text-xs font-mono text-zinc-400 mt-1">{activeSection.summary}</p>
               </div>
 
               {activeSection.taskSlug && (

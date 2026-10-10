@@ -31,7 +31,10 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     if (!body || !Array.isArray(body.users) || !Array.isArray(body.submissions)) {
       return NextResponse.json(
-        { error: 'Неверный формат резервной копии. Файл должен содержать списки users и submissions.' },
+        {
+          error:
+            'Неверный формат резервной копии. Файл должен содержать списки users и submissions.',
+        },
         { status: 400 }
       );
     }

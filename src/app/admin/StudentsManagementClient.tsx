@@ -74,13 +74,46 @@ export function StudentsManagementClient({
   // Helper transliterate for live login suggestion
   const transliterate = (str: string) => {
     const map: Record<string, string> = {
-      'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
-      'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
-      'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
-      'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
-      'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+      а: 'a',
+      б: 'b',
+      в: 'v',
+      г: 'g',
+      д: 'd',
+      е: 'e',
+      ё: 'e',
+      ж: 'zh',
+      з: 'z',
+      и: 'i',
+      й: 'y',
+      к: 'k',
+      л: 'l',
+      м: 'm',
+      н: 'n',
+      о: 'o',
+      п: 'p',
+      р: 'r',
+      с: 's',
+      т: 't',
+      у: 'u',
+      ф: 'f',
+      х: 'kh',
+      ц: 'ts',
+      ч: 'ch',
+      ш: 'sh',
+      щ: 'shch',
+      ъ: '',
+      ы: 'y',
+      ь: '',
+      э: 'e',
+      ю: 'yu',
+      я: 'ya',
     };
-    return str.toLowerCase().split('').map(ch => map[ch] ?? ch).join('').replace(/[^a-z0-9]/g, '');
+    return str
+      .toLowerCase()
+      .split('')
+      .map(ch => map[ch] ?? ch)
+      .join('')
+      .replace(/[^a-z0-9]/g, '');
   };
 
   const handleFullNameChange = (val: string) => {
@@ -150,7 +183,9 @@ export function StudentsManagementClient({
         passed_count: 0,
         total_score: 0,
       };
-      setStudents(prev => [...prev, updatedList].sort((a, b) => a.full_name.localeCompare(b.full_name)));
+      setStudents(prev =>
+        [...prev, updatedList].sort((a, b) => a.full_name.localeCompare(b.full_name))
+      );
       setIsAddModalOpen(false);
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : 'Произошла ошибка');
@@ -235,9 +270,7 @@ export function StudentsManagementClient({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Ошибка при сохранении');
 
-      setStudents(prev =>
-        prev.map(s => (s.id === editStudent.id ? { ...s, ...data.student } : s))
-      );
+      setStudents(prev => prev.map(s => (s.id === editStudent.id ? { ...s, ...data.student } : s)));
       setEditStudent(null);
     } catch (err: unknown) {
       setFormError(err instanceof Error ? err.message : 'Ошибка при сохранении');
@@ -265,7 +298,9 @@ export function StudentsManagementClient({
       if (!res.ok) throw new Error(data.error || 'Ошибка обновления пароля');
 
       setStudents(prev =>
-        prev.map(s => (s.id === passwordStudent.id ? { ...s, password_hash: changePasswordVal.trim() } : s))
+        prev.map(s =>
+          s.id === passwordStudent.id ? { ...s, password_hash: changePasswordVal.trim() } : s
+        )
       );
       setPasswordStudent(null);
       setChangePasswordVal('');
@@ -312,10 +347,14 @@ export function StudentsManagementClient({
       }
 
       setStudents(prev =>
-        prev.map(s => (s.id === id ? { ...s, two_factor_enabled: false, two_factor_secret: null } : s))
+        prev.map(s =>
+          s.id === id ? { ...s, two_factor_enabled: false, two_factor_secret: null } : s
+        )
       );
       setStudentToReset2FA(null);
-      setReset2FAMessage(`2FA для студента ${name} успешно сброшена! При следующем входе потребуется пароль и новая привязка.`);
+      setReset2FAMessage(
+        `2FA для студента ${name} успешно сброшена! При следующем входе потребуется пароль и новая привязка.`
+      );
       setTimeout(() => setReset2FAMessage(null), 6000);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Ошибка сброса 2FA');
@@ -402,13 +441,13 @@ export function StudentsManagementClient({
             <span className="text-zinc-500 text-[11px] uppercase">Группа:</span>
             <select
               value={selectedGroup}
-              onChange={(e) => setSelectedGroup(e.target.value)}
+              onChange={e => setSelectedGroup(e.target.value)}
               className="bg-zinc-950 border border-zinc-800 text-zinc-200 px-2.5 py-1 text-xs focus:outline-none focus:border-zinc-500 font-mono"
             >
               <option value="ALL">Все группы ({students.length})</option>
-              {currentGroups.map((g) => (
+              {currentGroups.map(g => (
                 <option key={g} value={g}>
-                  {g} ({students.filter((s) => s.group_name === g).length})
+                  {g} ({students.filter(s => s.group_name === g).length})
                 </option>
               ))}
             </select>
@@ -421,7 +460,7 @@ export function StudentsManagementClient({
               type="text"
               placeholder="Поиск по ФИО или логину..."
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={e => setSearchQuery(e.target.value)}
               className="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 pl-8 pr-3 py-1 text-xs focus:outline-none focus:border-zinc-500 font-mono"
             />
             {searchQuery && (
@@ -456,7 +495,9 @@ export function StudentsManagementClient({
 
         <div className="border border-zinc-800 bg-zinc-900/60 p-3.5 flex items-center justify-between">
           <div>
-            <div className="text-[10px] uppercase text-zinc-500 font-semibold">Активных на стенде</div>
+            <div className="text-[10px] uppercase text-zinc-500 font-semibold">
+              Активных на стенде
+            </div>
             <div className="text-xl font-bold text-amber-300 mt-0.5">{activeStudentsCount}</div>
           </div>
           <RefreshCw className="w-5 h-5 text-amber-400" />
@@ -464,8 +505,12 @@ export function StudentsManagementClient({
 
         <div className="border border-zinc-800 bg-zinc-900/60 p-3.5 flex items-center justify-between">
           <div>
-            <div className="text-[10px] uppercase text-zinc-500 font-semibold">Всего зачтено работ</div>
-            <div className="text-xl font-bold text-emerald-300 mt-0.5">{totalPassedSubmissions}</div>
+            <div className="text-[10px] uppercase text-zinc-500 font-semibold">
+              Всего зачтено работ
+            </div>
+            <div className="text-xl font-bold text-emerald-300 mt-0.5">
+              {totalPassedSubmissions}
+            </div>
           </div>
           <Award className="w-5 h-5 text-emerald-400" />
         </div>
@@ -534,7 +579,7 @@ export function StudentsManagementClient({
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/80 text-zinc-300">
-                {filteredStudents.map((std) => {
+                {filteredStudents.map(std => {
                   const isPassVisible = !!visiblePasswords[std.id];
                   const isCopied = copiedId === std.id;
 
@@ -606,17 +651,13 @@ export function StudentsManagementClient({
 
                       {/* Passed Tasks */}
                       <td className="p-3">
-                        <span className="font-bold text-zinc-200">
-                          {std.passed_count}
-                        </span>
+                        <span className="font-bold text-zinc-200">{std.passed_count}</span>
                         <span className="text-zinc-500 text-[11px]"> / 32</span>
                       </td>
 
                       {/* Score */}
                       <td className="p-3">
-                        <span className="font-bold text-emerald-400">
-                          {std.total_score} б.
-                        </span>
+                        <span className="font-bold text-emerald-400">{std.total_score} б.</span>
                       </td>
 
                       {/* Actions */}
@@ -703,7 +744,7 @@ export function StudentsManagementClient({
                   required
                   placeholder="Иванов Иван Иванович"
                   value={newFullName}
-                  onChange={(e) => handleFullNameChange(e.target.value)}
+                  onChange={e => handleFullNameChange(e.target.value)}
                   className="bg-zinc-900 border-zinc-800 text-white font-mono text-xs"
                 />
               </div>
@@ -718,16 +759,16 @@ export function StudentsManagementClient({
                     required
                     placeholder="9СА-421"
                     value={newGroup}
-                    onChange={(e) => setNewGroup(e.target.value)}
+                    onChange={e => setNewGroup(e.target.value)}
                     className="bg-zinc-900 border-zinc-800 text-white font-mono text-xs"
                   />
                   {availableGroups.length > 0 && (
                     <select
-                      onChange={(e) => setNewGroup(e.target.value)}
+                      onChange={e => setNewGroup(e.target.value)}
                       value={newGroup}
                       className="bg-zinc-900 border border-zinc-800 text-zinc-300 px-2 py-2 text-xs font-mono"
                     >
-                      {availableGroups.map((g) => (
+                      {availableGroups.map(g => (
                         <option key={g} value={g}>
                           {g}
                         </option>
@@ -746,7 +787,7 @@ export function StudentsManagementClient({
                   required
                   placeholder="ivanov"
                   value={newUsername}
-                  onChange={(e) => setNewUsername(e.target.value)}
+                  onChange={e => setNewUsername(e.target.value)}
                   className="bg-zinc-900 border-zinc-800 text-white font-mono text-xs"
                 />
                 <span className="text-[10px] text-zinc-500">
@@ -756,9 +797,7 @@ export function StudentsManagementClient({
 
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <label className="text-zinc-400 uppercase text-[10px] font-bold">
-                    Пароль *
-                  </label>
+                  <label className="text-zinc-400 uppercase text-[10px] font-bold">Пароль *</label>
                   <button
                     type="button"
                     onClick={() => setNewPassword(handleGeneratePassword())}
@@ -773,17 +812,13 @@ export function StudentsManagementClient({
                   required
                   placeholder="student123"
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={e => setNewPassword(e.target.value)}
                   className="bg-zinc-900 border-zinc-800 text-white font-mono text-xs font-bold"
                 />
               </div>
 
               <div className="pt-3 border-t border-zinc-800 flex items-center justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setIsAddModalOpen(false)}
-                >
+                <Button type="button" variant="secondary" onClick={() => setIsAddModalOpen(false)}>
                   Отмена
                 </Button>
                 <Button type="submit" variant="primary" disabled={isSubmitting}>
@@ -846,7 +881,7 @@ export function StudentsManagementClient({
                   type="text"
                   placeholder="9СА-421"
                   value={bulkDefaultGroup}
-                  onChange={(e) => setBulkDefaultGroup(e.target.value)}
+                  onChange={e => setBulkDefaultGroup(e.target.value)}
                   className="bg-zinc-900 border-zinc-800 text-white font-mono text-xs w-48"
                 />
               </div>
@@ -861,16 +896,23 @@ export function StudentsManagementClient({
 Петров Алексей Сергеевич, 9СА-421
 Сидоров Денис Михайлович, 9СА-421, sidorov, pass123`}
                   value={bulkText}
-                  onChange={(e) => setBulkText(e.target.value)}
+                  onChange={e => setBulkText(e.target.value)}
                   className="bg-zinc-900 border-zinc-800 text-white font-mono text-xs leading-relaxed"
                 />
               </div>
 
               <div className="p-3 bg-zinc-900/60 border border-zinc-800 space-y-1 text-zinc-400 text-[11px]">
                 <strong className="text-zinc-200">Поддерживаемые форматы строк:</strong>
-                <div>1. <code>ФИО</code> — группа берётся из поля выше, логин и пароль генерируются автоматически.</div>
-                <div>2. <code>ФИО, Группа</code> — логин и пароль генерируются автоматически.</div>
-                <div>3. <code>ФИО, Группа, Логин, Пароль</code> — явное указание реквизитов.</div>
+                <div>
+                  1. <code>ФИО</code> — группа берётся из поля выше, логин и пароль генерируются
+                  автоматически.
+                </div>
+                <div>
+                  2. <code>ФИО, Группа</code> — логин и пароль генерируются автоматически.
+                </div>
+                <div>
+                  3. <code>ФИО, Группа, Логин, Пароль</code> — явное указание реквизитов.
+                </div>
               </div>
 
               {parsedBulkRows.length > 0 && (
@@ -881,10 +923,7 @@ export function StudentsManagementClient({
             </div>
 
             <div className="pt-3 border-t border-zinc-800 flex items-center justify-end gap-2">
-              <Button
-                variant="secondary"
-                onClick={() => setIsBulkModalOpen(false)}
-              >
+              <Button variant="secondary" onClick={() => setIsBulkModalOpen(false)}>
                 Закрыть
               </Button>
               <Button
@@ -935,9 +974,7 @@ export function StudentsManagementClient({
                   type="text"
                   required
                   value={editStudent.full_name}
-                  onChange={(e) =>
-                    setEditStudent({ ...editStudent, full_name: e.target.value })
-                  }
+                  onChange={e => setEditStudent({ ...editStudent, full_name: e.target.value })}
                   className="bg-zinc-900 border-zinc-800 text-white font-mono text-xs"
                 />
               </div>
@@ -950,34 +987,24 @@ export function StudentsManagementClient({
                   type="text"
                   required
                   value={editStudent.group_name}
-                  onChange={(e) =>
-                    setEditStudent({ ...editStudent, group_name: e.target.value })
-                  }
+                  onChange={e => setEditStudent({ ...editStudent, group_name: e.target.value })}
                   className="bg-zinc-900 border-zinc-800 text-white font-mono text-xs"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-zinc-400 uppercase text-[10px] font-bold block">
-                  Логин
-                </label>
+                <label className="text-zinc-400 uppercase text-[10px] font-bold block">Логин</label>
                 <Input
                   type="text"
                   required
                   value={editStudent.username}
-                  onChange={(e) =>
-                    setEditStudent({ ...editStudent, username: e.target.value })
-                  }
+                  onChange={e => setEditStudent({ ...editStudent, username: e.target.value })}
                   className="bg-zinc-900 border-zinc-800 text-white font-mono text-xs"
                 />
               </div>
 
               <div className="pt-3 border-t border-zinc-800 flex items-center justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setEditStudent(null)}
-                >
+                <Button type="button" variant="secondary" onClick={() => setEditStudent(null)}>
                   Отмена
                 </Button>
                 <Button type="submit" variant="primary" disabled={isSubmitting}>
@@ -1032,17 +1059,13 @@ export function StudentsManagementClient({
                   type="text"
                   required
                   value={changePasswordVal}
-                  onChange={(e) => setChangePasswordVal(e.target.value)}
+                  onChange={e => setChangePasswordVal(e.target.value)}
                   className="bg-zinc-900 border-zinc-800 text-white font-mono text-xs font-bold"
                 />
               </div>
 
               <div className="pt-3 border-t border-zinc-800 flex items-center justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setPasswordStudent(null)}
-                >
+                <Button type="button" variant="secondary" onClick={() => setPasswordStudent(null)}>
                   Отмена
                 </Button>
                 <Button type="submit" variant="primary" disabled={isSubmitting}>
@@ -1081,10 +1104,12 @@ export function StudentsManagementClient({
 
             <div className="p-3 bg-cyan-950/20 border border-cyan-800/40 text-cyan-200/90 leading-relaxed text-[11px] space-y-2">
               <p>
-                Вы действительно хотите сбросить двухэтапную аутентификацию (Google Authenticator) для этого студента?
+                Вы действительно хотите сбросить двухэтапную аутентификацию (Google Authenticator)
+                для этого студента?
               </p>
               <p className="text-zinc-400 text-[10px]">
-                При следующем входе студенту потребуется войти по паролю и выполнить привязку приложения Authenticator заново.
+                При следующем входе студенту потребуется войти по паролю и выполнить привязку
+                приложения Authenticator заново.
               </p>
             </div>
 
@@ -1138,7 +1163,8 @@ export function StudentsManagementClient({
             <div className="p-3 bg-rose-950/25 border border-rose-800/40 text-rose-200/90 leading-relaxed text-[11px] flex gap-2.5">
               <AlertCircle className="w-4 h-4 text-rose-400 shrink-0 mt-0.5" />
               <div>
-                Внимание! Это действие нельзя отменить. Учётная запись, все отправленные решения и история оценивания будут безвозвратно удалены.
+                Внимание! Это действие нельзя отменить. Учётная запись, все отправленные решения и
+                история оценивания будут безвозвратно удалены.
               </div>
             </div>
 

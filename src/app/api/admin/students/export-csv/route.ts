@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
   let students = await db.getAllStudentsWithStats();
   if (groupFilter && groupFilter !== 'ALL') {
-    students = students.filter((s) => s.group_name === groupFilter);
+    students = students.filter(s => s.group_name === groupFilter);
   }
 
   const headerCols = [
@@ -45,9 +45,10 @@ export async function GET(req: NextRequest) {
   // UTF-8 BOM \uFEFF ensures proper Cyrillic rendering in Microsoft Excel
   const csvContent = '\uFEFF' + rows.join('\r\n');
 
-  const filename = groupFilter && groupFilter !== 'ALL'
-    ? `students_${groupFilter.replace(/[^a-zA-Z0-9а-яА-Я_-]/g, '_')}_passwords.csv`
-    : 'students_all_passwords.csv';
+  const filename =
+    groupFilter && groupFilter !== 'ALL'
+      ? `students_${groupFilter.replace(/[^a-zA-Z0-9а-яА-Я_-]/g, '_')}_passwords.csv`
+      : 'students_all_passwords.csv';
 
   return new NextResponse(csvContent, {
     headers: {

@@ -32,7 +32,9 @@ export function CodeSnippet({ code, label }: CodeSnippetProps) {
       <div className="relative bg-zinc-950 text-zinc-100 border border-zinc-800 p-3 font-mono text-xs sm:text-sm overflow-hidden group">
         <div className="flex items-start gap-2 overflow-x-auto pr-28 select-text scrollbar-thin">
           <span className="text-zinc-500 select-none font-mono mt-0.5">$</span>
-          <pre className="whitespace-pre font-mono text-zinc-100 m-0 p-0 leading-relaxed select-text">{code}</pre>
+          <pre className="whitespace-pre font-mono text-zinc-100 m-0 p-0 leading-relaxed select-text">
+            {code}
+          </pre>
         </div>
         <button
           type="button"

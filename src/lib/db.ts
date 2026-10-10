@@ -1,6 +1,14 @@
 import fs from 'fs';
 import path from 'path';
-import { User, UserRole, Task, Submission, SubmissionWithDetails, ModuleInfo, StudentWithStats } from './types';
+import {
+  User,
+  UserRole,
+  Task,
+  Submission,
+  SubmissionWithDetails,
+  ModuleInfo,
+  StudentWithStats,
+} from './types';
 import { MODULES_LIST, TASKS_DATA } from './tasks-data';
 
 // Initial Seed Users
@@ -173,7 +181,7 @@ function ensureDataFile(): LocalStore {
 
   const applyAdminEnv = (users: User[]) => {
     if (!envAdminUser && !envAdminPass && !envAdminName) return;
-    const admin = users.find((u) => u.role === 'admin');
+    const admin = users.find(u => u.role === 'admin');
     if (admin) {
       if (envAdminUser) admin.username = envAdminUser;
       if (envAdminPass) admin.password_hash = envAdminPass;
@@ -233,24 +241,24 @@ export const db = {
   },
 
   getModuleById(id: string): ModuleInfo | null {
-    return MODULES_LIST.find((m) => m.id === id) || null;
+    return MODULES_LIST.find(m => m.id === id) || null;
   },
 
   // Users
   async findUserByUsername(username: string): Promise<User | null> {
     const store = ensureDataFile();
-    const user = store.users.find((u) => u.username.toLowerCase() === username.toLowerCase());
+    const user = store.users.find(u => u.username.toLowerCase() === username.toLowerCase());
     return user || null;
   },
 
   async findUserById(id: string): Promise<User | null> {
     const store = ensureDataFile();
-    return store.users.find((u) => u.id === id) || null;
+    return store.users.find(u => u.id === id) || null;
   },
 
   async setUser2FATempSecret(userId: string, tempSecret: string): Promise<void> {
     const store = ensureDataFile();
-    const index = store.users.findIndex((u) => u.id === userId);
+    const index = store.users.findIndex(u => u.id === userId);
     if (index === -1) return;
     store.users[index].two_factor_temp_secret = tempSecret;
     saveStore(store);
@@ -258,7 +266,7 @@ export const db = {
 
   async confirmUser2FASetup(userId: string, secret: string): Promise<User | null> {
     const store = ensureDataFile();
-    const index = store.users.findIndex((u) => u.id === userId);
+    const index = store.users.findIndex(u => u.id === userId);
     if (index === -1) return null;
     store.users[index].two_factor_enabled = true;
     store.users[index].two_factor_secret = secret;
@@ -270,7 +278,7 @@ export const db = {
 
   async resetUser2FA(userId: string): Promise<User | null> {
     const store = ensureDataFile();
-    const index = store.users.findIndex((u) => u.id === userId);
+    const index = store.users.findIndex(u => u.id === userId);
     if (index === -1) return null;
     store.users[index].two_factor_enabled = false;
     store.users[index].two_factor_secret = null;
@@ -283,7 +291,7 @@ export const db = {
   async getAllStudents(): Promise<User[]> {
     const store = ensureDataFile();
     return store.users
-      .filter((u) => u.role === 'student' && u.is_active)
+      .filter(u => u.role === 'student' && u.is_active)
       .sort((a, b) => {
         if (a.group_name !== b.group_name) {
           return a.group_name.localeCompare(b.group_name);
@@ -294,12 +302,12 @@ export const db = {
 
   async getAllStudentsWithStats(): Promise<StudentWithStats[]> {
     const store = ensureDataFile();
-    const students = store.users.filter((u) => u.role === 'student');
+    const students = store.users.filter(u => u.role === 'student');
 
     return students
-      .map((std) => {
-        const subs = store.submissions.filter((s) => s.user_id === std.id);
-        const passed = subs.filter((s) => s.status === 'reviewed' && s.is_passed);
+      .map(std => {
+        const subs = store.submissions.filter(s => s.user_id === std.id);
+        const passed = subs.filter(s => s.status === 'reviewed' && s.is_passed);
         const totalScore = passed.reduce((acc, s) => acc + (s.score || 0), 0);
         return {
           ...std,
@@ -324,7 +332,9 @@ export const db = {
     role?: UserRole;
   }): Promise<User> {
     const store = ensureDataFile();
-    const existing = store.users.find((u) => u.username.toLowerCase() === data.username.toLowerCase().trim());
+    const existing = store.users.find(
+      u => u.username.toLowerCase() === data.username.toLowerCase().trim()
+    );
     if (existing) {
       throw new Error(`Пользователь с логином "${data.username.trim()}" уже зарегистрирован`);
     }
@@ -346,25 +356,60 @@ export const db = {
     return newUser;
   },
 
-  async createStudentsBatch(students: Array<{
-    full_name: string;
-    group_name: string;
-    username?: string;
-    password?: string;
-  }>): Promise<{ created: User[]; skipped: string[] }> {
+  async createStudentsBatch(
+    students: Array<{
+      full_name: string;
+      group_name: string;
+      username?: string;
+      password?: string;
+    }>
+  ): Promise<{ created: User[]; skipped: string[] }> {
     const store = ensureDataFile();
     const created: User[] = [];
     const skipped: string[] = [];
 
     const translitRu = (str: string): string => {
       const map: Record<string, string> = {
-        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'e',
-        'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
-        'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
-        'ф': 'f', 'х': 'kh', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'shch',
-        'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+        а: 'a',
+        б: 'b',
+        в: 'v',
+        г: 'g',
+        д: 'd',
+        е: 'e',
+        ё: 'e',
+        ж: 'zh',
+        з: 'z',
+        и: 'i',
+        й: 'y',
+        к: 'k',
+        л: 'l',
+        м: 'm',
+        н: 'n',
+        о: 'o',
+        п: 'p',
+        р: 'r',
+        с: 's',
+        т: 't',
+        у: 'u',
+        ф: 'f',
+        х: 'kh',
+        ц: 'ts',
+        ч: 'ch',
+        ш: 'sh',
+        щ: 'shch',
+        ъ: '',
+        ы: 'y',
+        ь: '',
+        э: 'e',
+        ю: 'yu',
+        я: 'ya',
       };
-      return str.toLowerCase().split('').map(ch => map[ch] ?? ch).join('').replace(/[^a-z0-9]/g, '');
+      return str
+        .toLowerCase()
+        .split('')
+        .map(ch => map[ch] ?? ch)
+        .join('')
+        .replace(/[^a-z0-9]/g, '');
     };
 
     const genUsername = (fullName: string): string => {
@@ -372,7 +417,8 @@ export const db = {
       const lastName = parts[0] || 'student';
       const base = translitRu(lastName) || 'student';
 
-      const exists = (uName: string) => store.users.some(u => u.username.toLowerCase() === uName.toLowerCase());
+      const exists = (uName: string) =>
+        store.users.some(u => u.username.toLowerCase() === uName.toLowerCase());
       if (!exists(base)) return base;
 
       if (parts.length > 1) {
@@ -400,7 +446,7 @@ export const db = {
 
       const groupName = item.group_name?.trim() || 'Без группы';
       const username = item.username?.trim() || genUsername(item.full_name);
-      const existing = store.users.find((u) => u.username.toLowerCase() === username.toLowerCase());
+      const existing = store.users.find(u => u.username.toLowerCase() === username.toLowerCase());
       if (existing) {
         skipped.push(`${item.full_name.trim()} (${username} — логин уже занят)`);
         continue;
@@ -432,15 +478,20 @@ export const db = {
 
   async updateUser(
     id: string,
-    updates: Partial<Pick<User, 'full_name' | 'group_name' | 'username' | 'password_hash' | 'is_active'>>
+    updates: Partial<
+      Pick<User, 'full_name' | 'group_name' | 'username' | 'password_hash' | 'is_active'>
+    >
   ): Promise<User | null> {
     const store = ensureDataFile();
-    const idx = store.users.findIndex((u) => u.id === id);
+    const idx = store.users.findIndex(u => u.id === id);
     if (idx === -1) return null;
 
-    if (updates.username && updates.username.toLowerCase().trim() !== store.users[idx].username.toLowerCase()) {
+    if (
+      updates.username &&
+      updates.username.toLowerCase().trim() !== store.users[idx].username.toLowerCase()
+    ) {
       const clash = store.users.find(
-        (u) => u.id !== id && u.username.toLowerCase() === updates.username!.toLowerCase().trim()
+        u => u.id !== id && u.username.toLowerCase() === updates.username!.toLowerCase().trim()
       );
       if (clash) {
         throw new Error(`Логин "${updates.username.trim()}" уже занят другим пользователем`);
@@ -462,11 +513,11 @@ export const db = {
 
   async deleteUser(id: string): Promise<boolean> {
     const store = ensureDataFile();
-    const idx = store.users.findIndex((u) => u.id === id);
+    const idx = store.users.findIndex(u => u.id === id);
     if (idx === -1) return false;
 
     store.users.splice(idx, 1);
-    store.submissions = store.submissions.filter((s) => s.user_id !== id);
+    store.submissions = store.submissions.filter(s => s.user_id !== id);
     saveStore(store);
     return true;
   },
@@ -474,40 +525,40 @@ export const db = {
   // Tasks
   async getAllTasks(): Promise<Task[]> {
     const store = ensureDataFile();
-    return store.tasks.filter((t) => t.is_active).sort((a, b) => a.order_index - b.order_index);
+    return store.tasks.filter(t => t.is_active).sort((a, b) => a.order_index - b.order_index);
   },
 
   async getTasksByModule(moduleId: string): Promise<Task[]> {
     const store = ensureDataFile();
     return store.tasks
-      .filter((t) => t.module_id === moduleId && t.is_active)
+      .filter(t => t.module_id === moduleId && t.is_active)
       .sort((a, b) => a.task_number - b.task_number);
   },
 
   async getTaskBySlug(slug: string): Promise<Task | null> {
     const store = ensureDataFile();
-    return store.tasks.find((t) => t.slug === slug && t.is_active) || null;
+    return store.tasks.find(t => t.slug === slug && t.is_active) || null;
   },
 
   async getTaskById(id: string): Promise<Task | null> {
     const store = ensureDataFile();
-    return store.tasks.find((t) => t.id === id) || null;
+    return store.tasks.find(t => t.id === id) || null;
   },
 
   // Submissions
   async getSubmissionByUserAndTask(userId: string, taskId: string): Promise<Submission | null> {
     const store = ensureDataFile();
-    return store.submissions.find((s) => s.user_id === userId && s.task_id === taskId) || null;
+    return store.submissions.find(s => s.user_id === userId && s.task_id === taskId) || null;
   },
 
   async getSubmissionById(id: string): Promise<SubmissionWithDetails | null> {
     const store = ensureDataFile();
-    const sub = store.submissions.find((s) => s.id === id);
+    const sub = store.submissions.find(s => s.id === id);
     if (!sub) return null;
 
-    const student = store.users.find((u) => u.id === sub.user_id);
-    const task = store.tasks.find((t) => t.id === sub.task_id);
-    const reviewer = sub.reviewed_by ? store.users.find((u) => u.id === sub.reviewed_by) : null;
+    const student = store.users.find(u => u.id === sub.user_id);
+    const task = store.tasks.find(t => t.id === sub.task_id);
+    const reviewer = sub.reviewed_by ? store.users.find(u => u.id === sub.reviewed_by) : null;
 
     return {
       ...sub,
@@ -525,28 +576,30 @@ export const db = {
 
   async getAllSubmissionsWithDetails(): Promise<SubmissionWithDetails[]> {
     const store = ensureDataFile();
-    return store.submissions.map((sub) => {
-      const student = store.users.find((u) => u.id === sub.user_id);
-      const task = store.tasks.find((t) => t.id === sub.task_id);
-      const reviewer = sub.reviewed_by ? store.users.find((u) => u.id === sub.reviewed_by) : null;
+    return store.submissions
+      .map(sub => {
+        const student = store.users.find(u => u.id === sub.user_id);
+        const task = store.tasks.find(t => t.id === sub.task_id);
+        const reviewer = sub.reviewed_by ? store.users.find(u => u.id === sub.reviewed_by) : null;
 
-      return {
-        ...sub,
-        student_name: student?.full_name || 'Неизвестный',
-        student_group: student?.group_name || '—',
-        task_title: task?.title || 'Задание',
-        task_module: task?.module_code || 'Модуль',
-        task_module_id: task?.module_id || 'module-1',
-        task_number: task?.task_number || 1,
-        task_slug: task?.slug || '',
-        reviewer_name: reviewer?.full_name || null,
-      };
-    }).sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
+        return {
+          ...sub,
+          student_name: student?.full_name || 'Неизвестный',
+          student_group: student?.group_name || '—',
+          task_title: task?.title || 'Задание',
+          task_module: task?.module_code || 'Модуль',
+          task_module_id: task?.module_id || 'module-1',
+          task_number: task?.task_number || 1,
+          task_slug: task?.slug || '',
+          reviewer_name: reviewer?.full_name || null,
+        };
+      })
+      .sort((a, b) => new Date(b.submitted_at).getTime() - new Date(a.submitted_at).getTime());
   },
 
   async getUserSubmissions(userId: string): Promise<Submission[]> {
     const store = ensureDataFile();
-    return store.submissions.filter((s) => s.user_id === userId);
+    return store.submissions.filter(s => s.user_id === userId);
   },
 
   async createOrUpdateSubmission(data: {
@@ -557,7 +610,7 @@ export const db = {
   }): Promise<Submission> {
     const store = ensureDataFile();
     const existingIndex = store.submissions.findIndex(
-      (s) => s.user_id === data.userId && s.task_id === data.taskId
+      s => s.user_id === data.userId && s.task_id === data.taskId
     );
 
     const now = new Date().toISOString();
@@ -623,7 +676,7 @@ export const db = {
     }
   ): Promise<SubmissionWithDetails | null> {
     const store = ensureDataFile();
-    const index = store.submissions.findIndex((s) => s.id === submissionId);
+    const index = store.submissions.findIndex(s => s.id === submissionId);
     if (index === -1) return null;
 
     store.submissions[index] = {
@@ -649,7 +702,7 @@ export const db = {
     allowRetake: boolean
   ): Promise<SubmissionWithDetails | null> {
     const store = ensureDataFile();
-    const index = store.submissions.findIndex((s) => s.id === submissionId);
+    const index = store.submissions.findIndex(s => s.id === submissionId);
     if (index === -1) return null;
 
     store.submissions[index].allow_retake = allowRetake;
@@ -663,12 +716,16 @@ export const db = {
     fullName?: string;
   }): Promise<User | null> {
     const store = ensureDataFile();
-    const adminIndex = store.users.findIndex((u) => u.role === 'admin');
+    const adminIndex = store.users.findIndex(u => u.role === 'admin');
     if (adminIndex === -1) return null;
 
-    if (data.username && data.username.toLowerCase().trim() !== store.users[adminIndex].username.toLowerCase()) {
+    if (
+      data.username &&
+      data.username.toLowerCase().trim() !== store.users[adminIndex].username.toLowerCase()
+    ) {
       const clash = store.users.find(
-        (u, idx) => idx !== adminIndex && u.username.toLowerCase() === data.username!.toLowerCase().trim()
+        (u, idx) =>
+          idx !== adminIndex && u.username.toLowerCase() === data.username!.toLowerCase().trim()
       );
       if (clash) {
         throw new Error(`Логин "${data.username.trim()}" уже занят другим пользователем`);
@@ -696,7 +753,9 @@ export const db = {
   async importStore(imported: { users: User[]; submissions: Submission[] }): Promise<void> {
     const store = ensureDataFile();
     if (!Array.isArray(imported.users) || !Array.isArray(imported.submissions)) {
-      throw new Error('Некорректная структура файла резервной копии: отсутствуют массивы users или submissions');
+      throw new Error(
+        'Некорректная структура файла резервной копии: отсутствуют массивы users или submissions'
+      );
     }
 
     // Backup current file before overriding

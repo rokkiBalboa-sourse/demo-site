@@ -15,10 +15,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Не указан ID отчёта' }, { status: 400 });
     }
 
-    const updated = await db.setSubmissionRetakePermission(
-      submissionId,
-      Boolean(allowRetake)
-    );
+    const updated = await db.setSubmissionRetakePermission(submissionId, Boolean(allowRetake));
 
     if (!updated) {
       return NextResponse.json({ error: 'Отчёт не найден' }, { status: 404 });

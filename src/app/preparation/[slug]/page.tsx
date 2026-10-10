@@ -3,10 +3,7 @@ import Link from 'next/link';
 import { getSession } from '@/lib/auth';
 import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/Button';
-import {
-  PREPARATION_TOPICS,
-  getPreparationTopicBySlug,
-} from '@/lib/preparation-data';
+import { PREPARATION_TOPICS, getPreparationTopicBySlug } from '@/lib/preparation-data';
 import { ProxmoxOverviewContent } from './ProxmoxOverviewContent';
 import { StandInstallationContent } from './StandInstallationContent';
 import { ReportGuideContent } from './ReportGuideContent';
@@ -41,12 +38,10 @@ export default async function PreparationTopicPage({ params }: PreparationPagePr
     notFound();
   }
 
-  const currentIndex = PREPARATION_TOPICS.findIndex((t) => t.id === topic.id);
+  const currentIndex = PREPARATION_TOPICS.findIndex(t => t.id === topic.id);
   const prevTopic = currentIndex > 0 ? PREPARATION_TOPICS[currentIndex - 1] : null;
   const nextTopic =
-    currentIndex < PREPARATION_TOPICS.length - 1
-      ? PREPARATION_TOPICS[currentIndex + 1]
-      : null;
+    currentIndex < PREPARATION_TOPICS.length - 1 ? PREPARATION_TOPICS[currentIndex + 1] : null;
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col font-mono">
@@ -87,9 +82,7 @@ export default async function PreparationTopicPage({ params }: PreparationPagePr
             )}
           </div>
 
-          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
-            {topic.title}
-          </h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-white tracking-tight">{topic.title}</h1>
 
           <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed max-w-3xl">
             {topic.description}
@@ -109,8 +102,8 @@ export default async function PreparationTopicPage({ params }: PreparationPagePr
               {topic.slug === 'stand-installation'
                 ? '04:57 • Оригинал 1080p Full HD'
                 : topic.slug === 'report-guide'
-                ? 'Оригинал без сжатия • MKV'
-                : 'Медиа-разбор'}
+                  ? 'Оригинал без сжатия • MKV'
+                  : 'Медиа-разбор'}
             </span>
           </div>
 
@@ -292,7 +285,8 @@ export default async function PreparationTopicPage({ params }: PreparationPagePr
                   Раздел подготавливается преподавателем
                 </div>
                 <p className="text-xs text-zinc-400 leading-relaxed">
-                  Инструкции, пошаговые примеры, конфигурационные файлы и скриншоты будут добавлены в данный блок.
+                  Инструкции, пошаговые примеры, конфигурационные файлы и скриншоты будут добавлены
+                  в данный блок.
                 </p>
               </div>
             </div>

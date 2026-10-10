@@ -31,10 +31,7 @@ export async function POST(req: NextRequest) {
     if (body.mode === 'batch') {
       const items = Array.isArray(body.students) ? body.students : [];
       if (items.length === 0) {
-        return NextResponse.json(
-          { error: 'Список студентов для импорта пуст' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Список студентов для импорта пуст' }, { status: 400 });
       }
 
       const result = await db.createStudentsBatch(items);

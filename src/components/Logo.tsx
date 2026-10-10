@@ -20,7 +20,9 @@ export function Logo({ size = 'md', showSubtitle = true }: LogoProps) {
   return (
     <div className="flex items-center gap-2.5 select-none">
       {/* Visual Terminal & Network Icon */}
-      <div className={`${iconSize} bg-white text-zinc-950 flex items-center justify-center font-mono font-black border border-white shrink-0`}>
+      <div
+        className={`${iconSize} bg-white text-zinc-950 flex items-center justify-center font-mono font-black border border-white shrink-0`}
+      >
         <svg
           viewBox="0 0 24 24"
           fill="none"

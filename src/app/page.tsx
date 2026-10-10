@@ -37,12 +37,12 @@ export default async function StudentHomePage() {
   const allTasks = await db.getAllTasks();
   const submissions = await db.getUserSubmissions(session.id);
 
-  const subMap = new Map(submissions.map((s) => [s.task_id, s]));
+  const subMap = new Map(submissions.map(s => [s.task_id, s]));
 
   // Global Statistics
   const totalTasksCount = allTasks.length; // 32
-  const passedCount = submissions.filter((s) => s.status === 'reviewed' && s.is_passed).length;
-  const pendingCount = submissions.filter((s) => s.status === 'pending').length;
+  const passedCount = submissions.filter(s => s.status === 'reviewed' && s.is_passed).length;
+  const pendingCount = submissions.filter(s => s.status === 'pending').length;
 
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
@@ -81,7 +81,9 @@ export default async function StudentHomePage() {
                 <div className="text-xl font-bold text-zinc-100">{pendingCount}</div>
               </div>
               <div className="border border-emerald-500/50 bg-emerald-950/40 shadow-[0_0_14px_rgba(16,185,129,0.25)] text-emerald-300 px-3.5 py-2.5 text-center min-w-[100px]">
-                <div className="text-emerald-400 text-[10px] uppercase font-bold tracking-wider">Проверено</div>
+                <div className="text-emerald-400 text-[10px] uppercase font-bold tracking-wider">
+                  Проверено
+                </div>
                 <div className="text-xl font-bold text-emerald-200">{passedCount}</div>
               </div>
             </div>
@@ -101,7 +103,7 @@ export default async function StudentHomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {PREPARATION_TOPICS.map((topic) => {
+            {PREPARATION_TOPICS.map(topic => {
               const icons = [Server, Laptop, ClipboardCheck];
               const IconComponent = icons[topic.number - 1] || BookOpen;
 
@@ -147,7 +149,10 @@ export default async function StudentHomePage() {
                   {/* Action Link */}
                   <div className="pt-6 mt-4 border-t border-zinc-800">
                     <Link href={`/preparation/${topic.slug}`}>
-                      <Button variant="secondary" className="w-full flex items-center justify-center gap-2 text-xs">
+                      <Button
+                        variant="secondary"
+                        className="w-full flex items-center justify-center gap-2 text-xs"
+                      >
                         <span>Перейти к материалу</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </Button>
@@ -172,14 +177,16 @@ export default async function StudentHomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {modules.map((mod) => {
+            {modules.map(mod => {
               const isLocked = false;
-              const moduleTasks = allTasks.filter((t) => t.module_id === mod.id);
-              const moduleTaskIds = new Set(moduleTasks.map((t) => t.id));
+              const moduleTasks = allTasks.filter(t => t.module_id === mod.id);
+              const moduleTaskIds = new Set(moduleTasks.map(t => t.id));
 
-              const moduleSubmissions = submissions.filter((s) => moduleTaskIds.has(s.task_id));
-              const modPassed = moduleSubmissions.filter((s) => s.status === 'reviewed' && s.is_passed).length;
-              const modPending = moduleSubmissions.filter((s) => s.status === 'pending').length;
+              const moduleSubmissions = submissions.filter(s => moduleTaskIds.has(s.task_id));
+              const modPassed = moduleSubmissions.filter(
+                s => s.status === 'reviewed' && s.is_passed
+              ).length;
+              const modPending = moduleSubmissions.filter(s => s.status === 'pending').length;
               const progressPercent = Math.round((modPassed / mod.total_tasks) * 100);
 
               return (
@@ -206,7 +213,9 @@ export default async function StudentHomePage() {
                     </div>
                   )}
 
-                  <div className={`space-y-4 ${isLocked ? 'filter grayscale opacity-25 select-none pointer-events-none' : ''}`}>
+                  <div
+                    className={`space-y-4 ${isLocked ? 'filter grayscale opacity-25 select-none pointer-events-none' : ''}`}
+                  >
                     {/* Module Code & Tasks Badge */}
                     <div className="flex items-center justify-between">
                       <span className="font-mono text-xs font-bold bg-white text-zinc-950 px-2 py-0.5">
@@ -251,15 +260,24 @@ export default async function StudentHomePage() {
                   </div>
 
                   {/* Action Link */}
-                  <div className={`pt-6 mt-4 border-t border-zinc-800 ${isLocked ? 'filter grayscale opacity-25 pointer-events-none' : ''}`}>
+                  <div
+                    className={`pt-6 mt-4 border-t border-zinc-800 ${isLocked ? 'filter grayscale opacity-25 pointer-events-none' : ''}`}
+                  >
                     {isLocked ? (
-                      <Button variant="secondary" disabled className="w-full flex items-center justify-center gap-2 cursor-not-allowed">
+                      <Button
+                        variant="secondary"
+                        disabled
+                        className="w-full flex items-center justify-center gap-2 cursor-not-allowed"
+                      >
                         <Lock className="w-3.5 h-3.5" />
                         <span>В разработке</span>
                       </Button>
                     ) : (
                       <Link href={`/modules/${mod.id}`}>
-                        <Button variant="primary" className="w-full flex items-center justify-center gap-2">
+                        <Button
+                          variant="primary"
+                          className="w-full flex items-center justify-center gap-2"
+                        >
                           <span>Открыть список заданий</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </Button>

@@ -34,7 +34,11 @@ interface StepItem {
 
 export function ReportGuideContent() {
   const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
-  const [selectedImage, setSelectedImage] = useState<{ src: string; alt: string; title: string } | null>(null);
+  const [selectedImage, setSelectedImage] = useState<{
+    src: string;
+    alt: string;
+    title: string;
+  } | null>(null);
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text);
@@ -126,7 +130,7 @@ systemctl restart systemd-timesyncd`;
           <div className="flex-1 flex items-center justify-center p-2 overflow-auto my-2">
             <div
               className="relative max-w-full max-h-[82vh] border border-zinc-700 bg-zinc-950 shadow-2xl"
-              onClick={(e) => e.stopPropagation()}
+              onClick={e => e.stopPropagation()}
             >
               <img
                 src={selectedImage.src}
@@ -152,22 +156,33 @@ systemctl restart systemd-timesyncd`;
         </div>
 
         <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-          Для каждого практического задания на портале предусмотрена автоматизированная процедура самопроверки стенда.
-          Следуйте пяти простым шагам ниже, чтобы корректно снять логи настроек с вашего гипервизора Proxmox VE и отправить отчёт преподавателю.
+          Для каждого практического задания на портале предусмотрена автоматизированная процедура
+          самопроверки стенда. Следуйте пяти простым шагам ниже, чтобы корректно снять логи настроек
+          с вашего гипервизора Proxmox VE и отправить отчёт преподавателю.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
           <div className="bg-zinc-950 border border-zinc-800 p-3 space-y-1">
-            <div className="text-[11px] text-emerald-400 font-bold uppercase">1. Запуск в pve Shell</div>
-            <div className="text-xs text-zinc-400">Скрипт запускается только на главном узле Proxmox VE</div>
+            <div className="text-[11px] text-emerald-400 font-bold uppercase">
+              1. Запуск в pve Shell
+            </div>
+            <div className="text-xs text-zinc-400">
+              Скрипт запускается только на главном узле Proxmox VE
+            </div>
           </div>
           <div className="bg-zinc-950 border border-zinc-800 p-3 space-y-1">
-            <div className="text-[11px] text-cyan-400 font-bold uppercase">2. Полный лог вывода</div>
-            <div className="text-xs text-zinc-400">Копируйте результат выполнения скрипта целиком</div>
+            <div className="text-[11px] text-cyan-400 font-bold uppercase">
+              2. Полный лог вывода
+            </div>
+            <div className="text-xs text-zinc-400">
+              Копируйте результат выполнения скрипта целиком
+            </div>
           </div>
           <div className="bg-zinc-950 border border-zinc-800 p-3 space-y-1">
             <div className="text-[11px] text-amber-400 font-bold uppercase">3. Тест и отправка</div>
-            <div className="text-xs text-zinc-400">Ответьте на теоретические вопросы и нажмите Отправить</div>
+            <div className="text-xs text-zinc-400">
+              Ответьте на теоретические вопросы и нажмите Отправить
+            </div>
           </div>
         </div>
       </div>
@@ -197,9 +212,7 @@ systemctl restart systemd-timesyncd`;
             </div>
 
             {/* Step Description */}
-            <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-              {step.description}
-            </p>
+            <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">{step.description}</p>
 
             {/* Screenshot Container with Click-to-Zoom */}
             <div className="space-y-2">
@@ -233,7 +246,8 @@ systemctl restart systemd-timesyncd`;
 
               <div className="flex items-center justify-between text-[11px] text-zinc-500 px-1">
                 <span>{step.imageAlt}</span>
-                <span className="flex items-center gap-1 text-zinc-400 hover:text-white cursor-pointer"
+                <span
+                  className="flex items-center gap-1 text-zinc-400 hover:text-white cursor-pointer"
                   onClick={() =>
                     setSelectedImage({
                       src: step.imageSrc,
@@ -279,7 +293,11 @@ systemctl restart systemd-timesyncd`;
         </div>
 
         <p className="text-xs sm:text-sm text-zinc-300 leading-relaxed">
-          Если на вашей виртуальной машине или хосте <code className="text-amber-300 bg-black/60 px-1 py-0.5">pve</code> при запуске скрипта проверки возникает ошибка, как показано ниже — это означает, что <strong>на машине сбито системное время или дата</strong> (часы отстают от реального времени).
+          Если на вашей виртуальной машине или хосте{' '}
+          <code className="text-amber-300 bg-black/60 px-1 py-0.5">pve</code> при запуске скрипта
+          проверки возникает ошибка, как показано ниже — это означает, что{' '}
+          <strong>на машине сбито системное время или дата</strong> (часы отстают от реального
+          времени).
         </p>
 
         {/* Terminal Error Snippet Box */}
@@ -287,11 +305,13 @@ systemctl restart systemd-timesyncd`;
           <div className="flex items-center justify-between pb-2 border-b border-zinc-800 text-[11px] text-zinc-500">
             <div className="flex items-center gap-2">
               <Terminal className="w-3.5 h-3.5 text-rose-400" />
-              <span className="text-rose-400 font-bold uppercase">Пример ошибки в консоли Proxmox Shell</span>
+              <span className="text-rose-400 font-bold uppercase">
+                Пример ошибки в консоли Proxmox Shell
+              </span>
             </div>
           </div>
           <pre className="text-[11px] font-mono text-zinc-300 leading-relaxed overflow-x-auto whitespace-pre">
-{`-bash: bash~: command not found
+            {`-bash: bash~: command not found
 curl: (60) SSL certificate problem: certificate is not yet valid
 More details here: https://curl.se/docs/sslcerts.html
  
@@ -336,7 +356,7 @@ establish a secure connection to it.`}
               </button>
             </div>
             <pre className="text-xs text-emerald-400 overflow-x-auto font-bold leading-relaxed">
-{fixCommands}
+              {fixCommands}
             </pre>
           </div>
         </div>
@@ -366,23 +386,26 @@ establish a secure connection to it.`}
             </button>
           </div>
           <pre className="text-xs text-cyan-300 overflow-x-auto leading-relaxed">
-{fallbackDateCmd}
+            {fallbackDateCmd}
           </pre>
         </div>
 
         {/* Temporary bypass tip */}
         <div className="bg-zinc-950 border border-zinc-800 p-3.5 text-xs text-zinc-300 space-y-1.5">
-          <div className="font-bold text-zinc-200">
-            Экстренный обход (флаг -k):
-          </div>
+          <div className="font-bold text-zinc-200">Экстренный обход (флаг -k):</div>
           <p className="text-zinc-400 leading-relaxed">
-            Если на стенде нет доступа к внешним NTP-серверам, можно запустить команду с ключом <code className="text-emerald-300 bg-zinc-900 px-1 py-0.5">-k</code> (<code className="text-emerald-300 bg-zinc-900 px-1 py-0.5">curl -ksSL ... | bash</code>), чтобы пропустить валидацию даты сертификата.
+            Если на стенде нет доступа к внешним NTP-серверам, можно запустить команду с ключом{' '}
+            <code className="text-emerald-300 bg-zinc-900 px-1 py-0.5">-k</code> (
+            <code className="text-emerald-300 bg-zinc-900 px-1 py-0.5">curl -ksSL ... | bash</code>
+            ), чтобы пропустить валидацию даты сертификата.
           </p>
         </div>
 
         <div className="pt-2 text-xs text-amber-300 font-bold flex items-center gap-2">
           <ArrowRight className="w-4 h-4" />
-          <span>После синхронизации времени повторно скопируйте и выполните проверочный скрипт.</span>
+          <span>
+            После синхронизации времени повторно скопируйте и выполните проверочный скрипт.
+          </span>
         </div>
       </section>
     </div>

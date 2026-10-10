@@ -25,7 +25,8 @@ export const ALT_LINUX_THEORY: TheorySection[] = [
     taskSlug: 'm1-task-1',
     number: 1,
     title: 'Задание №1: Базовая настройка сети и хостов',
-    summary: 'Архитектура ALT Linux, репозитории p10, пакетный менеджер APT-RPM, подсистема etcnet, настройка FQDN и адресации RFC 1918.',
+    summary:
+      'Архитектура ALT Linux, репозитории p10, пакетный менеджер APT-RPM, подсистема etcnet, настройка FQDN и адресации RFC 1918.',
     content: `Дистрибутивы семейства **ALT Linux** (разработка «Базальт СПО») построены на полностью независимой российской инфраструктуре, ядре Linux и пакетной базе **Сизиф (Sisyphus)**.
 
 ---
@@ -149,7 +150,8 @@ ipcalc 192.168.100.0/27
     taskSlug: 'm1-task-2',
     number: 2,
     title: 'Задание №2: Доступ к сети Интернет на ISP',
-    summary: 'Маршрутизация ядра Linux (net.ipv4.ip_forward), архитектура nftables, трансляция адресов NAT Masquerade и выход филиалов в сеть.',
+    summary:
+      'Маршрутизация ядра Linux (net.ipv4.ip_forward), архитектура nftables, трансляция адресов NAT Masquerade и выход филиалов в сеть.',
     content: `Узел **ISP** в топологии экзамена выполняет роль граничного маршрутизатора Интернет-провайдера. Через него маршрутизаторы HQ-RTR и BR-RTR получают связность между собой и выход во внешнюю глобальную сеть.
 
 ---
@@ -241,7 +243,8 @@ ping -c 3 77.88.8.8
     taskSlug: 'm1-task-3',
     number: 3,
     title: 'Задание №3: Локальные учётные записи и sudo',
-    summary: 'Принцип наименьших привилегий, администрирование пользователей и групп, подсистема libnss-role в ALT Linux и белые списки утилит в sudoers.',
+    summary:
+      'Принцип наименьших привилегий, администрирование пользователей и групп, подсистема libnss-role в ALT Linux и белые списки утилит в sudoers.',
     content: `Безопасность любой операционной системы базируется на **принципе наименьших привилегий (Principle of Least Privilege)**: учетной записи предоставляются только те права, которые абсолютно необходимы для выполнения ее прямых обязанностей.
 
 ---
@@ -325,7 +328,8 @@ visudo -c -f /etc/sudoers.d/99-network-policy
     taskSlug: 'm1-task-4',
     number: 4,
     title: 'Задание №4: Коммутация и сегментация VLAN в сегменте HQ',
-    summary: 'Стандарт IEEE 802.1Q, саб-интерфейсы в etcnet, архитектура Router-on-a-Stick и маршрутизация между изолированными сегментами.',
+    summary:
+      'Стандарт IEEE 802.1Q, саб-интерфейсы в etcnet, архитектура Router-on-a-Stick и маршрутизация между изолированными сегментами.',
     content: `Сегментация сети на уровне L2 с помощью **VLAN (Virtual Local Area Network)** изолирует широковещательные домены, повышает производительность сети и безопасность данных.
 
 ---
@@ -420,7 +424,8 @@ ip -c --br a show "vlan*"
     taskSlug: 'm1-task-5',
     number: 5,
     title: 'Задание №5: Безопасный удаленный доступ (SSH)',
-    summary: 'Конфигурация OpenSSH демона sshd, харденинг, смена портов, запрет входа root и авторизация по открытым ключам.',
+    summary:
+      'Конфигурация OpenSSH демона sshd, харденинг, смена портов, запрет входа root и авторизация по открытым ключам.',
     content: `Протокол **SSH (Secure Shell)** обеспечивает защищенное шифрованное удаленное управление сетевыми узлами и серверами через недоверенную сеть.
 
 ---
@@ -494,7 +499,8 @@ systemctl status sshd --no-pager
     taskSlug: 'm1-task-6',
     number: 6,
     title: 'Задание №6: Межофисный защищенный IP-туннель (GRE)',
-    summary: 'L3 туннелирование GRE, расчет MTU 1476 и TCP MSS 1436, настройка etcnet и альтернативный туннель OpenVPN Point-to-Point.',
+    summary:
+      'L3 туннелирование GRE, расчет MTU 1476 и TCP MSS 1436, настройка etcnet и альтернативный туннель OpenVPN Point-to-Point.',
     content: `**Сетевой туннель** — это виртуальный канал связи между двумя маршрутизаторами, созданный поверх промежуточной сети провайдера (ISP).
 
 ---
@@ -591,7 +597,8 @@ persist-key
     taskSlug: 'm1-task-7',
     number: 7,
     title: 'Задание №7: Динамическая маршрутизация Link-State (OSPF в FRR)',
-    summary: 'Протокол OSPFv2, стек FRRouting, построчный разбор команд, конфигурация /etc/frr/frr.conf и интерактивная утилита vtysh.',
+    summary:
+      'Протокол OSPFv2, стек FRRouting, построчный разбор команд, конфигурация /etc/frr/frr.conf и интерактивная утилита vtysh.',
     content: `Протокол **OSPF (Open Shortest Path First, RFC 2328)** — это масштабируемый протокол динамической маршрутизации внутреннего шлюза (IGP), работающий на основе отслеживания состояния каналов (Link-State).
 
 Маршрутизаторы OSPF обмениваются объявлениями о состоянии каналов (**LSA**), формируют единую топологическую базу данных (**LSDB**) и рассчитывают кратчайшие пути с помощью алгоритма Дейкстры (**SPF**).
@@ -702,7 +709,8 @@ vtysh -c "show ip route ospf"
     taskSlug: 'm1-task-8',
     number: 8,
     title: 'Задание №8: Динамическая трансляция адресов (NAT) на филиалах',
-    summary: 'Трансляция адресов источника (Source NAT / Masquerade) на роутерах HQ-RTR и BR-RTR через nftables, разделение туннельного и интернет-трафика.',
+    summary:
+      'Трансляция адресов источника (Source NAT / Masquerade) на роутерах HQ-RTR и BR-RTR через nftables, разделение туннельного и интернет-трафика.',
     content: `На маршрутизаторах филиалов **HQ-RTR** и **BR-RTR** необходимо обеспечить доступ клиентов в Интернет при сохранении прямой маршрутизации между филиалами.
 
 ---
@@ -762,7 +770,8 @@ ping -c 3 77.88.8.8
     taskSlug: 'm1-task-9',
     number: 9,
     title: 'Задание №9: Настройка DHCP-сервера для клиентов (HQ-CLI)',
-    summary: 'Механика 4-этапного процесса DORA, демон dnsmasq в ALT Linux, пулы адресов и критически важные опции DHCP 3, 6, 15.',
+    summary:
+      'Механика 4-этапного процесса DORA, демон dnsmasq в ALT Linux, пулы адресов и критически важные опции DHCP 3, 6, 15.',
     content: `Служба **DHCP (Dynamic Host Configuration Protocol)** автоматизирует распределение сетевых настроек среди клиентских компьютеров сети.
 
 ---
@@ -829,7 +838,8 @@ ip -c --br a show vlan200
     taskSlug: 'm1-task-10',
     number: 10,
     title: 'Задание №10: Инфраструктура службы доменных имён (DNS BIND)',
-    summary: 'Архитектура BIND 9, chroot-изоляция в /var/lib/bind, прямые и обратные зоны PTR, серверы пересылки (Forwarders) и диагностика через dig.',
+    summary:
+      'Архитектура BIND 9, chroot-изоляция в /var/lib/bind, прямые и обратные зоны PTR, серверы пересылки (Forwarders) и диагностика через dig.',
     content: `Служба доменных имен **DNS (Domain Name System)** преобразует символьные доменные имена в числовые IP-адреса и наоборот.
 
 ---
@@ -900,7 +910,8 @@ dig @127.0.0.1 -x 192.168.100.2 +short
     taskSlug: 'm1-task-11',
     number: 11,
     title: 'Задание №11: Настройка системного времени и часового пояса',
-    summary: 'Управление системными и аппаратными часами RTC, утилита timedatectl, симлинк /etc/localtime и подготовка к работе Kerberos.',
+    summary:
+      'Управление системными и аппаратными часами RTC, утилита timedatectl, симлинк /etc/localtime и подготовка к работе Kerberos.',
     content: `Синхронизация системного времени и корректный часовой пояс критически важны для работы распределенных систем: корреляции журналов безопасности rsyslog, проверки сроков SSL-сертификатов и билетной аутентификации Kerberos.
 
 ---
@@ -941,403 +952,445 @@ hwclock --systohc
   // МОДУЛЬ 2 (ЗАДАНИЯ 1 - 11)
   // =========================================================================
   {
-    "id": "m2-task-1",
-    "module": "module-2",
-    "moduleTitle": "Модуль №2",
-    "moduleDescription": "Службы каталога и сервисы",
-    "taskNumber": 1,
-    "taskSlug": "m2-task-1",
-    "number": 12,
-    "title": "Задание №1: Контроллер домена Samba DC и ввод клиента HQ-CLI",
-    "summary": "Архитектура Active Directory (LDAP, Kerberos KDC, DNS, SYSVOL), метапакет task-samba-dc, domain provision, ввод через Alterator acc, ролевая модель libnss-role и ограничение sudoers.",
-    "content": "**Samba 4 Active Directory Domain Controller (AD DC)** — полноценная реализация служб каталога Microsoft Active Directory в Linux. Она объединяет в себе:\n* **LDAP:** сервер каталогов для хранения информации об объектах (пользователи, группы, компьютеры).\n* **Kerberos KDC:** центр распределения ключей для сквозной безопасной аутентификации без передачи пароля по сети.\n* **Samba Internal DNS:** встроенный DNS-сервер для обслуживания ресурсных записей домена и SRV-записей (`_ldap._tcp`, `_kerberos._tcp`).\n* **SYSVOL:** общедоступная сетевая папка репликации групповых политик.\n\n---\n\n## 1. Порядок развёртывания Samba DC на сервере BR-SRV\n\n1. **Установка пакетов ДО изменения DNS:**\n   ```bash\n   apt-get update && apt-get install task-samba-dc -y\n   ```\n   > ⚠️ **Важно:** Сначала обязательно устанавливаются пакеты, и только потом настраивается DNS! Иначе сервер потеряет связь с репозиториями в Интернете.\n\n2. **Инициализация (Provisioning) домена:**\n   ```bash\n   rm -f /etc/samba/smb.conf\n   rm -rf {/var/lib/samba, /var/cache/samba}\n   mkdir -p /var/lib/samba/sysvol\n   samba-tool domain provision\n   ```\n   Параметры: Realm `AU-TEAM.IRPO`, Domain `AU-TEAM`, Role `dc`, DNS `SAMBA_INTERNAL`, Пароль `P@ssw0rd`.\n\n3. **Конфигурация Kerberos и запуск:**\n   ```bash\n   mv /etc/krb5.conf /etc/krb5.conf.back\n   cp /var/lib/samba/private/krb5.conf /etc/krb5.conf\n   systemctl enable --now samba\n   ```\n\n4. **Добавление DNS A-записей хостов и сервисов:**\n   ```bash\n   samba-tool dns add br-srv.au-team.irpo au-team.irpo hq-srv A 192.168.1.10 -U Administrator\n   samba-tool dns add br-srv.au-team.irpo au-team.irpo hq-rtr A 192.168.1.1 -U Administrator\n   samba-tool dns add br-srv.au-team.irpo au-team.irpo br-rtr A 192.168.3.1 -U Administrator\n   samba-tool dns add br-srv.au-team.irpo au-team.irpo web.au-team.irpo A 172.16.1.1 -U Administrator\n   samba-tool dns add br-srv.au-team.irpo au-team.irpo docker.au-team.irpo A 172.16.2.1 -U Administrator\n   ```\n\n5. **Создание группы hq и пользователей:**\n   ```bash\n   samba-tool group add hq\n   for i in {1..5}; do samba-tool user add hquser$i P@ssw0rd; done\n   for i in {1..5}; do samba-tool group addmembers hq hquser$i; done\n   ```\n\n---\n\n## 2. Механизм ролей libnss-role и ограничение sudo на HQ-CLI\n\nВ ALT Linux для сопоставления доменных групп Active Directory с локальными системными группами используется подсистема **`libnss-role`**:\n```bash\nroleadd hq wheel\necho \"WHEEL_USERS ALL=(ALL:ALL) /bin/cat, /bin/grep, /usr/bin/id\" >> /etc/sudoers\n```\nКоманда связывает доменную группу `hq` с привилегированной ролью `wheel`, а строка в `/etc/sudoers` ограничивает запуск суперпользовательских команд исключительно белым списком утилит (`cat`, `grep`, `id`).",
-    "codeBlocks": [
+    id: 'm2-task-1',
+    module: 'module-2',
+    moduleTitle: 'Модуль №2',
+    moduleDescription: 'Службы каталога и сервисы',
+    taskNumber: 1,
+    taskSlug: 'm2-task-1',
+    number: 12,
+    title: 'Задание №1: Контроллер домена Samba DC и ввод клиента HQ-CLI',
+    summary:
+      'Архитектура Active Directory (LDAP, Kerberos KDC, DNS, SYSVOL), метапакет task-samba-dc, domain provision, ввод через Alterator acc, ролевая модель libnss-role и ограничение sudoers.',
+    content:
+      '**Samba 4 Active Directory Domain Controller (AD DC)** — полноценная реализация служб каталога Microsoft Active Directory в Linux. Она объединяет в себе:\n* **LDAP:** сервер каталогов для хранения информации об объектах (пользователи, группы, компьютеры).\n* **Kerberos KDC:** центр распределения ключей для сквозной безопасной аутентификации без передачи пароля по сети.\n* **Samba Internal DNS:** встроенный DNS-сервер для обслуживания ресурсных записей домена и SRV-записей (`_ldap._tcp`, `_kerberos._tcp`).\n* **SYSVOL:** общедоступная сетевая папка репликации групповых политик.\n\n---\n\n## 1. Порядок развёртывания Samba DC на сервере BR-SRV\n\n1. **Установка пакетов ДО изменения DNS:**\n   ```bash\n   apt-get update && apt-get install task-samba-dc -y\n   ```\n   > ⚠️ **Важно:** Сначала обязательно устанавливаются пакеты, и только потом настраивается DNS! Иначе сервер потеряет связь с репозиториями в Интернете.\n\n2. **Инициализация (Provisioning) домена:**\n   ```bash\n   rm -f /etc/samba/smb.conf\n   rm -rf {/var/lib/samba, /var/cache/samba}\n   mkdir -p /var/lib/samba/sysvol\n   samba-tool domain provision\n   ```\n   Параметры: Realm `AU-TEAM.IRPO`, Domain `AU-TEAM`, Role `dc`, DNS `SAMBA_INTERNAL`, Пароль `P@ssw0rd`.\n\n3. **Конфигурация Kerberos и запуск:**\n   ```bash\n   mv /etc/krb5.conf /etc/krb5.conf.back\n   cp /var/lib/samba/private/krb5.conf /etc/krb5.conf\n   systemctl enable --now samba\n   ```\n\n4. **Добавление DNS A-записей хостов и сервисов:**\n   ```bash\n   samba-tool dns add br-srv.au-team.irpo au-team.irpo hq-srv A 192.168.1.10 -U Administrator\n   samba-tool dns add br-srv.au-team.irpo au-team.irpo hq-rtr A 192.168.1.1 -U Administrator\n   samba-tool dns add br-srv.au-team.irpo au-team.irpo br-rtr A 192.168.3.1 -U Administrator\n   samba-tool dns add br-srv.au-team.irpo au-team.irpo web.au-team.irpo A 172.16.1.1 -U Administrator\n   samba-tool dns add br-srv.au-team.irpo au-team.irpo docker.au-team.irpo A 172.16.2.1 -U Administrator\n   ```\n\n5. **Создание группы hq и пользователей:**\n   ```bash\n   samba-tool group add hq\n   for i in {1..5}; do samba-tool user add hquser$i P@ssw0rd; done\n   for i in {1..5}; do samba-tool group addmembers hq hquser$i; done\n   ```\n\n---\n\n## 2. Механизм ролей libnss-role и ограничение sudo на HQ-CLI\n\nВ ALT Linux для сопоставления доменных групп Active Directory с локальными системными группами используется подсистема **`libnss-role`**:\n```bash\nroleadd hq wheel\necho "WHEEL_USERS ALL=(ALL:ALL) /bin/cat, /bin/grep, /usr/bin/id" >> /etc/sudoers\n```\nКоманда связывает доменную группу `hq` с привилегированной ролью `wheel`, а строка в `/etc/sudoers` ограничивает запуск суперпользовательских команд исключительно белым списком утилит (`cat`, `grep`, `id`).',
+    codeBlocks: [
       {
-        "label": "Инициализация Samba DC и делегирование libnss-role",
-        "code": "samba-tool domain provision --domain=AU-TEAM --realm=AU-TEAM.IRPO --server-role=dc --dns-backend=SAMBA_INTERNAL --adminpass=P@ssw0rd\n\n# На клиенте HQ-CLI:\nroleadd hq wheel\necho \"WHEEL_USERS ALL=(ALL:ALL) /bin/cat, /bin/grep, /usr/bin/id\" >> /etc/sudoers"
-      }
-    ]
+        label: 'Инициализация Samba DC и делегирование libnss-role',
+        code: 'samba-tool domain provision --domain=AU-TEAM --realm=AU-TEAM.IRPO --server-role=dc --dns-backend=SAMBA_INTERNAL --adminpass=P@ssw0rd\n\n# На клиенте HQ-CLI:\nroleadd hq wheel\necho "WHEEL_USERS ALL=(ALL:ALL) /bin/cat, /bin/grep, /usr/bin/id" >> /etc/sudoers',
+      },
+    ],
   },
 
   {
-    "id": "m2-task-2",
-    "module": "module-2",
-    "moduleTitle": "Модуль №2",
-    "moduleDescription": "Службы каталога и сервисы",
-    "taskNumber": 2,
-    "taskSlug": "m2-task-2",
-    "number": 13,
-    "title": "Задание №2: Файловое хранилище RAID 0 на сервере HQ-SRV",
-    "summary": "Архитектура RAID 0 (Stripe), разметка parted с флагом raid on, объединение mdadm, /etc/mdadm.conf и постоянное автомонтирование в /etc/fstab.",
-    "content": "Программный массив **RAID 0 (Stripe / Чередование)** объединяет два физических накопителя в единый логический том:\n* **Суммирование объёма:** 1 Гб + 1 Гб ≈ 2 Гб полезного пространства.\n* **Увеличение скорости:** параллельная запись и чтение блоков на оба диска ускоряет операции почти в 2 раза.\n* **Нулевая избыточность:** при выходе из строя любого из дисков разрушается весь массив и теряются все данные!\n\n---\n\n## 1. Разметка разделов через parted\n\nНа каждом накопителе (/dev/sdb и /dev/sdc) создается таблица разделов MBR и раздел на 100% объема с флагом `raid on`:\n```bash\nparted /dev/sdb --script mklabel msdos mkpart primary 1MiB 100% set 1 raid on\nparted /dev/sdc --script mklabel msdos mkpart primary 1MiB 100% set 1 raid on\n```\n\n---\n\n## 2. Создание и фиксация массива mdadm\n\n```bash\n# 1. Сборка массива уровня 0:\nmdadm --create /dev/md0 --level=0 --raid-devices=2 /dev/sdb1 /dev/sdc1\n\n# 2. Сканирование и запись метаданных в конфигурационный файл:\nmdadm --detail --scan >> /etc/mdadm.conf\n\n# 3. Создание файловой системы:\nmkfs.ext4 /dev/md0\n\n# 4. Настройка автомонтирования в /etc/fstab:\nmkdir /raid\necho \"/dev/md0 /raid ext4 defaults 0 0\" >> /etc/fstab\nmount -av\n```",
-    "codeBlocks": [
+    id: 'm2-task-2',
+    module: 'module-2',
+    moduleTitle: 'Модуль №2',
+    moduleDescription: 'Службы каталога и сервисы',
+    taskNumber: 2,
+    taskSlug: 'm2-task-2',
+    number: 13,
+    title: 'Задание №2: Файловое хранилище RAID 0 на сервере HQ-SRV',
+    summary:
+      'Архитектура RAID 0 (Stripe), разметка parted с флагом raid on, объединение mdadm, /etc/mdadm.conf и постоянное автомонтирование в /etc/fstab.',
+    content:
+      'Программный массив **RAID 0 (Stripe / Чередование)** объединяет два физических накопителя в единый логический том:\n* **Суммирование объёма:** 1 Гб + 1 Гб ≈ 2 Гб полезного пространства.\n* **Увеличение скорости:** параллельная запись и чтение блоков на оба диска ускоряет операции почти в 2 раза.\n* **Нулевая избыточность:** при выходе из строя любого из дисков разрушается весь массив и теряются все данные!\n\n---\n\n## 1. Разметка разделов через parted\n\nНа каждом накопителе (/dev/sdb и /dev/sdc) создается таблица разделов MBR и раздел на 100% объема с флагом `raid on`:\n```bash\nparted /dev/sdb --script mklabel msdos mkpart primary 1MiB 100% set 1 raid on\nparted /dev/sdc --script mklabel msdos mkpart primary 1MiB 100% set 1 raid on\n```\n\n---\n\n## 2. Создание и фиксация массива mdadm\n\n```bash\n# 1. Сборка массива уровня 0:\nmdadm --create /dev/md0 --level=0 --raid-devices=2 /dev/sdb1 /dev/sdc1\n\n# 2. Сканирование и запись метаданных в конфигурационный файл:\nmdadm --detail --scan >> /etc/mdadm.conf\n\n# 3. Создание файловой системы:\nmkfs.ext4 /dev/md0\n\n# 4. Настройка автомонтирования в /etc/fstab:\nmkdir /raid\necho "/dev/md0 /raid ext4 defaults 0 0" >> /etc/fstab\nmount -av\n```',
+    codeBlocks: [
       {
-        "label": "Создание и фиксация RAID 0 на HQ-SRV",
-        "code": "mdadm --create /dev/md0 --level=0 --raid-devices=2 /dev/sdb1 /dev/sdc1\nmdadm --detail --scan >> /etc/mdadm.conf\nmkfs.ext4 /dev/md0\necho \"/dev/md0 /raid ext4 defaults 0 0\" >> /etc/fstab\nmount -av"
-      }
-    ]
+        label: 'Создание и фиксация RAID 0 на HQ-SRV',
+        code: 'mdadm --create /dev/md0 --level=0 --raid-devices=2 /dev/sdb1 /dev/sdc1\nmdadm --detail --scan >> /etc/mdadm.conf\nmkfs.ext4 /dev/md0\necho "/dev/md0 /raid ext4 defaults 0 0" >> /etc/fstab\nmount -av',
+      },
+    ],
   },
 
   {
-    "id": "m2-task-3",
-    "module": "module-2",
-    "moduleTitle": "Модуль №2",
-    "moduleDescription": "Службы каталога и сервисы",
-    "taskNumber": 3,
-    "taskSlug": "m2-task-3",
-    "number": 14,
-    "title": "Задание №3: Сетевая файловая система NFS на HQ-SRV и HQ-CLI",
-    "summary": "Протокол NFS, служба nfs-server, экспорт /etc/exports для подсети клиентов 192.168.2.0/27, проверка showmount и опция автомонтирования _netdev.",
-    "content": "Сетевая файловая система **NFS (Network File System)** обеспечивает удалённый доступ к файловым ресурсам по локальной сети:\n\n---\n\n## 1. Параметры экспорта в /etc/exports (HQ-SRV)\n\n```text\n/raid/nfs 192.168.2.0/27(rw,no_subtree_check,no_root_squash)\n```\n* **`rw`:** полный доступ на чтение и запись.\n* **`no_subtree_check`:** отключение проверки поддеревьев (повышает скорость и надежность работы с файлами).\n* **`no_root_squash`:** сохранение привилегий суперпользователя root клиента на сервере.\n* **`192.168.2.0/27`:** ограничение доступа только подсетью рабочих станций HQ-CLI.\n\n---\n\n## 2. Параметры монтирования в /etc/fstab (HQ-CLI)\n\n```text\n192.168.1.10:/raid/nfs /mnt/nfs nfs rw,soft,_netdev 0 0\n```\n* **`soft`:** режим мягкой обработки ошибок (клиент не зависает при разрыве сетевого линка).\n* **`_netdev`:** гарантирует, что система попытается примонтировать сетевой том только после полной инициализации сетевых интерфейсов.",
-    "codeBlocks": [
+    id: 'm2-task-3',
+    module: 'module-2',
+    moduleTitle: 'Модуль №2',
+    moduleDescription: 'Службы каталога и сервисы',
+    taskNumber: 3,
+    taskSlug: 'm2-task-3',
+    number: 14,
+    title: 'Задание №3: Сетевая файловая система NFS на HQ-SRV и HQ-CLI',
+    summary:
+      'Протокол NFS, служба nfs-server, экспорт /etc/exports для подсети клиентов 192.168.2.0/27, проверка showmount и опция автомонтирования _netdev.',
+    content:
+      'Сетевая файловая система **NFS (Network File System)** обеспечивает удалённый доступ к файловым ресурсам по локальной сети:\n\n---\n\n## 1. Параметры экспорта в /etc/exports (HQ-SRV)\n\n```text\n/raid/nfs 192.168.2.0/27(rw,no_subtree_check,no_root_squash)\n```\n* **`rw`:** полный доступ на чтение и запись.\n* **`no_subtree_check`:** отключение проверки поддеревьев (повышает скорость и надежность работы с файлами).\n* **`no_root_squash`:** сохранение привилегий суперпользователя root клиента на сервере.\n* **`192.168.2.0/27`:** ограничение доступа только подсетью рабочих станций HQ-CLI.\n\n---\n\n## 2. Параметры монтирования в /etc/fstab (HQ-CLI)\n\n```text\n192.168.1.10:/raid/nfs /mnt/nfs nfs rw,soft,_netdev 0 0\n```\n* **`soft`:** режим мягкой обработки ошибок (клиент не зависает при разрыве сетевого линка).\n* **`_netdev`:** гарантирует, что система попытается примонтировать сетевой том только после полной инициализации сетевых интерфейсов.',
+    codeBlocks: [
       {
-        "label": "Экспорт NFS на HQ-SRV и монтирование на HQ-CLI",
-        "code": "# HQ-SRV:\necho \"/raid/nfs 192.168.2.0/27(rw,no_subtree_check,no_root_squash)\" >> /etc/exports\nsystemctl enable --now nfs-server\n\n# HQ-CLI:\necho \"192.168.1.10:/raid/nfs /mnt/nfs nfs rw,soft,_netdev 0 0\" >> /etc/fstab\nmount -av"
-      }
-    ]
+        label: 'Экспорт NFS на HQ-SRV и монтирование на HQ-CLI',
+        code: '# HQ-SRV:\necho "/raid/nfs 192.168.2.0/27(rw,no_subtree_check,no_root_squash)" >> /etc/exports\nsystemctl enable --now nfs-server\n\n# HQ-CLI:\necho "192.168.1.10:/raid/nfs /mnt/nfs nfs rw,soft,_netdev 0 0" >> /etc/fstab\nmount -av',
+      },
+    ],
   },
 
   {
-    "id": "m2-task-4",
-    "module": "module-2",
-    "moduleTitle": "Модуль №2",
-    "moduleDescription": "Службы каталога и сервисы",
-    "taskNumber": 4,
-    "taskSlug": "m2-task-4",
-    "number": 15,
-    "title": "Задание №4: Служба сетевого времени Chrony на ISP",
-    "summary": "Иерархия слоев Stratum в протоколе NTP, подсистема control chrony server, директивы pool prefer minstratum 4, local stratum 5 и утилита chronyc.",
-    "content": "Служба **Chrony** обеспечивает синхронизацию системных часов узлов сети:\n\n---\n\n## 1. Архитектура уровней Stratum\n\n* **Stratum 0:** физические эталонные часы (атомные стандарты, GPS/ГЛОНАСС).\n* **Stratum 1–4:** вышестоящие пулы серверов интернета (`pool.ntp.org`).\n* **Stratum 5:** маршрутизатор **ISP**. За счёт директивы `local stratum 5` маршрутизатор объявляет себя доверенным источником даже при временном обрыве внешнего канала связи.\n* **Stratum 6:** внутренние клиенты (HQ-SRV, BR-RTR, BR-SRV, HQ-CLI).\n\n---\n\n## 2. Команды управления Chrony в ALT Linux\n\n```bash\n# 1. Открытие сокета NTP для обслуживания сети:\ncontrol chrony server\n\n# 2. Проверка источников синхронизации:\nchronyc sources\n# Символ ^* подтверждает, что источник выбран активным системным пиром!\n\n# 3. Просмотр детального статуса стратума:\nchronyc tracking\n```",
-    "codeBlocks": [
+    id: 'm2-task-4',
+    module: 'module-2',
+    moduleTitle: 'Модуль №2',
+    moduleDescription: 'Службы каталога и сервисы',
+    taskNumber: 4,
+    taskSlug: 'm2-task-4',
+    number: 15,
+    title: 'Задание №4: Служба сетевого времени Chrony на ISP',
+    summary:
+      'Иерархия слоев Stratum в протоколе NTP, подсистема control chrony server, директивы pool prefer minstratum 4, local stratum 5 и утилита chronyc.',
+    content:
+      'Служба **Chrony** обеспечивает синхронизацию системных часов узлов сети:\n\n---\n\n## 1. Архитектура уровней Stratum\n\n* **Stratum 0:** физические эталонные часы (атомные стандарты, GPS/ГЛОНАСС).\n* **Stratum 1–4:** вышестоящие пулы серверов интернета (`pool.ntp.org`).\n* **Stratum 5:** маршрутизатор **ISP**. За счёт директивы `local stratum 5` маршрутизатор объявляет себя доверенным источником даже при временном обрыве внешнего канала связи.\n* **Stratum 6:** внутренние клиенты (HQ-SRV, BR-RTR, BR-SRV, HQ-CLI).\n\n---\n\n## 2. Команды управления Chrony в ALT Linux\n\n```bash\n# 1. Открытие сокета NTP для обслуживания сети:\ncontrol chrony server\n\n# 2. Проверка источников синхронизации:\nchronyc sources\n# Символ ^* подтверждает, что источник выбран активным системным пиром!\n\n# 3. Просмотр детального статуса стратума:\nchronyc tracking\n```',
+    codeBlocks: [
       {
-        "label": "Настройка сервера ISP и клиентов Chrony",
-        "code": "# ISP:\ncontrol chrony server\nsed -i 's/#local stratum 10/local stratum 5/' /etc/chrony.conf\nsystemctl restart chronyd\n\n# Клиенты:\nsed -i 's/pool pool.ntp.org iburst/server 172.16.1.1 iburst/' /etc/chrony.conf\nsystemctl restart chronyd"
-      }
-    ]
+        label: 'Настройка сервера ISP и клиентов Chrony',
+        code: "# ISP:\ncontrol chrony server\nsed -i 's/#local stratum 10/local stratum 5/' /etc/chrony.conf\nsystemctl restart chronyd\n\n# Клиенты:\nsed -i 's/pool pool.ntp.org iburst/server 172.16.1.1 iburst/' /etc/chrony.conf\nsystemctl restart chronyd",
+      },
+    ],
   },
 
   {
-    "id": "m2-task-5",
-    "module": "module-2",
-    "moduleTitle": "Модуль №2",
-    "moduleDescription": "Службы каталога и сервисы",
-    "taskNumber": 5,
-    "taskSlug": "m2-task-5",
-    "number": 16,
-    "title": "Задание №5: Автоматизация с Ansible на сервере BR-SRV",
-    "summary": "Безагентная архитектура Ansible, утилита sshpass, активация OpenSSH на порту 2026, параметры host_key_checking = False и ad-hoc модуль ping.",
-    "content": "**Ansible** — безагентная (Agentless) система управления конфигурациями:\n* Не требует установки клиентских демонов на управляемые машины.\n* Управление выполняется через стандартный протокол SSH с вызовом интерпретатора Python.\n* Утилита **`sshpass`** позволяет передавать пароли учётных записей в сессию SSH в автоматическом неинтерактивном режиме.\n\n---\n\n## 1. Предварительное включение OpenSSH на порту 2026\n\nНа машинах HQ-RTR, BR-RTR и HQ-CLI служба OpenSSH настраивается на прослушивание порта 2026:\n```bash\ngrep -q \"^Port 2026\" /etc/openssh/sshd_config || sed -i '1i Port 2026' /etc/openssh/sshd_config\nsystemctl enable --now sshd\nsystemctl restart sshd\n```\n\n---\n\n## 2. Конфигурация Control Node на BR-SRV\n\nФайл **`/etc/ansible/ansible.cfg`**:\n```ini\n[defaults]\nhost_key_checking = False\ninterpreter_python = /usr/bin/python3\ninventory = /etc/ansible/hosts\n```\n\nФайл **`/etc/ansible/hosts`**:\n```ini\nHQ-SRV ansible_user=user ansible_password=resu ansible_port=2026\nHQ-RTR ansible_user=net_admin ansible_password=P@ssw0rd ansible_port=2026\nBR-RTR ansible_user=net_admin ansible_password=P@ssw0rd ansible_port=2026\nHQ-CLI ansible_user=user ansible_password=resu ansible_port=2026\n```\n\nКоманда проверки: `ansible all -m ping`.",
-    "codeBlocks": [
+    id: 'm2-task-5',
+    module: 'module-2',
+    moduleTitle: 'Модуль №2',
+    moduleDescription: 'Службы каталога и сервисы',
+    taskNumber: 5,
+    taskSlug: 'm2-task-5',
+    number: 16,
+    title: 'Задание №5: Автоматизация с Ansible на сервере BR-SRV',
+    summary:
+      'Безагентная архитектура Ansible, утилита sshpass, активация OpenSSH на порту 2026, параметры host_key_checking = False и ad-hoc модуль ping.',
+    content:
+      '**Ansible** — безагентная (Agentless) система управления конфигурациями:\n* Не требует установки клиентских демонов на управляемые машины.\n* Управление выполняется через стандартный протокол SSH с вызовом интерпретатора Python.\n* Утилита **`sshpass`** позволяет передавать пароли учётных записей в сессию SSH в автоматическом неинтерактивном режиме.\n\n---\n\n## 1. Предварительное включение OpenSSH на порту 2026\n\nНа машинах HQ-RTR, BR-RTR и HQ-CLI служба OpenSSH настраивается на прослушивание порта 2026:\n```bash\ngrep -q "^Port 2026" /etc/openssh/sshd_config || sed -i \'1i Port 2026\' /etc/openssh/sshd_config\nsystemctl enable --now sshd\nsystemctl restart sshd\n```\n\n---\n\n## 2. Конфигурация Control Node на BR-SRV\n\nФайл **`/etc/ansible/ansible.cfg`**:\n```ini\n[defaults]\nhost_key_checking = False\ninterpreter_python = /usr/bin/python3\ninventory = /etc/ansible/hosts\n```\n\nФайл **`/etc/ansible/hosts`**:\n```ini\nHQ-SRV ansible_user=user ansible_password=resu ansible_port=2026\nHQ-RTR ansible_user=net_admin ansible_password=P@ssw0rd ansible_port=2026\nBR-RTR ansible_user=net_admin ansible_password=P@ssw0rd ansible_port=2026\nHQ-CLI ansible_user=user ansible_password=resu ansible_port=2026\n```\n\nКоманда проверки: `ansible all -m ping`.',
+    codeBlocks: [
       {
-        "label": "Проверка инвентаря Ansible через ping-модуль",
-        "code": "ansible all -m ping"
-      }
-    ]
+        label: 'Проверка инвентаря Ansible через ping-модуль',
+        code: 'ansible all -m ping',
+      },
+    ],
   },
 
   {
-    "id": "m2-task-6",
-    "module": "module-2",
-    "moduleTitle": "Модуль №2",
-    "moduleDescription": "Службы каталога и сервисы",
-    "taskNumber": 6,
-    "taskSlug": "m2-task-6",
-    "number": 17,
-    "title": "Задание №6: Веб-приложение в Docker на сервере BR-SRV",
-    "summary": "Docker Compose v2, монтирование Additional.iso, импорт tar-образов через docker load, именованный том db_data и имя контейнера tespapp.",
-    "content": "Двухзвенный стек контейнеров развёртывается через современный плагин **Docker Compose v2**:\n\n---\n\n## 1. Архитектура сервисов docker-compose.yml\n\n* **СУБД (сервис database, контейнер `db`):** образ `mariadb:latest`, порт 3306, том `db_data:/var/lib/mysql`.\n* **Веб-приложение (сервис app, контейнер `tespapp`):** образ `site:latest`, проброс порта `8080:8000`, директива `depends_on: database`.\n\n> ⚠️ **Обратите внимание на имя:** контейнер приложения строго должен называться `tespapp` (по регламенту задания).\n\n---\n\n## 2. Персистентность данных (Docker Volumes)\n\nИменованный том **`db_data`** сохраняет файлы базы данных на хосте. При принудительной остановке и удалении контейнеров:\n```bash\ndocker rm -f $(docker ps -qa)\ndocker compose up -d\n```\nвсе ранее внесенные записи в СУБД сохраняются в полном объеме.",
-    "codeBlocks": [
+    id: 'm2-task-6',
+    module: 'module-2',
+    moduleTitle: 'Модуль №2',
+    moduleDescription: 'Службы каталога и сервисы',
+    taskNumber: 6,
+    taskSlug: 'm2-task-6',
+    number: 17,
+    title: 'Задание №6: Веб-приложение в Docker на сервере BR-SRV',
+    summary:
+      'Docker Compose v2, монтирование Additional.iso, импорт tar-образов через docker load, именованный том db_data и имя контейнера tespapp.',
+    content:
+      'Двухзвенный стек контейнеров развёртывается через современный плагин **Docker Compose v2**:\n\n---\n\n## 1. Архитектура сервисов docker-compose.yml\n\n* **СУБД (сервис database, контейнер `db`):** образ `mariadb:latest`, порт 3306, том `db_data:/var/lib/mysql`.\n* **Веб-приложение (сервис app, контейнер `tespapp`):** образ `site:latest`, проброс порта `8080:8000`, директива `depends_on: database`.\n\n> ⚠️ **Обратите внимание на имя:** контейнер приложения строго должен называться `tespapp` (по регламенту задания).\n\n---\n\n## 2. Персистентность данных (Docker Volumes)\n\nИменованный том **`db_data`** сохраняет файлы базы данных на хосте. При принудительной остановке и удалении контейнеров:\n```bash\ndocker rm -f $(docker ps -qa)\ndocker compose up -d\n```\nвсе ранее внесенные записи в СУБД сохраняются в полном объеме.',
+    codeBlocks: [
       {
-        "label": "Запуск и проверка стека Docker Compose",
-        "code": "docker compose up -d\ndocker ps\nss -ltnp4 | grep 8080"
-      }
-    ]
+        label: 'Запуск и проверка стека Docker Compose',
+        code: 'docker compose up -d\ndocker ps\nss -ltnp4 | grep 8080',
+      },
+    ],
   },
 
   {
-    "id": "m2-task-7",
-    "module": "module-2",
-    "moduleTitle": "Модуль №2",
-    "moduleDescription": "Службы каталога и сервисы",
-    "taskNumber": 7,
-    "taskSlug": "m2-task-7",
-    "number": 18,
-    "title": "Задание №7: Веб-приложение Apache + MariaDB на сервере HQ-SRV",
-    "summary": "Стек LAMP в ALT Linux (служба httpd2.service), метапакет lamp-server, импорт дампа dump.sql и настройка подключения index.php.",
-    "content": "Классический веб-стек **LAMP (Linux, Apache, MariaDB, PHP)** на сервере HQ-SRV:\n\n---\n\n## 1. Особенности стека в ALT Linux\n\n* Пакет и служба веб-сервера Apache называются **`httpd2`** (`httpd2.service`).\n* Метапакет **`lamp-server`** устанавливает сразу Apache, интерпретатор PHP с расширениями `php-mysqli` и сервер СУБД MariaDB.\n* Корневая директория размещения веб-контента: **`/var/www/html/`**.\n\n---\n\n## 2. База данных и приложение\n\n1. Создание БД и пользователя:\n   ```sql\n   CREATE DATABASE webdb;\n   CREATE USER 'web'@'localhost' IDENTIFIED BY 'P@ssw0rd';\n   GRANT ALL PRIVILEGES ON webdb.* TO 'web'@'localhost';\n   FLUSH PRIVILEGES;\n   ```\n2. Импорт дампа:\n   ```bash\n   mariadb webdb < /mnt/web/dump.sql\n   ```\n3. Реквизиты подключения в `/var/www/html/index.php`:\n   `$servername = \"localhost\"; $username = \"web\"; $password = \"P@ssw0rd\"; $dbname = \"webdb\";`",
-    "codeBlocks": [
+    id: 'm2-task-7',
+    module: 'module-2',
+    moduleTitle: 'Модуль №2',
+    moduleDescription: 'Службы каталога и сервисы',
+    taskNumber: 7,
+    taskSlug: 'm2-task-7',
+    number: 18,
+    title: 'Задание №7: Веб-приложение Apache + MariaDB на сервере HQ-SRV',
+    summary:
+      'Стек LAMP в ALT Linux (служба httpd2.service), метапакет lamp-server, импорт дампа dump.sql и настройка подключения index.php.',
+    content:
+      "Классический веб-стек **LAMP (Linux, Apache, MariaDB, PHP)** на сервере HQ-SRV:\n\n---\n\n## 1. Особенности стека в ALT Linux\n\n* Пакет и служба веб-сервера Apache называются **`httpd2`** (`httpd2.service`).\n* Метапакет **`lamp-server`** устанавливает сразу Apache, интерпретатор PHP с расширениями `php-mysqli` и сервер СУБД MariaDB.\n* Корневая директория размещения веб-контента: **`/var/www/html/`**.\n\n---\n\n## 2. База данных и приложение\n\n1. Создание БД и пользователя:\n   ```sql\n   CREATE DATABASE webdb;\n   CREATE USER 'web'@'localhost' IDENTIFIED BY 'P@ssw0rd';\n   GRANT ALL PRIVILEGES ON webdb.* TO 'web'@'localhost';\n   FLUSH PRIVILEGES;\n   ```\n2. Импорт дампа:\n   ```bash\n   mariadb webdb < /mnt/web/dump.sql\n   ```\n3. Реквизиты подключения в `/var/www/html/index.php`:\n   `$servername = \"localhost\"; $username = \"web\"; $password = \"P@ssw0rd\"; $dbname = \"webdb\";`",
+    codeBlocks: [
       {
-        "label": "Установка и активация стека LAMP на HQ-SRV",
-        "code": "apt-get install lamp-server -y\nsystemctl enable --now mariadb httpd2.service\nmariadb webdb < /mnt/web/dump.sql"
-      }
-    ]
+        label: 'Установка и активация стека LAMP на HQ-SRV',
+        code: 'apt-get install lamp-server -y\nsystemctl enable --now mariadb httpd2.service\nmariadb webdb < /mnt/web/dump.sql',
+      },
+    ],
   },
 
   {
-    "id": "m2-task-8",
-    "module": "module-2",
-    "moduleTitle": "Модуль №2",
-    "moduleDescription": "Службы каталога и сервисы",
-    "taskNumber": 8,
-    "taskSlug": "m2-task-8",
-    "number": 19,
-    "title": "Задание №8: Статический проброс портов (DNAT) на роутерах",
-    "summary": "Destination NAT в nftables, цепочка prerouting таблицы nat, приоритет dstnat, проброс портов 8080 и 2026 и проверка с узла ISP.",
-    "content": "**Destination NAT (DNAT / Port Forwarding)** подменяет адрес и порт назначения входящих извне пакетов:\n\n---\n\n## 1. Синтаксис цепочек prerouting в nftables\n\n```bash\nnft add chain nat prerouting { type nat hook prerouting priority dstnat \\; }\n```\nХук `prerouting` срабатывает до принятия решения о маршрутизации. Пакеты, адресованные внешнему интерфейсу роутера (`iif \"enp7s1\"`), перенаправляются на целевые адреса внутренних серверов.\n\n---\n\n## 2. Правила проброса на роутерах\n\n* **HQ-RTR:**\n  ```bash\n  nft add rule nat prerouting iif \"enp7s1\" tcp dport 2026 dnat to 192.168.1.10\n  nft add rule nat prerouting iif \"enp7s1\" tcp dport 8080 dnat to 192.168.1.10:80\n  ```\n* **BR-RTR (набор портов set):**\n  ```bash\n  nft add rule nat prerouting iif \"enp7s1\" tcp dport { 8080, 2026 } dnat to 192.168.3.10\n  ```\n* **Фиксация конфигурации:**\n  ```bash\n  nft list ruleset > /etc/nftables/nftables.nft\n  systemctl restart nftables\n  ```",
-    "codeBlocks": [
+    id: 'm2-task-8',
+    module: 'module-2',
+    moduleTitle: 'Модуль №2',
+    moduleDescription: 'Службы каталога и сервисы',
+    taskNumber: 8,
+    taskSlug: 'm2-task-8',
+    number: 19,
+    title: 'Задание №8: Статический проброс портов (DNAT) на роутерах',
+    summary:
+      'Destination NAT в nftables, цепочка prerouting таблицы nat, приоритет dstnat, проброс портов 8080 и 2026 и проверка с узла ISP.',
+    content:
+      '**Destination NAT (DNAT / Port Forwarding)** подменяет адрес и порт назначения входящих извне пакетов:\n\n---\n\n## 1. Синтаксис цепочек prerouting в nftables\n\n```bash\nnft add chain nat prerouting { type nat hook prerouting priority dstnat \\; }\n```\nХук `prerouting` срабатывает до принятия решения о маршрутизации. Пакеты, адресованные внешнему интерфейсу роутера (`iif "enp7s1"`), перенаправляются на целевые адреса внутренних серверов.\n\n---\n\n## 2. Правила проброса на роутерах\n\n* **HQ-RTR:**\n  ```bash\n  nft add rule nat prerouting iif "enp7s1" tcp dport 2026 dnat to 192.168.1.10\n  nft add rule nat prerouting iif "enp7s1" tcp dport 8080 dnat to 192.168.1.10:80\n  ```\n* **BR-RTR (набор портов set):**\n  ```bash\n  nft add rule nat prerouting iif "enp7s1" tcp dport { 8080, 2026 } dnat to 192.168.3.10\n  ```\n* **Фиксация конфигурации:**\n  ```bash\n  nft list ruleset > /etc/nftables/nftables.nft\n  systemctl restart nftables\n  ```',
+    codeBlocks: [
       {
-        "label": "Правила DNAT в nftables",
-        "code": "nft add chain nat prerouting { type nat hook prerouting priority dstnat \\; }\nnft add rule nat prerouting iif \"enp7s1\" tcp dport 8080 dnat to 192.168.1.10:80\nnft list ruleset > /etc/nftables/nftables.nft"
-      }
-    ]
+        label: 'Правила DNAT в nftables',
+        code: 'nft add chain nat prerouting { type nat hook prerouting priority dstnat \\; }\nnft add rule nat prerouting iif "enp7s1" tcp dport 8080 dnat to 192.168.1.10:80\nnft list ruleset > /etc/nftables/nftables.nft',
+      },
+    ],
   },
 
   {
-    "id": "m2-task-9",
-    "module": "module-2",
-    "moduleTitle": "Модуль №2",
-    "moduleDescription": "Службы каталога и сервисы",
-    "taskNumber": 9,
-    "taskSlug": "m2-task-9",
-    "number": 20,
-    "title": "Задание №9: Обратный прокси-сервер Nginx на ISP",
-    "summary": "Архитектура Reverse Proxy, маршрутизация по server_name, директива proxy_pass, проксирование заголовков Host и X-Real-IP.",
-    "content": "**Обратный прокси-сервер (Reverse Proxy)** принимает запросы клиентов на стандартный порт 80 и маршрутизирует их на внутренние филиалы:\n\n---\n\n## 1. Разделение сайтов по server_name\n\nВ конфигурации `/etc/nginx/sites-available.d/r-proxy.conf`:\n* **web.au-team.irpo:** пересылается на `http://172.16.1.10:8080` (через DNAT на HQ-RTR попадает в Apache на HQ-SRV). Включена базовая аутентификация `auth_basic`.\n* **docker.au-team.irpo:** пересылается на `http://172.16.2.10:8080` (через DNAT на BR-RTR попадает в контейнер tespapp на BR-SRV).\n\n---\n\n## 2. Активация виртуальных хостов в ALT Linux\n\n```bash\nln -s /etc/nginx/sites-available.d/r-proxy.conf /etc/nginx/sites-enabled.d/\nnginx -t\nsystemctl enable --now nginx\n```",
-    "codeBlocks": [
+    id: 'm2-task-9',
+    module: 'module-2',
+    moduleTitle: 'Модуль №2',
+    moduleDescription: 'Службы каталога и сервисы',
+    taskNumber: 9,
+    taskSlug: 'm2-task-9',
+    number: 20,
+    title: 'Задание №9: Обратный прокси-сервер Nginx на ISP',
+    summary:
+      'Архитектура Reverse Proxy, маршрутизация по server_name, директива proxy_pass, проксирование заголовков Host и X-Real-IP.',
+    content:
+      '**Обратный прокси-сервер (Reverse Proxy)** принимает запросы клиентов на стандартный порт 80 и маршрутизирует их на внутренние филиалы:\n\n---\n\n## 1. Разделение сайтов по server_name\n\nВ конфигурации `/etc/nginx/sites-available.d/r-proxy.conf`:\n* **web.au-team.irpo:** пересылается на `http://172.16.1.10:8080` (через DNAT на HQ-RTR попадает в Apache на HQ-SRV). Включена базовая аутентификация `auth_basic`.\n* **docker.au-team.irpo:** пересылается на `http://172.16.2.10:8080` (через DNAT на BR-RTR попадает в контейнер tespapp на BR-SRV).\n\n---\n\n## 2. Активация виртуальных хостов в ALT Linux\n\n```bash\nln -s /etc/nginx/sites-available.d/r-proxy.conf /etc/nginx/sites-enabled.d/\nnginx -t\nsystemctl enable --now nginx\n```',
+    codeBlocks: [
       {
-        "label": "Конфигурация Reverse Proxy в Nginx",
-        "code": "server {\n    listen 80;\n    server_name docker.au-team.irpo;\n    location / {\n        proxy_pass http://172.16.2.10:8080;\n        proxy_set_header Host $host;\n    }\n}"
-      }
-    ]
+        label: 'Конфигурация Reverse Proxy в Nginx',
+        code: 'server {\n    listen 80;\n    server_name docker.au-team.irpo;\n    location / {\n        proxy_pass http://172.16.2.10:8080;\n        proxy_set_header Host $host;\n    }\n}',
+      },
+    ],
   },
 
   {
-    "id": "m2-task-10",
-    "module": "module-2",
-    "moduleTitle": "Модуль №2",
-    "moduleDescription": "Службы каталога и сервисы",
-    "taskNumber": 10,
-    "taskSlug": "m2-task-10",
-    "number": 21,
-    "title": "Задание №10: Web-аутентификация в Nginx (.htpasswd)",
-    "summary": "Протокол HTTP Basic Authentication (RFC 7617), утилита apache2-htpasswd, хэширование паролей APR1, директивы auth_basic и auth_basic_user_file.",
-    "content": "**HTTP Basic Authentication** ограничивает доступ к веб-странице на уровне протокола HTTP:\n\n---\n\n## 1. Процедура авторизации\n\n1. При первом обращении Nginx отвечает кодом **`401 Unauthorized`** с заголовком `WWW-Authenticate: Basic realm=\"Restricted Access\"`.\n2. Браузер перехватывает ответ и отображает диалоговое окно логина и пароля.\n3. Клиент передает учетные данные в заголовке `Authorization: Basic <base64>`.\n4. Сервер сверяет хэш пароля с файлом `/etc/nginx/.htpasswd`.\n\n---\n\n## 2. Утилита htpasswd в ALT Linux\n\nПакет в ALT Linux: **`apache2-htpasswd`**.\n```bash\napt-get install apache2-htpasswd -y\n\n# Создание файла (-c) в неинтерактивном пакетном режиме (-b):\nhtpasswd -b -c /etc/nginx/.htpasswd WEB P@ssw0rd\n\n# Перезапуск службы:\nnginx -t && systemctl restart nginx\n```",
-    "codeBlocks": [
+    id: 'm2-task-10',
+    module: 'module-2',
+    moduleTitle: 'Модуль №2',
+    moduleDescription: 'Службы каталога и сервисы',
+    taskNumber: 10,
+    taskSlug: 'm2-task-10',
+    number: 21,
+    title: 'Задание №10: Web-аутентификация в Nginx (.htpasswd)',
+    summary:
+      'Протокол HTTP Basic Authentication (RFC 7617), утилита apache2-htpasswd, хэширование паролей APR1, директивы auth_basic и auth_basic_user_file.',
+    content:
+      '**HTTP Basic Authentication** ограничивает доступ к веб-странице на уровне протокола HTTP:\n\n---\n\n## 1. Процедура авторизации\n\n1. При первом обращении Nginx отвечает кодом **`401 Unauthorized`** с заголовком `WWW-Authenticate: Basic realm="Restricted Access"`.\n2. Браузер перехватывает ответ и отображает диалоговое окно логина и пароля.\n3. Клиент передает учетные данные в заголовке `Authorization: Basic <base64>`.\n4. Сервер сверяет хэш пароля с файлом `/etc/nginx/.htpasswd`.\n\n---\n\n## 2. Утилита htpasswd в ALT Linux\n\nПакет в ALT Linux: **`apache2-htpasswd`**.\n```bash\napt-get install apache2-htpasswd -y\n\n# Создание файла (-c) в неинтерактивном пакетном режиме (-b):\nhtpasswd -b -c /etc/nginx/.htpasswd WEB P@ssw0rd\n\n# Перезапуск службы:\nnginx -t && systemctl restart nginx\n```',
+    codeBlocks: [
       {
-        "label": "Создание .htpasswd и перезапуск Nginx",
-        "code": "htpasswd -b -c /etc/nginx/.htpasswd WEB P@ssw0rd\nnginx -t && systemctl restart nginx"
-      }
-    ]
+        label: 'Создание .htpasswd и перезапуск Nginx',
+        code: 'htpasswd -b -c /etc/nginx/.htpasswd WEB P@ssw0rd\nnginx -t && systemctl restart nginx',
+      },
+    ],
   },
 
   {
-    "id": "m2-task-11",
-    "module": "module-2",
-    "moduleTitle": "Модуль №2",
-    "moduleDescription": "Службы каталога и сервисы",
-    "taskNumber": 11,
-    "taskSlug": "m2-task-11",
-    "number": 22,
-    "title": "Задание №11: Установка Яндекс Браузера на HQ-CLI",
-    "summary": "Пакет yandex-browser-stable в репозиториях ALT Linux, проверка rpm -qa, запуск из GUI (XFCE/MATE) и обязательные материалы экзаменационного отчета.",
-    "content": "На рабочей станции **HQ-CLI** устанавливается отечественный **«Яндекс Браузер»**:\n\n---\n\n## 1. Установка из репозиториев ALT Linux\n\n```bash\napt-get update\napt-get install yandex-browser-stable -y\n```\nПакет автоматически регистрирует ярлык запуска в меню приложений (категория «Интернет» / «Сеть»).\n\n---\n\n## 2. Требования к оформлению отчета\n\nПо регламенту экзамена: *«Установку браузера отметьте в отчёте»*:\n1. Текстовый вывод команды проверки пакета в RPM-базе:\n   ```bash\n   rpm -qa | grep yandex-browser\n   ```\n2. Скриншот окна браузера со страницей «О программе» (Меню → Справка → О браузере) либо скриншот с открытым сайтом `http://web.au-team.irpo/`.",
-    "codeBlocks": [
+    id: 'm2-task-11',
+    module: 'module-2',
+    moduleTitle: 'Модуль №2',
+    moduleDescription: 'Службы каталога и сервисы',
+    taskNumber: 11,
+    taskSlug: 'm2-task-11',
+    number: 22,
+    title: 'Задание №11: Установка Яндекс Браузера на HQ-CLI',
+    summary:
+      'Пакет yandex-browser-stable в репозиториях ALT Linux, проверка rpm -qa, запуск из GUI (XFCE/MATE) и обязательные материалы экзаменационного отчета.',
+    content:
+      'На рабочей станции **HQ-CLI** устанавливается отечественный **«Яндекс Браузер»**:\n\n---\n\n## 1. Установка из репозиториев ALT Linux\n\n```bash\napt-get update\napt-get install yandex-browser-stable -y\n```\nПакет автоматически регистрирует ярлык запуска в меню приложений (категория «Интернет» / «Сеть»).\n\n---\n\n## 2. Требования к оформлению отчета\n\nПо регламенту экзамена: *«Установку браузера отметьте в отчёте»*:\n1. Текстовый вывод команды проверки пакета в RPM-базе:\n   ```bash\n   rpm -qa | grep yandex-browser\n   ```\n2. Скриншот окна браузера со страницей «О программе» (Меню → Справка → О браузере) либо скриншот с открытым сайтом `http://web.au-team.irpo/`.',
+    codeBlocks: [
       {
-        "label": "Проверка установки Яндекс Браузера",
-        "code": "rpm -qa | grep yandex-browser\nwhich yandex-browser-stable\nyandex-browser-stable --version"
-      }
-    ]
+        label: 'Проверка установки Яндекс Браузера',
+        code: 'rpm -qa | grep yandex-browser\nwhich yandex-browser-stable\nyandex-browser-stable --version',
+      },
+    ],
   },
   // =========================================================================
   // МОДУЛЬ 3 (ЗАДАНИЯ 1 - 10)
   // =========================================================================
-{
-  "id": "m3-task-1",
-  "module": "module-3",
-  "moduleTitle": "Модуль №3",
-  "moduleDescription": "Информационная безопасность и расширенные сервисы",
-  "taskNumber": 1,
-  "taskSlug": "m3-task-1",
-  "number": 23,
-  "title": "Задание №1: Импорт пользователей в домен au-team.irpo",
-  "summary": "Автоматизированный пакетный импорт пользователей в Samba DC из CSV, нормализация кодировок (iconv), создание подразделений (OU) и проверка входа через GUI на HQ-CLI.",
-  "content": "В корпоративных инфраструктурах ручное заведение десятков и сотен учетных записей неэффективно и чревато ошибками. Для этого используются скрипты автоматизированного импорта на базе **samba-tool** и структурированных файлов CSV.\n\n---\n\n## 1. Обработка файлов и нормализация кодировки\n\nФайлы выгрузки (например, из 1C или кадровых систем) часто содержат невидимые служебные байты:\n* **UTF-8 BOM (Byte Order Mark, `\\xEF\\xBB\\xBF`):** приводит к тому, что первое поле первой строки воспринимается со сбоями.\n* Символы возврата каретки Windows (`\\r`, CRLF).\n\nДля гарантированной очистки используется утилита **iconv**:\n```bash\niconv -f UTF-8 -t UTF-8//IGNORE /mnt/Users.csv > /root/users_fix.csv\n```\nФлаг `//IGNORE` отбрасывает любые невалидные последовательности байтов.\n\n---\n\n## 2. Разбор логики скрипта import.sh\n\n```bash\nwhile IFS=';' read -r name fam role phone ou street zip city country pass; do\n  username=\"${fam}.${name:0:1}\"\n  samba-tool user create \"${username,,}\" \"P@ssw0rd1\" \\\n    --given-name=\"$fam\" --surname=\"$name\" \\\n    --job-title=\"$role\" --telephone-number=\"$phone\"\n  [[ -n \"$ou\" ]] && samba-tool ou create \"OU=$ou\" 2>/dev/null\n  [[ -n \"$ou\" ]] && samba-tool user move \"${username,,}\" \"OU=$ou\" 2>/dev/null\ndone < /root/users_fix.csv\n```\n\n* **`IFS=';'`**: внутренний разделитель полей bash, задающий точку с запятой.\n* **`${name:0:1}`**: извлечение подстроки — 1 символ имени, начиная с нулевого смещения.\n* **`${username,,}`**: синтаксис bash 4+ для перевода строки строго в нижний регистр.\n* **`2>/dev/null`**: подавление вывода ошибок (если OU уже создано на предыдущей итерации цикла).\n\n---\n\n## 3. Диагностика и проверка учетных записей\n\n* Просмотр списка всех пользователей: `samba-tool user list`\n* Подробные атрибуты конкретной учетной записи: `samba-tool user show ivanov.i`",
-  "codeBlocks": [
-    {
-      "label": "Скрипт импорта пользователей в Samba DC",
-      "code": "iconv -f UTF-8 -t UTF-8//IGNORE /mnt/Users.csv > /root/users_fix.csv\ncat << \"EOF\" > /root/import.sh\n#!/bin/bash\nwhile IFS=';' read -r name fam role phone ou street zip city country pass; do\nusername=\"$fam\".\"${name:0:1}\"\nsamba-tool user create \"${username,,}\" \"P@ssw0rd1\" --given-name=\"$fam\" --surname=\"$name\" --job-title=\"$role\" --telephone-number=\"$phone\"\n[[ -n \"$ou\" ]] && samba-tool ou create \"OU=$ou\" 2>/dev/null\n[[ -n \"$ou\" ]] && samba-tool user move \"${username,,}\" \"OU=$ou\" 2>/dev/null\ndone < /root/users_fix.csv\nEOF\nbash /root/import.sh"
-    }
-  ]
-},
+  {
+    id: 'm3-task-1',
+    module: 'module-3',
+    moduleTitle: 'Модуль №3',
+    moduleDescription: 'Информационная безопасность и расширенные сервисы',
+    taskNumber: 1,
+    taskSlug: 'm3-task-1',
+    number: 23,
+    title: 'Задание №1: Импорт пользователей в домен au-team.irpo',
+    summary:
+      'Автоматизированный пакетный импорт пользователей в Samba DC из CSV, нормализация кодировок (iconv), создание подразделений (OU) и проверка входа через GUI на HQ-CLI.',
+    content:
+      'В корпоративных инфраструктурах ручное заведение десятков и сотен учетных записей неэффективно и чревато ошибками. Для этого используются скрипты автоматизированного импорта на базе **samba-tool** и структурированных файлов CSV.\n\n---\n\n## 1. Обработка файлов и нормализация кодировки\n\nФайлы выгрузки (например, из 1C или кадровых систем) часто содержат невидимые служебные байты:\n* **UTF-8 BOM (Byte Order Mark, `\\xEF\\xBB\\xBF`):** приводит к тому, что первое поле первой строки воспринимается со сбоями.\n* Символы возврата каретки Windows (`\\r`, CRLF).\n\nДля гарантированной очистки используется утилита **iconv**:\n```bash\niconv -f UTF-8 -t UTF-8//IGNORE /mnt/Users.csv > /root/users_fix.csv\n```\nФлаг `//IGNORE` отбрасывает любые невалидные последовательности байтов.\n\n---\n\n## 2. Разбор логики скрипта import.sh\n\n```bash\nwhile IFS=\';\' read -r name fam role phone ou street zip city country pass; do\n  username="${fam}.${name:0:1}"\n  samba-tool user create "${username,,}" "P@ssw0rd1" \\\n    --given-name="$fam" --surname="$name" \\\n    --job-title="$role" --telephone-number="$phone"\n  [[ -n "$ou" ]] && samba-tool ou create "OU=$ou" 2>/dev/null\n  [[ -n "$ou" ]] && samba-tool user move "${username,,}" "OU=$ou" 2>/dev/null\ndone < /root/users_fix.csv\n```\n\n* **`IFS=\';\'`**: внутренний разделитель полей bash, задающий точку с запятой.\n* **`${name:0:1}`**: извлечение подстроки — 1 символ имени, начиная с нулевого смещения.\n* **`${username,,}`**: синтаксис bash 4+ для перевода строки строго в нижний регистр.\n* **`2>/dev/null`**: подавление вывода ошибок (если OU уже создано на предыдущей итерации цикла).\n\n---\n\n## 3. Диагностика и проверка учетных записей\n\n* Просмотр списка всех пользователей: `samba-tool user list`\n* Подробные атрибуты конкретной учетной записи: `samba-tool user show ivanov.i`',
+    codeBlocks: [
+      {
+        label: 'Скрипт импорта пользователей в Samba DC',
+        code: 'iconv -f UTF-8 -t UTF-8//IGNORE /mnt/Users.csv > /root/users_fix.csv\ncat << "EOF" > /root/import.sh\n#!/bin/bash\nwhile IFS=\';\' read -r name fam role phone ou street zip city country pass; do\nusername="$fam"."${name:0:1}"\nsamba-tool user create "${username,,}" "P@ssw0rd1" --given-name="$fam" --surname="$name" --job-title="$role" --telephone-number="$phone"\n[[ -n "$ou" ]] && samba-tool ou create "OU=$ou" 2>/dev/null\n[[ -n "$ou" ]] && samba-tool user move "${username,,}" "OU=$ou" 2>/dev/null\ndone < /root/users_fix.csv\nEOF\nbash /root/import.sh',
+      },
+    ],
+  },
 
-{
-  "id": "m3-task-2",
-  "module": "module-3",
-  "moduleTitle": "Модуль №3",
-  "moduleDescription": "Информационная безопасность и расширенные сервисы",
-  "taskNumber": 2,
-  "taskSlug": "m3-task-2",
-  "number": 24,
-  "title": "Задание №2: Настройка центра сертификации ГОСТ и HTTPS в Nginx",
-  "summary": "Отечественные криптографические алгоритмы ГОСТ Р 34.12-2015 и 34.11-2012, openssl-gost-engine, выпуск сертификатов на 30 дней, СКЗИ КриптоПро CSP на клиенте.",
-  "content": "В рамках требований безопасности критической информационной инфраструктуры (КИИ) РФ веб-сервисы переводятся на использование криптографических стандартов **ГОСТ**.\n\n---\n\n## 1. Модуль ГОСТ-движка OpenSSL (openssl-gost-engine)\n\nСтандартный OpenSSL не поддерживает алгоритмы ГОСТ «из коробки». В ALT Linux устанавливается и активируется специальный модуль расширения:\n```bash\napt-get install openssl openssl-engines openssl-gost-engine -y\ncontrol openssl-gost enabled\nopenssl engine\n```\nАлгоритм открытого ключа: **`gost2012_256`** (ГОСТ Р 34.10-2012 с длиной ключа 256 бит).\nХэш-функция: **`md_gost12_256`** (Стрибог, ГОСТ Р 34.11-2012).\n\n---\n\n## 2. Центр сертификации и выпуск сертификатов\n\n1. **Корневой CA:** создается закрытый ключ и самоподписанный сертификат сроком действия 90 дней с Common Name: `ROOT-CA.AU-TEAM.IRPO`.\n2. **Серверные сертификаты:** создаются ключи и запросы (CSR), после чего корневой CA подписывает их **строго на 30 дней**:\n   ```bash\n   openssl x509 -req -in web.au-team.irpo.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out web.au-team.irpo.crt -days 30\n   ```\n\n---\n\n## 3. Настройка Nginx и СКЗИ КриптоПро CSP\n\nВ Nginx активируются ГОСТ-шифры:\n```nginx\nssl_ciphers GOST2012-GOST8912-GOST8912;\nssl_protocols TLSv1.2;\nssl_prefer_server_ciphers on;\n```\nНа клиентской машине HQ-CLI корневой сертификат копируется в `/etc/pki/ca-trust/source/anchors/`, выполняется `update-ca-trust extract`, а в СКЗИ «КриптоПро CSP» обеспечивается доверие сертификату.",
-  "codeBlocks": [
-    {
-      "label": "Генерация ключа и сертификата ГОСТ на 30 дней",
-      "code": "openssl genpkey -algorithm gost2012_256 -pkeyopt paramset:A -out web.au-team.irpo.key\nopenssl req -new -md_gost12_256 -key web.au-team.irpo.key -out web.au-team.irpo.csr\nopenssl x509 -req -in web.au-team.irpo.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out web.au-team.irpo.crt -days 30"
-    }
-  ]
-},
+  {
+    id: 'm3-task-2',
+    module: 'module-3',
+    moduleTitle: 'Модуль №3',
+    moduleDescription: 'Информационная безопасность и расширенные сервисы',
+    taskNumber: 2,
+    taskSlug: 'm3-task-2',
+    number: 24,
+    title: 'Задание №2: Настройка центра сертификации ГОСТ и HTTPS в Nginx',
+    summary:
+      'Отечественные криптографические алгоритмы ГОСТ Р 34.12-2015 и 34.11-2012, openssl-gost-engine, выпуск сертификатов на 30 дней, СКЗИ КриптоПро CSP на клиенте.',
+    content:
+      'В рамках требований безопасности критической информационной инфраструктуры (КИИ) РФ веб-сервисы переводятся на использование криптографических стандартов **ГОСТ**.\n\n---\n\n## 1. Модуль ГОСТ-движка OpenSSL (openssl-gost-engine)\n\nСтандартный OpenSSL не поддерживает алгоритмы ГОСТ «из коробки». В ALT Linux устанавливается и активируется специальный модуль расширения:\n```bash\napt-get install openssl openssl-engines openssl-gost-engine -y\ncontrol openssl-gost enabled\nopenssl engine\n```\nАлгоритм открытого ключа: **`gost2012_256`** (ГОСТ Р 34.10-2012 с длиной ключа 256 бит).\nХэш-функция: **`md_gost12_256`** (Стрибог, ГОСТ Р 34.11-2012).\n\n---\n\n## 2. Центр сертификации и выпуск сертификатов\n\n1. **Корневой CA:** создается закрытый ключ и самоподписанный сертификат сроком действия 90 дней с Common Name: `ROOT-CA.AU-TEAM.IRPO`.\n2. **Серверные сертификаты:** создаются ключи и запросы (CSR), после чего корневой CA подписывает их **строго на 30 дней**:\n   ```bash\n   openssl x509 -req -in web.au-team.irpo.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out web.au-team.irpo.crt -days 30\n   ```\n\n---\n\n## 3. Настройка Nginx и СКЗИ КриптоПро CSP\n\nВ Nginx активируются ГОСТ-шифры:\n```nginx\nssl_ciphers GOST2012-GOST8912-GOST8912;\nssl_protocols TLSv1.2;\nssl_prefer_server_ciphers on;\n```\nНа клиентской машине HQ-CLI корневой сертификат копируется в `/etc/pki/ca-trust/source/anchors/`, выполняется `update-ca-trust extract`, а в СКЗИ «КриптоПро CSP» обеспечивается доверие сертификату.',
+    codeBlocks: [
+      {
+        label: 'Генерация ключа и сертификата ГОСТ на 30 дней',
+        code: 'openssl genpkey -algorithm gost2012_256 -pkeyopt paramset:A -out web.au-team.irpo.key\nopenssl req -new -md_gost12_256 -key web.au-team.irpo.key -out web.au-team.irpo.csr\nopenssl x509 -req -in web.au-team.irpo.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out web.au-team.irpo.crt -days 30',
+      },
+    ],
+  },
 
-{
-  "id": "m3-task-3",
-  "module": "module-3",
-  "moduleTitle": "Модуль №3",
-  "moduleDescription": "Информационная безопасность и расширенные сервисы",
-  "taskNumber": 3,
-  "taskSlug": "m3-task-3",
-  "number": 25,
-  "title": "Задание №3: Защищённый шифрованный IP-туннель OpenVPN и OSPF",
-  "summary": "Замена открытого туннеля GRE на защищенный L3 OpenVPN с предварительным ключом (static.key) и шифрованием AES-256-CBC, переключение интерфейса в FRR OSPF.",
-  "content": "Протокол **GRE** (Generic Routing Encapsulation) обеспечивает инкапсуляцию сетевых пакетов, но не предоставляет шифрования данных. При прохождении через сеть провайдера трафик уязвим для перехвата.\n\n---\n\n## 1. Режим OpenVPN Point-to-Point со Static Key\n\nДля межсетевого объединения двух офисных маршрутизаторов оптимален режим P2P со статическим ключом:\n* Не требует развертывания сложной инфраструктуры открытых ключей (PKI/CA).\n* Использует симметричное шифрование **AES-256-CBC**.\n* Создает L3-интерфейс **`tun0`**, полностью прозрачный для протокола динамической маршрутизации OSPF.\n\nГенерация ключа на HQ-RTR:\n```bash\nopenvpn --genkey secret /etc/openvpn/keys/static.key\nchmod og-rw /etc/openvpn/keys/static.key\n```\n\n---\n\n## 2. Конфигурация tun0 и удаление GRE\n\n* На HQ-RTR (сервер): IP `192.168.5.1`, peer `192.168.5.2`.\n* На BR-RTR (клиент): IP `192.168.5.2`, peer `192.168.5.1`, `remote 172.16.1.10`.\n* Старый интерфейс `/etc/net/ifaces/gre1/` удаляется, чтобы предотвратить дублирование маршрутов.\n\n---\n\n## 3. Обновление динамической маршрутизации FRR OSPF\n\nВ конфигурации `/etc/frr/frr.conf` выполняется замена интерфейса:\n```bash\nsed -i 's/interface gre1/interface tun0/' /etc/frr/frr.conf\nsystemctl restart frr\n```\nПроверка соседства: `vtysh -c \"show ip ospf neighbor\"` (статус `Full/-`).",
-  "codeBlocks": [
-    {
-      "label": "Конфигурация сервера OpenVPN /etc/openvpn/server/tun0.conf",
-      "code": "dev tun0\ncipher AES-256-CBC\nauth-nocache\nifconfig 192.168.5.1 192.168.5.2\nsecret /etc/openvpn/keys/static.key"
-    }
-  ]
-},
+  {
+    id: 'm3-task-3',
+    module: 'module-3',
+    moduleTitle: 'Модуль №3',
+    moduleDescription: 'Информационная безопасность и расширенные сервисы',
+    taskNumber: 3,
+    taskSlug: 'm3-task-3',
+    number: 25,
+    title: 'Задание №3: Защищённый шифрованный IP-туннель OpenVPN и OSPF',
+    summary:
+      'Замена открытого туннеля GRE на защищенный L3 OpenVPN с предварительным ключом (static.key) и шифрованием AES-256-CBC, переключение интерфейса в FRR OSPF.',
+    content:
+      'Протокол **GRE** (Generic Routing Encapsulation) обеспечивает инкапсуляцию сетевых пакетов, но не предоставляет шифрования данных. При прохождении через сеть провайдера трафик уязвим для перехвата.\n\n---\n\n## 1. Режим OpenVPN Point-to-Point со Static Key\n\nДля межсетевого объединения двух офисных маршрутизаторов оптимален режим P2P со статическим ключом:\n* Не требует развертывания сложной инфраструктуры открытых ключей (PKI/CA).\n* Использует симметричное шифрование **AES-256-CBC**.\n* Создает L3-интерфейс **`tun0`**, полностью прозрачный для протокола динамической маршрутизации OSPF.\n\nГенерация ключа на HQ-RTR:\n```bash\nopenvpn --genkey secret /etc/openvpn/keys/static.key\nchmod og-rw /etc/openvpn/keys/static.key\n```\n\n---\n\n## 2. Конфигурация tun0 и удаление GRE\n\n* На HQ-RTR (сервер): IP `192.168.5.1`, peer `192.168.5.2`.\n* На BR-RTR (клиент): IP `192.168.5.2`, peer `192.168.5.1`, `remote 172.16.1.10`.\n* Старый интерфейс `/etc/net/ifaces/gre1/` удаляется, чтобы предотвратить дублирование маршрутов.\n\n---\n\n## 3. Обновление динамической маршрутизации FRR OSPF\n\nВ конфигурации `/etc/frr/frr.conf` выполняется замена интерфейса:\n```bash\nsed -i \'s/interface gre1/interface tun0/\' /etc/frr/frr.conf\nsystemctl restart frr\n```\nПроверка соседства: `vtysh -c "show ip ospf neighbor"` (статус `Full/-`).',
+    codeBlocks: [
+      {
+        label: 'Конфигурация сервера OpenVPN /etc/openvpn/server/tun0.conf',
+        code: 'dev tun0\ncipher AES-256-CBC\nauth-nocache\nifconfig 192.168.5.1 192.168.5.2\nsecret /etc/openvpn/keys/static.key',
+      },
+    ],
+  },
 
-{
-  "id": "m3-task-4",
-  "module": "module-3",
-  "moduleTitle": "Модуль №3",
-  "moduleDescription": "Информационная безопасность и расширенные сервисы",
-  "taskNumber": 4,
-  "taskSlug": "m3-task-4",
-  "number": 26,
-  "title": "Задание №4: Межсетевой экран nftables на маршрутизаторах HQ-RTR и BR-RTR",
-  "summary": "Подсистема пакетной фильтрации nftables, таблица inet filter, хук input, отслеживание состояний conntrack, белые списки протоколов и изоляция внешнего IPv4.",
-  "content": "**nftables** — современный высокопроизводительный фреймворк фильтрации пакетов в ядре Linux, пришедший на смену iptables/ip6tables. Он объединяет работу с IPv4 и IPv6 в единое семейство адресов **`inet`**.\n\n---\n\n## 1. Структура таблицы inet filter\n\nКонфигурация добавляется в начало файлов `/etc/nftables/hq-rtr.nft` и `/etc/nftables/br-rtr.nft`:\n```text\ntable inet filter {\n    chain input {\n        type filter hook input priority filter;\n        ...\n    }\n}\n```\nХук **`input`** перехватывает все пакеты, предназначенные непосредственно локальному маршрутизатору.\n\n---\n\n## 2. Разбор ключевых правил\n\n* **`ct state {established, related} accept;`** — разрешает ответы на уже установленные соединения, инициированные маршрутизатором или прошедшие через него.\n* **`udp dport 53`**, **`tcp dport 80, 443`**, **`tcp dport 123`** — разрешение легитимных протоколов DNS, HTTP, HTTPS, NTP.\n* **`ip protocol {gre, icmp, ospf}`** и **`udp dport 500`** — разрешение межсетевых туннелей, ICMP-диагностики, OSPF-маршрутизации и IPsec IKE.\n* **`ip saddr {192.168.100.0/27, 192.168.200.0/28, 192.168.30.0/28} accept;`** — полный доступ из доверенных офисных сегментов.\n* **`ip version 4 drop;`** — сброс всех остальных входящих пакетов из недоверенной сети Интернет.\n\nПросмотр активных правил: `nft list ruleset`.",
-  "codeBlocks": [
-    {
-      "label": "Таблица inet filter в /etc/nftables/hq-rtr.nft",
-      "code": "table inet filter {\n    chain input {\n        type filter hook input priority filter;\n        udp dport 53 accept;\n        tcp dport 80 accept;\n        tcp dport 443 accept;\n        tcp dport 123 accept;\n        ct state {established, related} accept;\n        ip protocol gre accept;\n        ip protocol icmp accept;\n        ip protocol ospf accept;\n        udp dport 500 accept;\n        ip saddr 192.168.100.0/27 accept;\n        ip saddr 192.168.200.0/28 accept;\n        ip saddr 192.168.30.0/28 accept;\n        ip version 4 drop;\n    }\n}"
-    }
-  ]
-},
+  {
+    id: 'm3-task-4',
+    module: 'module-3',
+    moduleTitle: 'Модуль №3',
+    moduleDescription: 'Информационная безопасность и расширенные сервисы',
+    taskNumber: 4,
+    taskSlug: 'm3-task-4',
+    number: 26,
+    title: 'Задание №4: Межсетевой экран nftables на маршрутизаторах HQ-RTR и BR-RTR',
+    summary:
+      'Подсистема пакетной фильтрации nftables, таблица inet filter, хук input, отслеживание состояний conntrack, белые списки протоколов и изоляция внешнего IPv4.',
+    content:
+      '**nftables** — современный высокопроизводительный фреймворк фильтрации пакетов в ядре Linux, пришедший на смену iptables/ip6tables. Он объединяет работу с IPv4 и IPv6 в единое семейство адресов **`inet`**.\n\n---\n\n## 1. Структура таблицы inet filter\n\nКонфигурация добавляется в начало файлов `/etc/nftables/hq-rtr.nft` и `/etc/nftables/br-rtr.nft`:\n```text\ntable inet filter {\n    chain input {\n        type filter hook input priority filter;\n        ...\n    }\n}\n```\nХук **`input`** перехватывает все пакеты, предназначенные непосредственно локальному маршрутизатору.\n\n---\n\n## 2. Разбор ключевых правил\n\n* **`ct state {established, related} accept;`** — разрешает ответы на уже установленные соединения, инициированные маршрутизатором или прошедшие через него.\n* **`udp dport 53`**, **`tcp dport 80, 443`**, **`tcp dport 123`** — разрешение легитимных протоколов DNS, HTTP, HTTPS, NTP.\n* **`ip protocol {gre, icmp, ospf}`** и **`udp dport 500`** — разрешение межсетевых туннелей, ICMP-диагностики, OSPF-маршрутизации и IPsec IKE.\n* **`ip saddr {192.168.100.0/27, 192.168.200.0/28, 192.168.30.0/28} accept;`** — полный доступ из доверенных офисных сегментов.\n* **`ip version 4 drop;`** — сброс всех остальных входящих пакетов из недоверенной сети Интернет.\n\nПросмотр активных правил: `nft list ruleset`.',
+    codeBlocks: [
+      {
+        label: 'Таблица inet filter в /etc/nftables/hq-rtr.nft',
+        code: 'table inet filter {\n    chain input {\n        type filter hook input priority filter;\n        udp dport 53 accept;\n        tcp dport 80 accept;\n        tcp dport 443 accept;\n        tcp dport 123 accept;\n        ct state {established, related} accept;\n        ip protocol gre accept;\n        ip protocol icmp accept;\n        ip protocol ospf accept;\n        udp dport 500 accept;\n        ip saddr 192.168.100.0/27 accept;\n        ip saddr 192.168.200.0/28 accept;\n        ip saddr 192.168.30.0/28 accept;\n        ip version 4 drop;\n    }\n}',
+      },
+    ],
+  },
 
-{
-  "id": "m3-task-5",
-  "module": "module-3",
-  "moduleTitle": "Модуль №3",
-  "moduleDescription": "Информационная безопасность и расширенные сервисы",
-  "taskNumber": 5,
-  "taskSlug": "m3-task-5",
-  "number": 27,
-  "title": "Задание №5: Настройка принт-сервера CUPS",
-  "summary": "Служба печати Common Unix Printing System (CUPS), порт 631, виртуальный PDF-принтер cups-pdf, сетевой доступ и подключение из GUI на HQ-CLI.",
-  "content": "**CUPS (Common Unix Printing System)** — стандартная модульная система управления печатью для Unix-подобных операционных систем, использующая протокол **IPP (Internet Printing Protocol)**.\n\n---\n\n## 1. Установка и сетевой доступ\n\nВ ALT Linux устанавливаются пакеты `cups` и `cups-pdf` (виртуальный принтер, преобразующий задания печати в файлы PDF):\n```bash\napt-get install cups cups-pdf -y\n```\nПо умолчанию демон слушает только локальный интерфейс: `Listen localhost:631`. Для сетевого использования адрес заменяется на интерфейс сервера:\n```text\nListen 192.168.1.10:631\n```\n\n---\n\n## 2. Разграничение доступа в cupsd.conf\n\nДля публикации принтеров и разрешения удаленного доступа клиентским машинам в секции `<Location />`, `<Location /admin>` и `<Location /admin/conf>` добавляются директивы:\n```text\nOrder allow,deny\nAllow all\n```\n\n---\n\n## 3. Диагностика и подключение\n\n* Проверка прослушивания сокета: `ss -ltnp4 | grep 631`\n* На рабочей станции HQ-CLI в графической панели «Параметры печати» выбирается «Поиск сетевого принтера» по IP-адресу `192.168.1.10`.",
-  "codeBlocks": [
-    {
-      "label": "Настройка /etc/cups/cupsd.conf и перезапуск",
-      "code": "sed -i 's/Listen localhost:631/Listen 192.168.1.10:631/' /etc/cups/cupsd.conf\nsystemctl enable --now cups\nsystemctl restart cups\nss -ltnp4 | grep 631"
-    }
-  ]
-},
+  {
+    id: 'm3-task-5',
+    module: 'module-3',
+    moduleTitle: 'Модуль №3',
+    moduleDescription: 'Информационная безопасность и расширенные сервисы',
+    taskNumber: 5,
+    taskSlug: 'm3-task-5',
+    number: 27,
+    title: 'Задание №5: Настройка принт-сервера CUPS',
+    summary:
+      'Служба печати Common Unix Printing System (CUPS), порт 631, виртуальный PDF-принтер cups-pdf, сетевой доступ и подключение из GUI на HQ-CLI.',
+    content:
+      '**CUPS (Common Unix Printing System)** — стандартная модульная система управления печатью для Unix-подобных операционных систем, использующая протокол **IPP (Internet Printing Protocol)**.\n\n---\n\n## 1. Установка и сетевой доступ\n\nВ ALT Linux устанавливаются пакеты `cups` и `cups-pdf` (виртуальный принтер, преобразующий задания печати в файлы PDF):\n```bash\napt-get install cups cups-pdf -y\n```\nПо умолчанию демон слушает только локальный интерфейс: `Listen localhost:631`. Для сетевого использования адрес заменяется на интерфейс сервера:\n```text\nListen 192.168.1.10:631\n```\n\n---\n\n## 2. Разграничение доступа в cupsd.conf\n\nДля публикации принтеров и разрешения удаленного доступа клиентским машинам в секции `<Location />`, `<Location /admin>` и `<Location /admin/conf>` добавляются директивы:\n```text\nOrder allow,deny\nAllow all\n```\n\n---\n\n## 3. Диагностика и подключение\n\n* Проверка прослушивания сокета: `ss -ltnp4 | grep 631`\n* На рабочей станции HQ-CLI в графической панели «Параметры печати» выбирается «Поиск сетевого принтера» по IP-адресу `192.168.1.10`.',
+    codeBlocks: [
+      {
+        label: 'Настройка /etc/cups/cupsd.conf и перезапуск',
+        code: "sed -i 's/Listen localhost:631/Listen 192.168.1.10:631/' /etc/cups/cupsd.conf\nsystemctl enable --now cups\nsystemctl restart cups\nss -ltnp4 | grep 631",
+      },
+    ],
+  },
 
-{
-  "id": "m3-task-6",
-  "module": "module-3",
-  "moduleTitle": "Модуль №3",
-  "moduleDescription": "Информационная безопасность и расширенные сервисы",
-  "taskNumber": 6,
-  "taskSlug": "m3-task-6",
-  "number": 28,
-  "title": "Задание №6: Централизованное логирование rsyslog и ротация logrotate",
-  "summary": "Централизованный сбор системных событий по протоколу Syslog, связка systemd-journald и rsyslog, фильтр *.warn, динамические пути /opt/%HOSTNAME%/ и еженедельный logrotate.",
-  "content": "Централизованный сбор логов критически важен для аудита информационной безопасности, обнаружения инцидентов и расследования сбоев сетевой инфраструктуры.\n\n---\n\n## 1. Настройка клиентов (HQ-RTR, BR-RTR, BR-SRV)\n\n1. Включается форвардинг событий не ниже уровня **warning** из `journald` в `syslog`:\n   ```text\n   ForwardToSyslog=yes\n   MaxLevelSyslog=warning\n   ```\n2. В `/etc/rsyslog.d/00_common.conf` раскомментируются модули `imjournal` и `imuxsock`.\n3. Создается правило пересылки на сервер: `echo \"*.warn @192.168.1.10\" > /etc/rsyslog.d/10_to_server.conf`.\n\n---\n\n## 2. Настройка сервера сбора логов HQ-SRV\n\n1. Устанавливается модуль прослушивания сети: `rsyslog-classic rsyslog-server-listen`.\n2. Создается динамический шаблон сохранения:\n   ```text\n   $template DynFile,\"/opt/%HOSTNAME%/%PROGRAMNAME%.log\"\n   *.* ?DynFile\n   & stop\n   ```\n3. Сервер изолируется от записи собственных логов в `/opt` путем комментирования модуля `imuxsock` в `/etc/rsyslog.d/10_classic.conf`.\n\n---\n\n## 3. Ротация логов logrotate и cron\n\nДля предотвращения переполнения диска настраивается еженедельная ротация:\n```text\n/opt/**/*.log {\n    weekly\n    missingok\n    notifempty\n    compress\n    minsize 10M\n}\n```\nВ `crontab` суперпользователя добавляется запуск: `0 0 * * 0 /usr/sbin/logrotate /etc/logrotate.d/rsyslog`.",
-  "codeBlocks": [
-    {
-      "label": "Шаблон распределения логов на HQ-SRV",
-      "code": "cat << \"EOF\" > /etc/rsyslog.d/91_template.conf\n$template DynFile,\"/opt/%HOSTNAME%/%PROGRAMNAME%.log\"\n*.* ?DynFile\n& stop\nEOF\nsystemctl restart rsyslogd"
-    }
-  ]
-},
+  {
+    id: 'm3-task-6',
+    module: 'module-3',
+    moduleTitle: 'Модуль №3',
+    moduleDescription: 'Информационная безопасность и расширенные сервисы',
+    taskNumber: 6,
+    taskSlug: 'm3-task-6',
+    number: 28,
+    title: 'Задание №6: Централизованное логирование rsyslog и ротация logrotate',
+    summary:
+      'Централизованный сбор системных событий по протоколу Syslog, связка systemd-journald и rsyslog, фильтр *.warn, динамические пути /opt/%HOSTNAME%/ и еженедельный logrotate.',
+    content:
+      'Централизованный сбор логов критически важен для аудита информационной безопасности, обнаружения инцидентов и расследования сбоев сетевой инфраструктуры.\n\n---\n\n## 1. Настройка клиентов (HQ-RTR, BR-RTR, BR-SRV)\n\n1. Включается форвардинг событий не ниже уровня **warning** из `journald` в `syslog`:\n   ```text\n   ForwardToSyslog=yes\n   MaxLevelSyslog=warning\n   ```\n2. В `/etc/rsyslog.d/00_common.conf` раскомментируются модули `imjournal` и `imuxsock`.\n3. Создается правило пересылки на сервер: `echo "*.warn @192.168.1.10" > /etc/rsyslog.d/10_to_server.conf`.\n\n---\n\n## 2. Настройка сервера сбора логов HQ-SRV\n\n1. Устанавливается модуль прослушивания сети: `rsyslog-classic rsyslog-server-listen`.\n2. Создается динамический шаблон сохранения:\n   ```text\n   $template DynFile,"/opt/%HOSTNAME%/%PROGRAMNAME%.log"\n   *.* ?DynFile\n   & stop\n   ```\n3. Сервер изолируется от записи собственных логов в `/opt` путем комментирования модуля `imuxsock` в `/etc/rsyslog.d/10_classic.conf`.\n\n---\n\n## 3. Ротация логов logrotate и cron\n\nДля предотвращения переполнения диска настраивается еженедельная ротация:\n```text\n/opt/**/*.log {\n    weekly\n    missingok\n    notifempty\n    compress\n    minsize 10M\n}\n```\nВ `crontab` суперпользователя добавляется запуск: `0 0 * * 0 /usr/sbin/logrotate /etc/logrotate.d/rsyslog`.',
+    codeBlocks: [
+      {
+        label: 'Шаблон распределения логов на HQ-SRV',
+        code: 'cat << "EOF" > /etc/rsyslog.d/91_template.conf\n$template DynFile,"/opt/%HOSTNAME%/%PROGRAMNAME%.log"\n*.* ?DynFile\n& stop\nEOF\nsystemctl restart rsyslogd',
+      },
+    ],
+  },
 
-{
-  "id": "m3-task-7",
-  "module": "module-3",
-  "moduleTitle": "Модуль №3",
-  "moduleDescription": "Информационная безопасность и расширенные сервисы",
-  "taskNumber": 7,
-  "taskSlug": "m3-task-7",
-  "number": 29,
-  "title": "Задание №7: Мониторинг устройств с помощью открытого ПО",
-  "summary": "Стек мониторинга Prometheus + Node Exporter + Grafana, pull-модель сбора метрик, DNS CNAME mon, популярный дашборд 1860 для визуализации CPU, RAM и дисков.",
-  "content": "Современный мониторинг Linux-инфраструктуры строится на открытом стеке **Prometheus** (сервер сбора метрик с time-series БД) и **Grafana** (веб-визуализация).\n\n---\n\n## 1. Архитектура решения\n\n* **Node Exporter (порт TCP 9100):** легковесный агент, опрашивающий метрики ОС ядра Linux (`/proc`, `/sys`).\n* **Prometheus (порт TCP 9090):** периодически опрашивает агенты (pull-модель) с заданным интервалом `scrape_interval: 5s`.\n* **Grafana (порт TCP 3000):** выполняет PromQL-запросы к Prometheus и строит интерактивные графики.\n\n---\n\n## 2. Конфигурация Prometheus targets\n\nВ `/etc/prometheus/prometheus.yml` добавляются целевые узлы:\n```yaml\nscrape_configs:\n  - job_name: 'prometheus'\n    static_configs:\n      - targets: ['localhost:9090']\n  - job_name: hq-srv\n    static_configs:\n      - targets: ['192.168.1.10:9100']\n  - job_name: br-srv\n    static_configs:\n      - targets: ['192.168.3.10:9100']\n```\n\n---\n\n## 3. Сетевые имена и дашборд 1860\n\n* В DNS Samba создается CNAME-запись: `mon.au-team.irpo -> hq-srv.au-team.irpo`.\n* В Grafana подключается источник Prometheus (`http://192.168.1.10:9090`).\n* Импортируется официальный дашборд **1860 (Node Exporter Full)**, предоставляющий готовые панели загрузки CPU, RAM, I/O и сетевого трафика.",
-  "codeBlocks": [
-    {
-      "label": "Добавление CNAME-записи mon в Samba DNS",
-      "code": "samba-tool dns add br-srv.au-team.irpo au-team.irpo mon CNAME hq-srv.au-team.irpo -U Administrator\nsamba-tool dns query br-srv.au-team.irpo au-team.irpo mon CNAME -U administrator"
-    }
-  ]
-},
+  {
+    id: 'm3-task-7',
+    module: 'module-3',
+    moduleTitle: 'Модуль №3',
+    moduleDescription: 'Информационная безопасность и расширенные сервисы',
+    taskNumber: 7,
+    taskSlug: 'm3-task-7',
+    number: 29,
+    title: 'Задание №7: Мониторинг устройств с помощью открытого ПО',
+    summary:
+      'Стек мониторинга Prometheus + Node Exporter + Grafana, pull-модель сбора метрик, DNS CNAME mon, популярный дашборд 1860 для визуализации CPU, RAM и дисков.',
+    content:
+      "Современный мониторинг Linux-инфраструктуры строится на открытом стеке **Prometheus** (сервер сбора метрик с time-series БД) и **Grafana** (веб-визуализация).\n\n---\n\n## 1. Архитектура решения\n\n* **Node Exporter (порт TCP 9100):** легковесный агент, опрашивающий метрики ОС ядра Linux (`/proc`, `/sys`).\n* **Prometheus (порт TCP 9090):** периодически опрашивает агенты (pull-модель) с заданным интервалом `scrape_interval: 5s`.\n* **Grafana (порт TCP 3000):** выполняет PromQL-запросы к Prometheus и строит интерактивные графики.\n\n---\n\n## 2. Конфигурация Prometheus targets\n\nВ `/etc/prometheus/prometheus.yml` добавляются целевые узлы:\n```yaml\nscrape_configs:\n  - job_name: 'prometheus'\n    static_configs:\n      - targets: ['localhost:9090']\n  - job_name: hq-srv\n    static_configs:\n      - targets: ['192.168.1.10:9100']\n  - job_name: br-srv\n    static_configs:\n      - targets: ['192.168.3.10:9100']\n```\n\n---\n\n## 3. Сетевые имена и дашборд 1860\n\n* В DNS Samba создается CNAME-запись: `mon.au-team.irpo -> hq-srv.au-team.irpo`.\n* В Grafana подключается источник Prometheus (`http://192.168.1.10:9090`).\n* Импортируется официальный дашборд **1860 (Node Exporter Full)**, предоставляющий готовые панели загрузки CPU, RAM, I/O и сетевого трафика.",
+    codeBlocks: [
+      {
+        label: 'Добавление CNAME-записи mon в Samba DNS',
+        code: 'samba-tool dns add br-srv.au-team.irpo au-team.irpo mon CNAME hq-srv.au-team.irpo -U Administrator\nsamba-tool dns query br-srv.au-team.irpo au-team.irpo mon CNAME -U administrator',
+      },
+    ],
+  },
 
-{
-  "id": "m3-task-8",
-  "module": "module-3",
-  "moduleTitle": "Модуль №3",
-  "moduleDescription": "Информационная безопасность и расширенные сервисы",
-  "taskNumber": 8,
-  "taskSlug": "m3-task-8",
-  "number": 30,
-  "title": "Задание №8: Инвентаризация рабочих мест через Ansible на BR-SRV",
-  "summary": "Автоматизация сбора параметров узлов через Ansible facts, структура плейбуков YAML, директива delegate_to: localhost и генерация отчетов в каталоге PC-INFO.",
-  "content": "**Ansible** — инструмент безагентной автоматизации конфигураций, использующий существующий транспорт SSH и язык разметки YAML.\n\n---\n\n## 1. Механизм сбора фактов (gather_facts)\n\nПри выполнении плейбука с параметром `gather_facts: true` Ansible автоматически запускает модуль **setup**, опрашивающий систему целевого хоста:\n* **`ansible_hostname`**: короткое имя машины.\n* **`ansible_default_ipv4.address`**: основной IP-адрес шлюза/интерфейса.\n* **`ansible_memtotal_mb`**, **`ansible_processor_vcpus`**: аппаратные характеристики.\n\n---\n\n## 2. Создание отчетов на локальном управляющем узле\n\nОбычно задачи в Ansible выполняются на удаленных узлах из секции `hosts`. Чтобы сохранить файл отчета на сервере управления (BR-SRV), применяется директива **`delegate_to: localhost`**:\n```yaml\n- name: \"Creating a data file\"\n  copy:\n    dest: /etc/ansible/PC-INFO/{{ ansible_hostname }}.yml\n    content: |\n      Hostname: {{ ansible_hostname }}\n      IP_Address: {{ ansible_default_ipv4.address }}\n  delegate_to: localhost\n```\n\n---\n\n## 3. Валидация и запуск\n\n* Проверка синтаксиса: `ansible-playbook --syntax-check get_hostname_address.yml`\n* Выполнение: `ansible-playbook get_hostname_address.yml`\n* Проверка файлов: `cat /etc/ansible/PC-INFO/hq-srv.yml`",
-  "codeBlocks": [
-    {
-      "label": "Плейбук инвентаризации get_hostname_address.yml",
-      "code": "cat << \"EOF\" > /etc/ansible/get_hostname_address.yml\n---\n- name: \"Get data from hosts\"\n  gather_facts: true\n  hosts:\n    - HQ-SRV\n    - HQ-CLI\n  tasks:\n    - name: \"Creating a data file\"\n      copy:\n        dest: /etc/ansible/PC-INFO/{{ ansible_hostname }}.yml\n        content: |\n          Hostname: {{ ansible_hostname }}\n          IP_Address: {{ ansible_default_ipv4.address }}\n      delegate_to: localhost\nEOF\nansible-playbook --syntax-check /etc/ansible/get_hostname_address.yml"
-    }
-  ]
-},
+  {
+    id: 'm3-task-8',
+    module: 'module-3',
+    moduleTitle: 'Модуль №3',
+    moduleDescription: 'Информационная безопасность и расширенные сервисы',
+    taskNumber: 8,
+    taskSlug: 'm3-task-8',
+    number: 30,
+    title: 'Задание №8: Инвентаризация рабочих мест через Ansible на BR-SRV',
+    summary:
+      'Автоматизация сбора параметров узлов через Ansible facts, структура плейбуков YAML, директива delegate_to: localhost и генерация отчетов в каталоге PC-INFO.',
+    content:
+      '**Ansible** — инструмент безагентной автоматизации конфигураций, использующий существующий транспорт SSH и язык разметки YAML.\n\n---\n\n## 1. Механизм сбора фактов (gather_facts)\n\nПри выполнении плейбука с параметром `gather_facts: true` Ansible автоматически запускает модуль **setup**, опрашивающий систему целевого хоста:\n* **`ansible_hostname`**: короткое имя машины.\n* **`ansible_default_ipv4.address`**: основной IP-адрес шлюза/интерфейса.\n* **`ansible_memtotal_mb`**, **`ansible_processor_vcpus`**: аппаратные характеристики.\n\n---\n\n## 2. Создание отчетов на локальном управляющем узле\n\nОбычно задачи в Ansible выполняются на удаленных узлах из секции `hosts`. Чтобы сохранить файл отчета на сервере управления (BR-SRV), применяется директива **`delegate_to: localhost`**:\n```yaml\n- name: "Creating a data file"\n  copy:\n    dest: /etc/ansible/PC-INFO/{{ ansible_hostname }}.yml\n    content: |\n      Hostname: {{ ansible_hostname }}\n      IP_Address: {{ ansible_default_ipv4.address }}\n  delegate_to: localhost\n```\n\n---\n\n## 3. Валидация и запуск\n\n* Проверка синтаксиса: `ansible-playbook --syntax-check get_hostname_address.yml`\n* Выполнение: `ansible-playbook get_hostname_address.yml`\n* Проверка файлов: `cat /etc/ansible/PC-INFO/hq-srv.yml`',
+    codeBlocks: [
+      {
+        label: 'Плейбук инвентаризации get_hostname_address.yml',
+        code: 'cat << "EOF" > /etc/ansible/get_hostname_address.yml\n---\n- name: "Get data from hosts"\n  gather_facts: true\n  hosts:\n    - HQ-SRV\n    - HQ-CLI\n  tasks:\n    - name: "Creating a data file"\n      copy:\n        dest: /etc/ansible/PC-INFO/{{ ansible_hostname }}.yml\n        content: |\n          Hostname: {{ ansible_hostname }}\n          IP_Address: {{ ansible_default_ipv4.address }}\n      delegate_to: localhost\nEOF\nansible-playbook --syntax-check /etc/ansible/get_hostname_address.yml',
+      },
+    ],
+  },
 
-{
-  "id": "m3-task-9",
-  "module": "module-3",
-  "moduleTitle": "Модуль №3",
-  "moduleDescription": "Информационная безопасность и расширенные сервисы",
-  "taskNumber": 9,
-  "taskSlug": "m3-task-9",
-  "number": 31,
-  "title": "Задание №9: Защита службы SSH с помощью Fail2ban на HQ-SRV",
-  "summary": "Предотвращение атак перебора паролей (Brute Force), изолятор sshd в jail.d, интеграция с systemd-journald через python3-module-systemd, временная блокировка на 1 минуту.",
-  "content": "**Fail2ban** сканирует журналы системных служб на наличие признаков атак перебора аутентификации и автоматически модифицирует правила межсетевого экрана (nftables/iptables), временно блокируя подозрительные IP-адреса.\n\n---\n\n## 1. Интеграция с systemd-journald в ALT Linux\n\nВ современных системах без классического `syslog.log` логи ведутся в бинарном журнале systemd. Для чтения логов напрямую из журнала устанавливается модуль:\n```bash\napt-get install fail2ban python3-module-systemd -y\nsed -i 's/before = paths-altlinux.conf/before = paths-altlinux-systemd.conf/' /etc/fail2ban/jail.conf\n```\n\n---\n\n## 2. Настройка изолятора /etc/fail2ban/jail.d/sshd.conf\n\n```ini\n[sshd]\nenabled = true\nport = 2026\nfilter = sshd\nbackend = systemd\nmaxretry = 3\nbantime = 1m\n```\n\n* **`port = 2026`**: нестандартный порт SSH, настроенный в Модуле №1.\n* **`backend = systemd`**: эффективное чтение событий OpenSSH из сокета журнала.\n* **`maxretry = 3`**: лимит неудачных попыток входа до срабатывания защиты.\n* **`bantime = 1m`**: время действия временной блокировки (1 минута).\n\n---\n\n## 3. Управление и статус\n\n* Просмотр заблокированных адресов: `fail2ban-client status sshd`\n* Ручной разбан (при необходимости): `fail2ban-client set sshd unbanip <IP>`",
-  "codeBlocks": [
-    {
-      "label": "Конфигурация изолятора sshd",
-      "code": "cat << \"EOF\" > /etc/fail2ban/jail.d/sshd.conf\n[sshd]\nenabled = true\nport = 2026\nfilter = sshd\nbackend = systemd\nmaxretry = 3\nbantime = 1m\nEOF\nsystemctl enable --now fail2ban\nfail2ban-client status sshd"
-    }
-  ]
-},
+  {
+    id: 'm3-task-9',
+    module: 'module-3',
+    moduleTitle: 'Модуль №3',
+    moduleDescription: 'Информационная безопасность и расширенные сервисы',
+    taskNumber: 9,
+    taskSlug: 'm3-task-9',
+    number: 31,
+    title: 'Задание №9: Защита службы SSH с помощью Fail2ban на HQ-SRV',
+    summary:
+      'Предотвращение атак перебора паролей (Brute Force), изолятор sshd в jail.d, интеграция с systemd-journald через python3-module-systemd, временная блокировка на 1 минуту.',
+    content:
+      "**Fail2ban** сканирует журналы системных служб на наличие признаков атак перебора аутентификации и автоматически модифицирует правила межсетевого экрана (nftables/iptables), временно блокируя подозрительные IP-адреса.\n\n---\n\n## 1. Интеграция с systemd-journald в ALT Linux\n\nВ современных системах без классического `syslog.log` логи ведутся в бинарном журнале systemd. Для чтения логов напрямую из журнала устанавливается модуль:\n```bash\napt-get install fail2ban python3-module-systemd -y\nsed -i 's/before = paths-altlinux.conf/before = paths-altlinux-systemd.conf/' /etc/fail2ban/jail.conf\n```\n\n---\n\n## 2. Настройка изолятора /etc/fail2ban/jail.d/sshd.conf\n\n```ini\n[sshd]\nenabled = true\nport = 2026\nfilter = sshd\nbackend = systemd\nmaxretry = 3\nbantime = 1m\n```\n\n* **`port = 2026`**: нестандартный порт SSH, настроенный в Модуле №1.\n* **`backend = systemd`**: эффективное чтение событий OpenSSH из сокета журнала.\n* **`maxretry = 3`**: лимит неудачных попыток входа до срабатывания защиты.\n* **`bantime = 1m`**: время действия временной блокировки (1 минута).\n\n---\n\n## 3. Управление и статус\n\n* Просмотр заблокированных адресов: `fail2ban-client status sshd`\n* Ручной разбан (при необходимости): `fail2ban-client set sshd unbanip <IP>`",
+    codeBlocks: [
+      {
+        label: 'Конфигурация изолятора sshd',
+        code: 'cat << "EOF" > /etc/fail2ban/jail.d/sshd.conf\n[sshd]\nenabled = true\nport = 2026\nfilter = sshd\nbackend = systemd\nmaxretry = 3\nbantime = 1m\nEOF\nsystemctl enable --now fail2ban\nfail2ban-client status sshd',
+      },
+    ],
+  },
 
-{
-  "id": "m3-task-10",
-  "module": "module-3",
-  "moduleTitle": "Модуль №3",
-  "moduleDescription": "Информационная безопасность и расширенные сервисы",
-  "taskNumber": 10,
-  "taskSlug": "m3-task-10",
-  "number": 32,
-  "title": "Задание №10: Резервное копирование данных HQ-SRV на узел хранения HQ-CLI",
-  "summary": "Отечественная СРК «Кибер Бэкап» 17.4, модуль ядра snapapi, Management Server (порт 9877) и Storage Node, организация irpo, планы бэкапа etc_backup и webdb_backup.",
-  "content": "**«Кибер Бэкап»** (ранее Acronis Защита Данных) — ведущее отечественное решение резервного копирования и восстановления данных корпоративного уровня, включенное в реестр отечественного ПО.\n\n---\n\n## 1. Архитектура компонентов\n\n* **Сервер управления (Management Server):** центральный узел координации, хранящий БД политик и предоставляющий веб-консоль управления по защищенному протоколу HTTPS (порт **TCP 9877**).\n* **Агент для Linux (snapapi):** драйвер ядра для создания консистентных «горячих» снимков файловой системы. Требует сборки под актуальное ядро (`kernel-source-6.1`, `gcc`, `make`).\n* **Узел хранения (Storage Node):** выделенный сервер/машина (HQ-CLI), принимающий и архивирующий резервные копии в каталог `/backup` (хранилище `backup_dir`).\n* **Агент СУБД MySQL/MariaDB:** осуществляет консистентное копирование баз данных без остановки сервиса.\n\n---\n\n## 2. Веб-консоль и планы резервного копирования\n\n1. Доступ к панели: `https://hq-srv.au-team.irpo:9877` (учетные данные: `root` / `toor`).\n2. Создается организация **`irpo`**, в которую добавляется администратор **`irpoadmin`** (пароль `P@ssw0rd`).\n3. Регистрируется узел хранения на HQ-CLI с путем к локальной папке `/backup`.\n4. Настраиваются два плана защиты для сервера HQ-SRV:\n   * **`etc_backup`**: резервное копирование конфигурационной директории `/etc`.\n   * **`webdb_backup`**: консистентное резервное копирование экземпляра СУБД MySQL/MariaDB.",
-  "codeBlocks": [
-    {
-      "label": "Подготовка ядра и установка Management Server на HQ-SRV",
-      "code": "apt-get update && apt-get install kernel-source-6.1 kernel-headers-modules-un-def gcc make kmod-sign -y\nupdate-kernel -y\nuseradd irpoadmin && echo \"P@ssw0rd\" | passwd --stdin irpoadmin 2>/dev/null || passwd irpoadmin\n/mnt/cyberbackup_17.4.36200.x86_64 --skip-prereq-check --nodeps"
-    }
-  ]
-},
+  {
+    id: 'm3-task-10',
+    module: 'module-3',
+    moduleTitle: 'Модуль №3',
+    moduleDescription: 'Информационная безопасность и расширенные сервисы',
+    taskNumber: 10,
+    taskSlug: 'm3-task-10',
+    number: 32,
+    title: 'Задание №10: Резервное копирование данных HQ-SRV на узел хранения HQ-CLI',
+    summary:
+      'Отечественная СРК «Кибер Бэкап» 17.4, модуль ядра snapapi, Management Server (порт 9877) и Storage Node, организация irpo, планы бэкапа etc_backup и webdb_backup.',
+    content:
+      '**«Кибер Бэкап»** (ранее Acronis Защита Данных) — ведущее отечественное решение резервного копирования и восстановления данных корпоративного уровня, включенное в реестр отечественного ПО.\n\n---\n\n## 1. Архитектура компонентов\n\n* **Сервер управления (Management Server):** центральный узел координации, хранящий БД политик и предоставляющий веб-консоль управления по защищенному протоколу HTTPS (порт **TCP 9877**).\n* **Агент для Linux (snapapi):** драйвер ядра для создания консистентных «горячих» снимков файловой системы. Требует сборки под актуальное ядро (`kernel-source-6.1`, `gcc`, `make`).\n* **Узел хранения (Storage Node):** выделенный сервер/машина (HQ-CLI), принимающий и архивирующий резервные копии в каталог `/backup` (хранилище `backup_dir`).\n* **Агент СУБД MySQL/MariaDB:** осуществляет консистентное копирование баз данных без остановки сервиса.\n\n---\n\n## 2. Веб-консоль и планы резервного копирования\n\n1. Доступ к панели: `https://hq-srv.au-team.irpo:9877` (учетные данные: `root` / `toor`).\n2. Создается организация **`irpo`**, в которую добавляется администратор **`irpoadmin`** (пароль `P@ssw0rd`).\n3. Регистрируется узел хранения на HQ-CLI с путем к локальной папке `/backup`.\n4. Настраиваются два плана защиты для сервера HQ-SRV:\n   * **`etc_backup`**: резервное копирование конфигурационной директории `/etc`.\n   * **`webdb_backup`**: консистентное резервное копирование экземпляра СУБД MySQL/MariaDB.',
+    codeBlocks: [
+      {
+        label: 'Подготовка ядра и установка Management Server на HQ-SRV',
+        code: 'apt-get update && apt-get install kernel-source-6.1 kernel-headers-modules-un-def gcc make kmod-sign -y\nupdate-kernel -y\nuseradd irpoadmin && echo "P@ssw0rd" | passwd --stdin irpoadmin 2>/dev/null || passwd irpoadmin\n/mnt/cyberbackup_17.4.36200.x86_64 --skip-prereq-check --nodeps',
+      },
+    ],
+  },
 ];
