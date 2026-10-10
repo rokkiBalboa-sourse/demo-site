@@ -585,7 +585,7 @@ su -l net_admin -c "sudo id"`,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
-    {
+  {
     "id": "m1-task-4",
     "slug": "m1-task-4",
     "module_id": "module-1",
@@ -1156,7 +1156,7 @@ su -l net_admin -c "sudo id"`,
         "node": "BR-SRV",
         "title": "Шаг 1.3: Подготовка и инициализация (Provisioning) домена",
         "explanation": "Удаляем старый smb.conf и базы Samba, создаем каталог SYSVOL и запускаем интерактивный samba-tool domain provision.",
-        "commands": "# Очистка предыдущих конфигураций\nrm -f /etc/samba/smb.conf\nrm -rf {/var/lib/samba, /var/cache/samba}\nmkdir -p /var/lib/samba/sysvol\n\n# Запуск инициализации домена:\n# Realm: AU-TEAM.IRPO\n# Domain: AU-TEAM\n# Server Role: dc\n# DNS backend: SAMBA_INTERNAL\n# DNS forwarder: 77.88.8.8 (или Enter)\n# Administrator password: P@ssw0rd\nsamba-tool domain provision"
+        "commands": "# Очистка предыдущих конфигураций\nrm -f /etc/samba/smb.conf\nrm -rf {/var/lib/samba, /var/cache/samba}\nmkdir -p /var/lib/samba/sysvol\n\n# Запуск инициализации домена:\n# Realm: AU-TEAM.IRPO\n# Domain: AU-TEAM\n# Server Role: dc\n# DNS backend: SAMBA_INTERNAL\n# DNS forwarder: 77.88.8.8 \n# Administrator password: P@ssw0rd\nsamba-tool domain provision"
       },
       {
         "step_number": 5,

@@ -33,6 +33,7 @@ import {
 } from 'lucide-react';
 import { analyzeCommandBlock } from '@/lib/command-explainer';
 import { Module1AssignmentDispatcher } from './TaskModule1Assignments';
+import { Module2AssignmentDispatcher } from './TaskModule2Assignments';
 
 interface TaskSubmitFormProps {
   task: Task;
@@ -1129,6 +1130,8 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                 </div>
               </div>
             </div>
+          ) : task.module_id === 'module-2' ? (
+            <Module2AssignmentDispatcher task={task} />
           ) : (
             <Module1AssignmentDispatcher task={task} />
           )}
