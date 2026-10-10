@@ -241,7 +241,7 @@ function MarkdownContent({ content }: { content: string }) {
 export function TheoryClient() {
   const [activeSectionId, setActiveSectionId] = useState<string>(ALT_LINUX_THEORY[0].id);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedModule, setSelectedModule] = useState<'all' | 'module-1' | 'module-2'>('all');
+  const [selectedModule, setSelectedModule] = useState<'all' | 'module-1' | 'module-2' | 'module-3'>('all');
 
   const activeSection =
     ALT_LINUX_THEORY.find((s) => s.id === activeSectionId) || ALT_LINUX_THEORY[0];
@@ -276,7 +276,7 @@ export function TheoryClient() {
             Теоретическая часть: Архитектура и администрирование ALT Linux
           </h1>
           <p className="text-xs text-zinc-400 font-mono mt-1 max-w-3xl leading-relaxed">
-            Разделы документации строго соответствуют структуре экзаменационных заданий Модулей 1 и 2.
+            Разделы документации строго соответствуют структуре экзаменационных заданий Модулей 1, 2 и 3.
             Здесь собрана вся необходимая теоретическая база для понимания и самостоятельного выполнения каждого пункта.
           </p>
         </div>
@@ -294,7 +294,7 @@ export function TheoryClient() {
         {/* Left Sidebar */}
         <div className="lg:col-span-4 space-y-3">
           {/* Module Filter Tabs */}
-          <div className="grid grid-cols-3 gap-1 p-1 bg-zinc-900/90 border border-zinc-800">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1 p-1 bg-zinc-900/90 border border-zinc-800">
             <button
               type="button"
               onClick={() => setSelectedModule('all')}
@@ -304,7 +304,7 @@ export function TheoryClient() {
                   : 'text-zinc-400 hover:text-zinc-200'
               }`}
             >
-              Все (22)
+              Все ({ALT_LINUX_THEORY.length})
             </button>
             <button
               type="button"
@@ -327,6 +327,17 @@ export function TheoryClient() {
               }`}
             >
               Модуль 2 (11)
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedModule('module-3')}
+              className={`py-1.5 text-xs font-mono transition-colors cursor-pointer text-center ${
+                selectedModule === 'module-3'
+                  ? 'bg-zinc-800 text-white font-bold border border-zinc-700'
+                  : 'text-zinc-400 hover:text-zinc-200'
+              }`}
+            >
+              Модуль 3 (10)
             </button>
           </div>
 

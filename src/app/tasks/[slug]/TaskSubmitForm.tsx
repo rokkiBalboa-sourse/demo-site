@@ -34,6 +34,7 @@ import {
 import { analyzeCommandBlock } from '@/lib/command-explainer';
 import { Module1AssignmentDispatcher } from './TaskModule1Assignments';
 import { Module2AssignmentDispatcher } from './TaskModule2Assignments';
+import { Module3AssignmentDispatcher } from './TaskModule3Assignments';
 
 interface TaskSubmitFormProps {
   task: Task;
@@ -1130,6 +1131,8 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                 </div>
               </div>
             </div>
+          ) : task.module_id === 'module-3' ? (
+            <Module3AssignmentDispatcher task={task} />
           ) : task.module_id === 'module-2' ? (
             <Module2AssignmentDispatcher task={task} />
           ) : (

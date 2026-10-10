@@ -38,58 +38,6 @@ export default async function ModuleDetailPage({ params }: ModulePageProps) {
     notFound();
   }
 
-  if (moduleId === 'module-3') {
-    return (
-      <div className="min-h-screen bg-zinc-950 flex flex-col">
-        <Header user={session} />
-
-        <main className="max-w-2xl mx-auto px-4 py-16 flex-1 w-full space-y-6">
-          <div className="flex items-center justify-between">
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1 text-xs font-mono text-zinc-400 hover:text-white transition-colors"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Назад ко всем модулям</span>
-            </Link>
-          </div>
-
-          <div className="border border-zinc-800 bg-zinc-900/60 p-8 text-center space-y-4">
-            <div className="inline-flex items-center justify-center w-12 h-12 bg-zinc-950 border border-zinc-800 text-zinc-400 mb-1">
-              <Lock className="w-6 h-6" />
-            </div>
-
-            <div className="space-y-1">
-              <div className="font-mono text-xs uppercase tracking-widest text-zinc-500 font-bold">
-                {moduleInfo.code} • В РАЗРАБОТКЕ
-              </div>
-              <h1 className="text-xl font-bold font-mono text-white">
-                {moduleInfo.title}
-              </h1>
-            </div>
-
-            <p className="font-mono text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
-              Данный экзаменационный модуль временно заблокирован и находится в процессе разработки. Пожалуйста, выполняйте практические задания Модуля 1.
-            </p>
-
-            <div className="pt-4 flex items-center justify-center gap-3">
-              <Link href="/modules/module-1">
-                <Button variant="primary" className="flex items-center gap-2">
-                  <span>Перейти к Модулю 1</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Button>
-              </Link>
-              <Link href="/">
-                <Button variant="secondary">
-                  <span>На главную</span>
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </main>
-      </div>
-    );
-  }
 
   const tasks = await db.getTasksByModule(moduleId);
   const submissions = await db.getUserSubmissions(session.id);

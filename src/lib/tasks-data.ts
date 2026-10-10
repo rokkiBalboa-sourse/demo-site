@@ -2688,384 +2688,1453 @@ su -l net_admin -c "sudo id"`,
   // MODULE 3 (10 TASKS)
   // =========================================================================
   {
-    id: 'm3-task-1',
-    slug: 'm3-task-1',
-    module_id: 'module-3',
-    task_number: 1,
-    title: 'Импорт пользователей в домен Samba DC',
-    module_code: 'Модуль 3',
-    description: 'Массовое создание доменных пользователей и групп подразделений по предоставленному списку CSV через samba-tool.',
-    nodes: ['HQ-SRV'],
-    theory: [
+    "id": "m3-task-1",
+    "slug": "m3-task-1",
+    "module_id": "module-3",
+    "task_number": 1,
+    "title": "Импорт пользователей в домен au-team.irpo",
+    "module_code": "Модуль 3",
+    "description": "Автоматизированный импорт пользователей из Users.csv на диске Additional.iso в домен Samba DC на BR-SRV (логины в формате фамилия.первая_буква_имени, единый пароль P@ssw0rd1, заполнение атрибутов, автоматическое создание OU и перемещение пользователей) с проверкой входа через GUI на HQ-CLI.",
+    "nodes": [
+      "BR-SRV",
+      "HQ-CLI"
+    ],
+    "video_url": "https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d",
+    "assignment": "### Задание №1: Импорт пользователей в домен au-team.irpo\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на контроллере домена (**BR-SRV**) выполняется автоматизированный импорт пользователей из файла `Users.csv`, находящегося на подключаемом компакт-диске `Additional.iso`.\n\nСкрипт формирует логины пользователей в формате `фамилия.первая_буква_имени` в нижнем регистре (например, `ivanov.i`), задаёт пароль `P@ssw0rd1`, заполняет атрибуты учетных записей (имя, фамилия, должность, телефон), автоматически создаёт подразделения (OU) и перемещает пользователей в соответствующие подразделения.\n\n#### Где выполнять:\n* **BR-SRV** — монтирование диска, подготовка CSV-файла, создание и запуск скрипта импорта `import.sh`.\n* **HQ-CLI** — проверка входа через графический интерфейс (GUI) под любым импортированным пользователем.",
+    "theory": [
       {
-        title: 'Управление объектами каталога через samba-tool user add',
-        explanation: 'Команда samba-tool создает учетную запись пользователя в базе NTDS.dit, генерирует Kerberos принципал и назначает членство в группах безопасности.',
+        "title": "Автоматизация администрирования Samba 4 через samba-tool",
+        "explanation": "Утилита samba-tool предоставляет мощный интерфейс командной строки для управления объектами каталога: создание учетных записей (user create), организационных подразделений (ou create) и перемещение объектов между контейнерами (user move)."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'HQ-SRV',
-        title: 'Пакетное создание пользователей и групп',
-        explanation: 'Создаем группу ОтделИТ и пользователя engineer.',
-        commands: `samba-tool group add "ОтделИТ" --description="ИТ персонал"
-samba-tool user create engineer 'TempPass2026!' --given-name="Инженер" --surname="Иванов"
-samba-tool group addmembers "ОтделИТ" engineer
-samba-tool group listmembers "ОтделИТ"`,
+        "title": "Нормализация кодировок текстовых файлов в Linux (iconv)",
+        "explanation": "Файлы CSV, подготовленные в других ОС, часто содержат символы разметки Windows (CRLF), BOM или некорректные байты. Утилита iconv с ключом -t UTF-8//IGNORE очищает поток от недопустимых символов."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "BR-SRV",
+        "title": "Шаг 1: Монтирование диска Additional.iso и проверка содержимого",
+        "explanation": "Монтируем CD/DVD-диск в каталог /mnt/ и проверяем список файлов.",
+        "commands": "mount -o loop /dev/sr0 /mnt/ -v\nls -l /mnt/"
       },
+      {
+        "step_number": 2,
+        "node": "BR-SRV",
+        "title": "Шаг 2: Очистка и нормализация кодировки файла Users.csv",
+        "explanation": "Нормализуем кодировку UTF-8 с игнорированием некорректных байтов и сохраняем файл в /root/users_fix.csv.",
+        "commands": "iconv -f UTF-8 -t UTF-8//IGNORE /mnt/Users.csv > /root/users_fix.csv\nhead -n 5 /root/users_fix.csv"
+      },
+      {
+        "step_number": 3,
+        "node": "BR-SRV",
+        "title": "Шаг 3: Создание скрипта автоматического импорта import.sh",
+        "explanation": "Создаем скрипт, считывающий поля CSV, генерирующий логины, создающий пользователей и распределяющий их по OU.",
+        "commands": "#!/bin/bash\ncat << \"EOF\" > /root/import.sh\n#!/bin/bash\n#\nwhile IFS=';' read -r name fam role phone ou street zip city country pass; do\nusername=\"$fam\".\"${name:0:1}\"\nsamba-tool user create \"${username,,}\" \"P@ssw0rd1\" --given-name=\"$fam\" --surname=\"$name\" --job-title=\"$role\" --telephone-number=\"$phone\"\n[[ -n \"$ou\" ]] && samba-tool ou create \"OU=$ou\" 2>/dev/null\n[[ -n \"$ou\" ]] && samba-tool user move \"${username,,}\" \"OU=$ou\" 2>/dev/null\ndone < /root/users_fix.csv\nEOF\nchmod +x /root/import.sh"
+      },
+      {
+        "step_number": 4,
+        "node": "BR-SRV",
+        "title": "Шаг 4: Запуск скрипта импорта",
+        "explanation": "Запускаем пакетный импорт пользователей в базу Active Directory.",
+        "commands": "bash /root/import.sh"
+      },
+      {
+        "step_number": 5,
+        "node": "BR-SRV",
+        "title": "Шаг 5: Проверка импортированных пользователей",
+        "explanation": "Просматриваем общий список пользователей и атрибуты созданного аккаунта.",
+        "commands": "samba-tool user list\nsamba-tool user show ivanov.i"
+      },
+      {
+        "step_number": 6,
+        "node": "HQ-CLI",
+        "title": "Шаг 6: Проверка входа на клиентской машине HQ-CLI",
+        "explanation": "В GUI переключаемся на ручной ввод пользователя (логин ivanov.i, пароль P@ssw0rd1) и входим в систему.",
+        "commands": "# В окне входа переключаемся на пользователя домена:\n# Логин: ivanov.i (или любой другой из Users.csv)\n# Пароль: P@ssw0rd1\n# Проверяем успешный вход на рабочий стол."
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m3_t1.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какая подкоманда samba-tool добавляет пользователя в группу?', placeholder: 'samba-tool group addmembers <Group> <User>' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m3_t1.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какой флаг утилиты iconv позволяет пропускать и отбрасывать невалидные байтовые последовательности при конвертации?",
+        "options": [
+          {
+            "id": "A",
+            "text": "//IGNORE"
+          },
+          {
+            "id": "B",
+            "text": "--skip-errors"
+          },
+          {
+            "id": "C",
+            "text": "-f no-fail"
+          },
+          {
+            "id": "D",
+            "text": "--drop-invalid"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какая команда samba-tool создает организационное подразделение (OU) в структуре каталога Active Directory?",
+        "options": [
+          {
+            "id": "A",
+            "text": "samba-tool ou create \"OU=Отдел\""
+          },
+          {
+            "id": "B",
+            "text": "samba-tool org add"
+          },
+          {
+            "id": "C",
+            "text": "samba-tool container new"
+          },
+          {
+            "id": "D",
+            "text": "samba-tool group addou"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "Какая конструкция командной оболочки Bash переводит строковую переменную username в нижний регистр?",
+        "options": [
+          {
+            "id": "A",
+            "text": "${username,,}"
+          },
+          {
+            "id": "B",
+            "text": "${username:lower}"
+          },
+          {
+            "id": "C",
+            "text": "$(lower $username)"
+          },
+          {
+            "id": "D",
+            "text": "${username.toLower()}"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 23,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 23,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm3-task-2',
-    slug: 'm3-task-2',
-    module_id: 'module-3',
-    task_number: 2,
-    title: 'Центр сертификации ГОСТ и HTTPS Nginx',
-    module_code: 'Модуль 3',
-    description: 'Развертывание локального центра сертификации с использованием криптографических алгоритмов ГОСТ Р 34.12/34.10 и выпуск TLS-сертификатов.',
-    nodes: ['HQ-SRV'],
-    theory: [
+    "id": "m3-task-2",
+    "slug": "m3-task-2",
+    "module_id": "module-3",
+    "task_number": 2,
+    "title": "Настройка центра сертификации ГОСТ и HTTPS в Nginx",
+    "module_code": "Модуль 3",
+    "description": "Развёртывание Центра сертификации ГОСТ на базе openssl-gost-engine на узле ISP, выпуск корневого сертификата ROOT-CA и серверных сертификатов на 30 дней для web.au-team.irpo и docker.au-team.irpo, настройка HTTPS (порт 443) в Nginx и установка КриптоПро CSP на HQ-CLI с проверкой в браузере.",
+    "nodes": [
+      "ISP",
+      "HQ-CLI"
+    ],
+    "video_url": "https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d",
+    "assignment": "### Задание №2: Настройка центра сертификации ГОСТ и HTTPS в Nginx\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на узле **ISP** настраивается Центр сертификации с использованием отечественных криптографических алгоритмов ГОСТ (`openssl-gost-engine`).\n\nВыпускаются сертификаты со сроком действия ровно **30 дней** для доменных имён `web.au-team.irpo` и `docker.au-team.irpo`. Реверсивный прокси-сервер Nginx переводится на протокол HTTPS (порт 443) с ГОСТ-шифрованием. На рабочей станции **HQ-CLI** устанавливается СКЗИ КриптоПро CSP, импортируется корневой сертификат и проверяется защищённый доступ без предупреждений безопасности.\n\n#### Узлы выполнения:\n* **ISP** — установка ГОСТ-движка OpenSSL, выпуск корневого и серверных сертификатов на 30 дней, перевод Nginx на HTTPS (порт 443).\n* **HQ-CLI** — копирование сертификата CA, обновление хранилища ca-trust, установка КриптоПро CSP через GUI и проверка сайтов в Яндекс Браузере.",
+    "theory": [
       {
-        title: 'Российская криптография в OpenSSL (движок gost)',
-        explanation: 'Движок gost в OpenSSL позволяет использовать алгоритмы кузнечик/магма и подпись ГОСТ Р 34.10-2012 для защиты веб-трафика по протоколу TLS.',
+        "title": "Российские криптографические стандарты ГОСТ Р 34.12 / 34.10 в OpenSSL",
+        "explanation": "Модуль openssl-gost-engine подключает в OpenSSL поддержку отечественных шифров (Кузнечик, Магма) и алгоритма цифровой подписи ГОСТ Р 34.10-2012 с длиной ключа 256/512 бит. В ALT Linux модуль активируется системной командой control openssl-gost enabled."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'HQ-SRV',
-        title: 'Генерация сертификата и подключение SSL к сайту',
-        explanation: 'Создаем самоподписанный сертификат и настраиваем порт 443.',
-        commands: `mkdir -p /etc/ssl/certs /etc/ssl/private
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout /etc/ssl/private/web.key -out /etc/ssl/certs/web.crt -subj "/C=RU/O=AU-TEAM/CN=hq.au-team.irpo"
-systemctl restart httpd2`,
+        "title": "СКЗИ КриптоПро CSP и поддержка ГОСТ в веб-браузерах",
+        "explanation": "Для работы с отечественными ГОСТ-сертификатами в веб-браузерах (Яндекс Браузер, Chromium ГОСТ) требуется криптопровайдер КриптоПро CSP. Он перехватывает TLS-хэндшейк и выполняет шифрование с использованием ГОСТ-алгоритмов."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "ISP",
+        "title": "Шаг 1: Разрешение входа root по SSH для передачи файлов",
+        "explanation": "Включаем PermitRootLogin в sshd_config и перезапускаем службу SSH.",
+        "commands": "echo \"PermitRootLogin yes\" >> /etc/openssh/sshd_config\nsystemctl restart sshd"
       },
+      {
+        "step_number": 2,
+        "node": "ISP",
+        "title": "Шаг 2: Установка ПО и активация ГОСТ-движка",
+        "explanation": "Устанавливаем openssl-gost-engine, активируем через control и проверяем модуль.",
+        "commands": "apt-get install openssl openssl-engines -y\napt-get install openssl-gost-engine -y\ncontrol openssl-gost enabled\nopenssl engine\nopenssl ciphers | tr \":\" \"\\n\" | grep GOST"
+      },
+      {
+        "step_number": 3,
+        "node": "ISP",
+        "title": "Шаг 3: Создание корневого сертификата CA (ROOT-CA)",
+        "explanation": "Генерируем закрытый ключ и самоподписанный сертификат CA с Common Name ROOT-CA.AU-TEAM.IRPO.",
+        "commands": "openssl genpkey -algorithm gost2012_256 -pkeyopt paramset:TCB -out ca.key\nopenssl req -new -x509 -md_gost12_256 -days 90 -key ca.key -out ca.crt\n# В поле Common Name укажите: ROOT-CA.AU-TEAM.IRPO"
+      },
+      {
+        "step_number": 4,
+        "node": "ISP",
+        "title": "Шаг 4: Создание ключей и CSR для веб-серверов",
+        "explanation": "Генерируем ключи paramset:A и CSR для web.au-team.irpo и docker.au-team.irpo.",
+        "commands": "openssl genpkey -algorithm gost2012_256 -pkeyopt paramset:A -out web.au-team.irpo.key\nopenssl genpkey -algorithm gost2012_256 -pkeyopt paramset:A -out docker.au-team.irpo.key\n\nopenssl req -new -md_gost12_256 -key web.au-team.irpo.key -out web.au-team.irpo.csr\n# Common Name: WEB.AU-TEAM.IRPO\n\nopenssl req -new -md_gost12_256 -key docker.au-team.irpo.key -out docker.au-team.irpo.csr\n# Common Name: DOCKER.AU-TEAM.IRPO"
+      },
+      {
+        "step_number": 5,
+        "node": "ISP",
+        "title": "Шаг 5: Выпуск сертификатов веб-серверов ровно на 30 дней",
+        "explanation": "Подписываем запросы сертификатов ключом CA со сроком действия 30 дней.",
+        "commands": "openssl x509 -req -in web.au-team.irpo.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out web.au-team.irpo.crt -days 30\nopenssl x509 -req -in docker.au-team.irpo.csr -CA ca.crt -CAkey ca.key -CAcreateserial -out docker.au-team.irpo.crt -days 30\nls -l *.crt"
+      },
+      {
+        "step_number": 6,
+        "node": "ISP",
+        "title": "Шаг 6: Настройка HTTPS в Nginx",
+        "explanation": "Переводим виртуальные хосты на порт 443 ssl с шифрами GOST и перезапускаем Nginx.",
+        "commands": "cat << \"EOF\" > /etc/nginx/sites-available.d/r-proxy.conf\nserver {\n    listen 443 ssl;\n    server_name web.au-team.irpo;\n\n    ssl_certificate /root/web.au-team.irpo.crt;\n    ssl_certificate_key /root/web.au-team.irpo.key;\n    ssl_ciphers GOST2012-GOST8912-GOST8912;\n    ssl_protocols TLSv1.2;\n    ssl_prefer_server_ciphers on;\n\n    location / {\n        proxy_pass http://172.16.1.10:8080;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-Forwarded-Proto $scheme;\n        auth_basic \"Restricted Access\";\n        auth_basic_user_file /etc/nginx/.htpasswd;\n    }\n}\n\nserver {\n    listen 443 ssl;\n    server_name docker.au-team.irpo;\n\n    ssl_certificate /root/docker.au-team.irpo.crt;\n    ssl_certificate_key /root/docker.au-team.irpo.key;\n    ssl_ciphers GOST2012-GOST8912-GOST8912;\n    ssl_protocols TLSv1.2;\n    ssl_prefer_server_ciphers on;\n\n    location / {\n        proxy_pass http://172.16.2.10:8080;\n        proxy_set_header Host $host;\n        proxy_set_header X-Real-IP $remote_addr;\n        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n        proxy_set_header X-Forwarded-Proto $scheme;\n    }\n}\nEOF\nnginx -t && systemctl restart nginx"
+      },
+      {
+        "step_number": 7,
+        "node": "HQ-CLI",
+        "title": "Шаг 7: Импорт сертификата CA на HQ-CLI",
+        "explanation": "Копируем ca.crt с ISP в anchors и обновляем доверенные хранилища системы.",
+        "commands": "scp root@172.16.1.1:~/ca.crt /etc/pki/ca-trust/source/anchors/\nupdate-ca-trust extract"
+      },
+      {
+        "step_number": 8,
+        "node": "HQ-CLI",
+        "title": "Шаг 8: Установка КриптоПро CSP и проверка в браузере",
+        "explanation": "Устанавливаем cryptopro-preinstall, запускаем GUI-установщик и проверяем HTTPS-сайты.",
+        "commands": "apt-get install cryptopro-preinstall -y\necho \"https://disk.yandex.ru/d/6yI-K7zWPcPalg\" > /home/user/link.txt\n# Скачиваем архив КриптоПро CSP, распаковываем в /home/user/linux-amd64/\n# Запускаем: ./install_gui.sh (выбираем КС1, графические диалоги, cptools, плагин)\n# Проверяем в Яндекс Браузере: https://web.au-team.irpo и https://docker.au-team.irpo"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m3_t2.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какой стандарт ГОСТ регламентирует алгоритм электронной цифровой подписи?', placeholder: 'ГОСТ Р 34.10-2012' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m3_t2.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какая команда подсистемы безопасности ALT Linux активирует использование криптографического движка ГОСТ в OpenSSL?",
+        "options": [
+          {
+            "id": "A",
+            "text": "control openssl-gost enabled"
+          },
+          {
+            "id": "B",
+            "text": "openssl-config --enable-gost"
+          },
+          {
+            "id": "C",
+            "text": "systemctl enable gost-engine"
+          },
+          {
+            "id": "D",
+            "text": "gostctl activate"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "На какой срок по требованию задания выпускаются серверные сертификаты для веб-ресурсов?",
+        "options": [
+          {
+            "id": "A",
+            "text": "30 дней"
+          },
+          {
+            "id": "B",
+            "text": "90 дней"
+          },
+          {
+            "id": "C",
+            "text": "365 дней"
+          },
+          {
+            "id": "D",
+            "text": "180 дней"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "Какой порт используется для защищённого протокола HTTPS при публикации сайтов в Nginx?",
+        "options": [
+          {
+            "id": "A",
+            "text": "443"
+          },
+          {
+            "id": "B",
+            "text": "8080"
+          },
+          {
+            "id": "C",
+            "text": "8443"
+          },
+          {
+            "id": "D",
+            "text": "4433"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 24,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 24,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm3-task-3',
-    slug: 'm3-task-3',
-    module_id: 'module-3',
-    task_number: 3,
-    title: 'Защищённый IP-туннель и OSPF',
-    module_code: 'Модуль 3',
-    description: 'Организация криптографической защиты трафика между филиалами с шифрованием канала и передачей маршрутов OSPF.',
-    nodes: ['HQ-RTR', 'BR-RTR'],
-    theory: [
+    "id": "m3-task-3",
+    "slug": "m3-task-3",
+    "module_id": "module-3",
+    "task_number": 3,
+    "title": "Защищённый шифрованный IP-туннель OpenVPN и OSPF",
+    "module_code": "Модуль 3",
+    "description": "Замена незашифрованного туннеля GRE на защищённый шифрованный туннель OpenVPN со статическим ключом (AES-256-CBC, интерфейс tun0, адреса 192.168.5.1/192.168.5.2) между HQ-RTR и BR-RTR, переключение OSPF на tun0 в FRR и составление экзаменационного отчёта.",
+    "nodes": [
+      "HQ-RTR",
+      "BR-RTR"
+    ],
+    "video_url": "https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d",
+    "assignment": "### Задание №3: Защищённый шифрованный IP-туннель OpenVPN и OSPF\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании базовый незашифрованный туннель GRE между маршрутизаторами **HQ-RTR** и **BR-RTR** заменяется на защищённый шифрованный туннель на базе **OpenVPN** с использованием статического ключа шифрования (Static Key) и шифра **AES-256-CBC**.\n\nИнтерфейс старого туннеля `gre1` удаляется, а в конфигурации службы динамической маршрутизации FRR (OSPF) интерфейс переключается на `tun0`, восстанавливая связность и обмен маршрутами между офисами.\n\n#### Где выполнять:\n* **HQ-RTR** — генерация ключа `static.key`, настройка сервера `tun0`, удаление `gre1`, правка OSPF.\n* **BR-RTR** — приём ключа, настройка клиента `tun0`, удаление `gre1`, правка OSPF.",
+    "theory": [
       {
-        title: 'Шифрование туннелей IPsec и WireGuard',
-        explanation: 'Криптографическая инкапсуляция защищает транзитные данные от прослушивания и модификации при прохождении через сеть провайдера ISP.',
+        "title": "Режим OpenVPN Point-to-Point со статическим секретным ключом (Static Key)",
+        "explanation": "Режим статического ключа (secret static.key) идеален для соединения роутер-роутер: он не требует сложной инфраструктуры PKI/CA и сертификатов, обеспечивает криптостойкое шифрование (AES-256-CBC) и создает виртуальный интерфейс tun0 третьего сетевого уровня."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'HQ-RTR',
-        title: 'Проверка целостности зашифрованного туннеля',
-        explanation: 'Убеждаемся, что шифрованный туннель активен и пакеты OSPF маршрутизируются штатно.',
-        commands: `ip link show gre1
-vtysh -c "show ip ospf route"`,
+        "title": "Взаимодействие виртуальных туннелей с динамической маршрутизацией FRR (OSPF)",
+        "explanation": "Протокол OSPF оперирует сетевыми интерфейсами ядра Linux. При замене туннеля gre1 на tun0 директива interface tun0 в файле /etc/frr/frr.conf позволяет демону ospfd отправлять Hello-пакеты (мультикаст 224.0.0.5) через защищенный шифрованный канал."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "HQ-RTR",
+        "title": "Шаг 1: Установка OpenVPN и генерация статического ключа",
+        "explanation": "Устанавливаем OpenVPN, создаем каталог ключей и генерируем секретный ключ static.key.",
+        "commands": "apt-get update && apt-get install openvpn -y\nmkdir -p /etc/openvpn/keys /etc/openvpn/server\nopenvpn --genkey secret /etc/openvpn/keys/static.key\nchmod og-rw /etc/openvpn/keys/static.key\ncat /etc/openvpn/keys/static.key"
       },
+      {
+        "step_number": 2,
+        "node": "BR-RTR",
+        "title": "Шаг 2: Настройка клиента OpenVPN на BR-RTR",
+        "explanation": "Вставляем скопированный ключ, создаем tun0.conf, активируем службу, удаляем gre1 и перезагружаем.",
+        "commands": "apt-get update && apt-get install openvpn -y\nmkdir -p /etc/openvpn/keys /etc/openvpn/client\ncat << \"EOF\" > /etc/openvpn/client/tun0.conf\nremote 172.16.1.10\ndev tun0\ncipher AES-256-CBC\nauth-nocache\nifconfig 192.168.5.2 192.168.5.1\nsecret /etc/openvpn/keys/static.key\nEOF\nchmod og-rw /etc/openvpn/keys/static.key\nsystemctl enable openvpn-client@tun0\nrm -rf /etc/net/ifaces/gre1/ && reboot"
+      },
+      {
+        "step_number": 3,
+        "node": "HQ-RTR",
+        "title": "Шаг 3: Настройка сервера OpenVPN на HQ-RTR",
+        "explanation": "Создаем серверный tun0.conf, активируем службу, удаляем gre1 и перезагружаем.",
+        "commands": "cat << \"EOF\" > /etc/openvpn/server/tun0.conf\ndev tun0\ncipher AES-256-CBC\nauth-nocache\nifconfig 192.168.5.1 192.168.5.2\nsecret /etc/openvpn/keys/static.key\nEOF\nsystemctl enable openvpn-server@tun0\nrm -rf /etc/net/ifaces/gre1/ && reboot"
+      },
+      {
+        "step_number": 4,
+        "node": "HQ-RTR, BR-RTR",
+        "title": "Шаг 4: Замена gre1 на tun0 в FRR OSPF на обоих роутерах",
+        "explanation": "Заменяем interface gre1 на interface tun0 в /etc/frr/frr.conf и перезапускаем FRR.",
+        "commands": "sed -i \"s/interface gre1/interface tun0/\" /etc/frr/frr.conf\nsystemctl restart frr\ngrep tun0 -A6 /etc/frr/frr.conf"
+      },
+      {
+        "step_number": 5,
+        "node": "HQ-RTR, BR-RTR",
+        "title": "Шаг 5: Проверка поднятия tun0 и установления соседства OSPF",
+        "explanation": "Проверяем интерфейс tun0, таблицу маршрутов ядра и статус соседства vtysh.",
+        "commands": "ip -br -c a\nip r\nvtysh -c \"show ip ospf neighbor\""
+      },
+      {
+        "step_number": 6,
+        "node": "Экзаменационный отчет",
+        "title": "Шаг 6: Заполнение экзаменационного отчёта",
+        "explanation": "Фиксируем параметры: OpenVPN point-to-point, AES-256-CBC, интерфейс tun0 (192.168.5.1 / 192.168.5.2), замена gre1 в FRR.",
+        "commands": "# В отчёте отразите:\n# 1. ПО: OpenVPN (статический секретный ключ)\n# 2. Алгоритм шифрования: AES-256-CBC\n# 3. IP адресация: 192.168.5.1 (HQ) и 192.168.5.2 (BR)\n# 4. Перенастройка OSPF: замена gre1 на tun0 в /etc/frr/frr.conf"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m3_t3.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какой протокол IPsec обеспечивает конфиденциальность данных (шифрование)?', placeholder: 'ESP (Encapsulating Security Payload, протокол IP 50)' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m3_t3.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какой алгоритм симметричного шифрования задаётся в конфигурации туннеля OpenVPN?",
+        "options": [
+          {
+            "id": "A",
+            "text": "AES-256-CBC"
+          },
+          {
+            "id": "B",
+            "text": "DES-EDE3"
+          },
+          {
+            "id": "C",
+            "text": "ChaCha20"
+          },
+          {
+            "id": "D",
+            "text": "Blowfish-128"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какая команда генерирует секретный статический ключ шифрования для OpenVPN?",
+        "options": [
+          {
+            "id": "A",
+            "text": "openvpn --genkey secret static.key"
+          },
+          {
+            "id": "B",
+            "text": "openssl rand -hex 256"
+          },
+          {
+            "id": "C",
+            "text": "vpn-keygen --static"
+          },
+          {
+            "id": "D",
+            "text": "openvpn-create-key"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "Какой тип виртуального интерфейса создается OpenVPN для инкапсуляции сетевого уровня L3 (IP)?",
+        "options": [
+          {
+            "id": "A",
+            "text": "tun"
+          },
+          {
+            "id": "B",
+            "text": "tap"
+          },
+          {
+            "id": "C",
+            "text": "gre"
+          },
+          {
+            "id": "D",
+            "text": "veth"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 25,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 25,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm3-task-4',
-    slug: 'm3-task-4',
-    module_id: 'module-3',
-    task_number: 4,
-    title: 'Межсетевой экран nftables',
-    module_code: 'Модуль 3',
-    description: 'Написание правил фильтрации современного пакетного фильтра nftables: состояние соединений (conntrack), защита от спуфинга и блокировка нежелательных портов.',
-    nodes: ['HQ-RTR'],
-    theory: [
+    "id": "m3-task-4",
+    "slug": "m3-task-4",
+    "module_id": "module-3",
+    "task_number": 4,
+    "title": "Межсетевой экран nftables на маршрутизаторах HQ-RTR и BR-RTR",
+    "module_code": "Модуль 3",
+    "description": "Настройка брандмауэра nftables на пограничных маршрутизаторах: таблица inet filter, цепочка input с фильтрацией протоколов DNS, HTTP, HTTPS, NTP, ICMP, GRE, OSPF, UDP 500, доверенных сетей 192.168.100.0/27, 192.168.200.0/28, 192.168.30.0/28 и блокировкой всего входящего внешнего трафика (ip version 4 drop).",
+    "nodes": [
+      "HQ-RTR",
+      "BR-RTR"
+    ],
+    "video_url": "https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d",
+    "assignment": "### Задание №4: Межсетевой экран nftables на маршрутизаторах HQ-RTR и BR-RTR\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на пограничных маршрутизаторах **HQ-RTR** и **BR-RTR** настраивается межсетевой экран на базе **nftables**.\n\nВ конфигурационный файл добавляется таблица `inet filter` с цепочкой `input`, разрешающей прохождение сетевых протоколов (DNS, HTTP, HTTPS, NTP, ICMP, GRE, OSPF, UDP 500), доступ из внутренних доверенных офисных подсетей и установленные соединения, а весь остальной входящий IPv4-трафик со стороны внешней сети сбрасывается (`ip version 4 drop`).\n\n#### Где выполнять:\n* **HQ-RTR** — внесение таблицы `inet filter` в `/etc/nftables/hq-rtr.nft` и перезапуск nftables.\n* **BR-RTR** — внесение таблицы `inet filter` в `/etc/nftables/br-rtr.nft` и перезапуск nftables.",
+    "theory": [
       {
-        title: 'Синтаксис и таблицы nftables',
-        explanation: 'nftables заменяет устаревший iptables. Правила объединяются в таблицы и цепочки с единым виртуальным процессором фильтрации ядра Linux.',
+        "title": "Структура цепочек и приоритетов фильтрации в nftables",
+        "explanation": "Таблица inet filter обрабатывает одновременно IPv4 и IPv6 пакеты. Цепочка input с типом filter и хуком input (priority filter) анализирует локально предназначенный входящий трафик до передачи приложениям."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'HQ-RTR',
-        title: 'Конфигурация базового набора правил /etc/nftables/nftables.nft',
-        explanation: 'Разрешаем established/related трафик и дропаем нелегитимные входящие пакеты.',
-        commands: `cat << 'EOF' > /etc/nftables/nftables.nft
-table inet filter {
-    chain input {
-        type filter hook input priority 0; policy drop;
-        iif "lo" accept
-        ct state established,related accept
-        tcp dport 22 accept
-        ip protocol icmp accept
-    }
-}
-EOF
-nft -f /etc/nftables/nftables.nft
-nft list ruleset`,
+        "title": "Механизм отслеживания состояний Conntrack в nftables",
+        "explanation": "Директива ct state {established, related} accept разрешает пакеты, принадлежащие уже установленным сетевым сессиям (например, ответы удаленных серверов на исходящие запросы роутера)."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "HQ-RTR",
+        "title": "Шаг 1: Добавление таблицы inet filter в /etc/nftables/hq-rtr.nft",
+        "explanation": "Вносим таблицу filter перед существующей nat в конфигурацию HQ-RTR.",
+        "commands": "cat << \"EOF\" > /tmp/filter.nft\ntable inet filter {\n        chain input {\n                type filter hook input priority filter;\n                udp dport 53 accept;\n                tcp dport 80 accept;\n                tcp dport 443 accept;\n                tcp dport 123 accept;\n                ct state {established, related} accept;\n                ip protocol gre accept;\n                ip protocol icmp accept;\n                ip protocol ospf accept;\n                udp dport 500 accept;\n                ip saddr 192.168.100.0/27 accept;\n                ip saddr 192.168.200.0/28 accept;\n                ip saddr 192.168.30.0/28 accept;\n                ip version 4 drop;\n        }\n}\nEOF\nsed -i '1r /tmp/filter.nft' /etc/nftables/hq-rtr.nft 2>/dev/null || cat /tmp/filter.nft >> /etc/nftables/hq-rtr.nft"
       },
+      {
+        "step_number": 2,
+        "node": "HQ-RTR",
+        "title": "Шаг 2: Перезапуск и проверка службы nftables на HQ-RTR",
+        "explanation": "Перезапускаем службу nftables и проверяем статус.",
+        "commands": "systemctl restart nftables\nsystemctl status nftables"
+      },
+      {
+        "step_number": 3,
+        "node": "BR-RTR",
+        "title": "Шаг 3: Добавление таблицы inet filter в /etc/nftables/br-rtr.nft",
+        "explanation": "Вносим аналогичную таблицу filter в конфигурацию BR-RTR.",
+        "commands": "cat << \"EOF\" > /tmp/filter.nft\ntable inet filter {\n        chain input {\n                type filter hook input priority filter;\n                udp dport 53 accept;\n                tcp dport 80 accept;\n                tcp dport 443 accept;\n                tcp dport 123 accept;\n                ct state {established, related} accept;\n                ip protocol gre accept;\n                ip protocol icmp accept;\n                ip protocol ospf accept;\n                udp dport 500 accept;\n                ip saddr 192.168.100.0/27 accept;\n                ip saddr 192.168.200.0/28 accept;\n                ip saddr 192.168.30.0/28 accept;\n                ip version 4 drop;\n        }\n}\nEOF\nsed -i '1r /tmp/filter.nft' /etc/nftables/br-rtr.nft 2>/dev/null || cat /tmp/filter.nft >> /etc/nftables/br-rtr.nft"
+      },
+      {
+        "step_number": 4,
+        "node": "BR-RTR",
+        "title": "Шаг 4: Перезапуск службы nftables на BR-RTR",
+        "explanation": "Перезапускаем демон nftables для применения правил фильтрации.",
+        "commands": "systemctl restart nftables\nsystemctl status nftables"
+      },
+      {
+        "step_number": 5,
+        "node": "HQ-RTR, BR-RTR",
+        "title": "Шаг 5: Проверка правил и сетевой связности",
+        "explanation": "Проверяем загруженный ruleset, пинг через ICMP и активность соседства OSPF.",
+        "commands": "nft list ruleset\nping 172.16.1.1 -c 3\nvtysh -c \"show ip ospf neighbor\""
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m3_t4.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какое состояние соединения в conntrack соответствует ответным пакетам уже открытого сеанса?', placeholder: 'established,related' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m3_t4.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какое финальное правило в цепочке input сбрасывает все неразрешенные входящие пакеты IPv4?",
+        "options": [
+          {
+            "id": "A",
+            "text": "ip version 4 drop;"
+          },
+          {
+            "id": "B",
+            "text": "reject all;"
+          },
+          {
+            "id": "C",
+            "text": "policy drop;"
+          },
+          {
+            "id": "D",
+            "text": "iptables -P INPUT DROP"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какое правило nftables разрешает возврат входящих пакетов для уже установленных исходящих соединений?",
+        "options": [
+          {
+            "id": "A",
+            "text": "ct state {established, related} accept;"
+          },
+          {
+            "id": "B",
+            "text": "state match ESTABLISHED accept;"
+          },
+          {
+            "id": "C",
+            "text": "conntrack allow;"
+          },
+          {
+            "id": "D",
+            "text": "ip state valid accept;"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "Какой хук (hook) и приоритет указываются для цепочки input в таблице фильтрации?",
+        "options": [
+          {
+            "id": "A",
+            "text": "type filter hook input priority filter;"
+          },
+          {
+            "id": "B",
+            "text": "type nat hook prerouting;"
+          },
+          {
+            "id": "C",
+            "text": "type route hook output;"
+          },
+          {
+            "id": "D",
+            "text": "type raw hook ingress;"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 26,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 26,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm3-task-5',
-    slug: 'm3-task-5',
-    module_id: 'module-3',
-    task_number: 5,
-    title: 'Принт-сервер CUPS и PDF-принтер',
-    module_code: 'Модуль 3',
-    description: 'Развертывание службы Common Unix Printing System (CUPS) на HQ-SRV, создание виртуального принтера с выводом в PDF и публикация очереди печати.',
-    nodes: ['HQ-SRV'],
-    theory: [
+    "id": "m3-task-5",
+    "slug": "m3-task-5",
+    "module_id": "module-3",
+    "task_number": 5,
+    "title": "Настройка принт-сервера CUPS",
+    "module_code": "Модуль 3",
+    "description": "Установка и настройка сетевой службы печати CUPS и виртуального принтера cups-pdf на сервере HQ-SRV (Listen 192.168.1.10:631, Allow all в Location), запуск демона cups и подключение сетевого принтера на клиенте HQ-CLI через графическое меню параметров печати.",
+    "nodes": [
+      "HQ-SRV",
+      "HQ-CLI"
+    ],
+    "video_url": "https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d",
+    "assignment": "### Задание №5: Настройка принт-сервера CUPS\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на сервере центрального офиса (**HQ-SRV**) настраивается служба печати **CUPS** и модуль виртуального PDF-принтера **cups-pdf**.\n\nВ конфигурационном файле разрешается удалённый доступ к принтерам и администрированию, после чего на клиентской машине **HQ-CLI** через графическую панель параметров печати выполняется поиск и подключение опубликованного сетевого принтера.\n\n#### Где выполнять:\n* **HQ-SRV** — установка CUPS и CUPS-PDF, правка cupsd.conf, запуск службы.\n* **HQ-CLI** — добавление сетевого принтера через графическое меню параметров печати.",
+    "theory": [
       {
-        title: 'Архитектура CUPS и протокол IPP',
-        explanation: 'CUPS управляет очередями печати через Internet Printing Protocol (порт 631). Виртуальный PDF-принтер перехватывает PostScript/PDF потоки и сохраняет их в локальную директорию пользователя.',
+        "title": "Архитектура системы сетевой печати CUPS (Common Unix Printing System)",
+        "explanation": "CUPS использует протокол IPP (Internet Printing Protocol, порт TCP 631) и обеспечивает spooling (постановку в очередь), фильтрацию растровых данных и отправку заданий на физические или виртуальные печатающие устройства."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'HQ-SRV',
-        title: 'Установка и запуск службы cupsd',
-        explanation: 'Проверяем статус демона печати.',
-        commands: `systemctl enable --now cups
-lpstat -r
-lpinfo -v | grep -i pdf`,
+        "title": "Виртуальный принтер cups-pdf в Linux",
+        "explanation": "Модуль cups-pdf предоставляет программный драйвер PostScript/PDF, преобразующий любые отправленные на печать документы в файлы PDF и сохраняющий их в домашнем каталоге пользователя (каталог PDF)."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "HQ-SRV",
+        "title": "Шаг 1: Установка пакетов CUPS и CUPS-PDF",
+        "explanation": "Устанавливаем серверную часть CUPS и драйвер виртуального PDF-принтера.",
+        "commands": "apt-get install cups cups-pdf -y"
       },
+      {
+        "step_number": 2,
+        "node": "HQ-SRV",
+        "title": "Шаг 2: Редактирование конфигурации /etc/cups/cupsd.conf",
+        "explanation": "Заменяем Listen на 192.168.1.10:631 и добавляем Allow all в секции Location.",
+        "commands": "sed -i 's/Listen localhost:631/Listen 192.168.1.10:631/' /etc/cups/cupsd.conf\n# Добавляем Allow all в блоки <Location />, <Location /admin>, <Location /admin/conf>\ngrep -E \"Listen|Allow\" /etc/cups/cupsd.conf"
+      },
+      {
+        "step_number": 3,
+        "node": "HQ-SRV",
+        "title": "Шаг 3: Запуск и проверка службы CUPS",
+        "explanation": "Включаем автозапуск, перезапускаем сервис и проверяем прослушивание порта 631.",
+        "commands": "systemctl enable --now cups\nsystemctl restart cups\nss -ltnp4 | grep 631"
+      },
+      {
+        "step_number": 4,
+        "node": "HQ-CLI",
+        "title": "Шаг 4: Подключение сетевого принтера на клиенте HQ-CLI",
+        "explanation": "В графическом меню переходим в параметры печати, ищем принтер по IP 192.168.1.10 и подключаем его.",
+        "commands": "# В GUI HQ-CLI:\n# 1. Откройте Меню -> Параметры печати\n# 2. Нажмите \"Добавить\" -> \"Сетевой принтер\" -> \"Поиск сетевого принтера\"\n# 3. Введите хост 192.168.1.10 и нажмите поиск\n# 4. Выберите найденный виртуальный PDF-принтер и подтвердите добавление"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m3_t5.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какой сетевой TCP-порт по умолчанию использует служба CUPS для веб-интерфейса и печати IPP?', placeholder: '631' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m3_t5.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какой сетевой TCP-порт используется службой печати CUPS по умолчанию?",
+        "options": [
+          {
+            "id": "A",
+            "text": "631"
+          },
+          {
+            "id": "B",
+            "text": "515"
+          },
+          {
+            "id": "C",
+            "text": "9100"
+          },
+          {
+            "id": "D",
+            "text": "636"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какой пакет предоставляет в ALT Linux драйвер виртуального принтера, сохраняющего документы в формат PDF?",
+        "options": [
+          {
+            "id": "A",
+            "text": "cups-pdf"
+          },
+          {
+            "id": "B",
+            "text": "pdf-writer"
+          },
+          {
+            "id": "C",
+            "text": "cups-virtual-printer"
+          },
+          {
+            "id": "D",
+            "text": "ghostscript-pdf"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "Какая директива в блоках <Location> файла cupsd.conf разрешает доступ со всех клиентских адресов?",
+        "options": [
+          {
+            "id": "A",
+            "text": "Allow all"
+          },
+          {
+            "id": "B",
+            "text": "PermitAny true"
+          },
+          {
+            "id": "C",
+            "text": "Access granted"
+          },
+          {
+            "id": "D",
+            "text": "listen 0.0.0.0"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 27,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 27,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm3-task-6',
-    slug: 'm3-task-6',
-    module_id: 'module-3',
-    task_number: 6,
-    title: 'Централизованное логирование rsyslog',
-    module_code: 'Модуль 3',
-    description: 'Настройка сервера сбора журналов rsyslog на HQ-SRV и отправка логов аутентификации (auth, authpriv) со всех серверов и маршрутизаторов по протоколу UDP/TCP 514.',
-    nodes: ['HQ-SRV', 'HQ-RTR'],
-    theory: [
+    "id": "m3-task-6",
+    "slug": "m3-task-6",
+    "module_id": "module-3",
+    "task_number": 6,
+    "title": "Централизованное логирование rsyslog и ротация logrotate",
+    "module_code": "Модуль 3",
+    "description": "Настройка централизованного сбора системных журналов на HQ-SRV через rsyslog: клиенты HQ-RTR, BR-RTR, BR-SRV пересылают события warning и выше (*.warn @192.168.1.10), сервер сохраняет логи по каталогам /opt/%HOSTNAME%/, собственное логирование сервера изолировано, настроена еженедельная ротация logrotate через cron.",
+    "nodes": [
+      "HQ-RTR",
+      "BR-RTR",
+      "BR-SRV",
+      "HQ-SRV"
+    ],
+    "video_url": "https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d",
+    "assignment": "### Задание №6: Централизованное логирование rsyslog и ротация logrotate\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на сервере главного офиса (**HQ-SRV**) настраивается централизованный приём системных журналов с помощью **rsyslog**.\n\nНа клиентских узлах (**HQ-RTR**, **BR-RTR**, **BR-SRV**) включается пересылка событий из `systemd-journald` в rsyslog с фильтром важности не ниже warning (`*.warn`). Приходящие логи на сервере автоматически сохраняются в поддиректории `/opt/%HOSTNAME%/`. Сам сервер HQ-SRV изолирован от записи собственных логов в эти каталоги (отключен модуль imuxsock). Для архивации журналов настраивается **logrotate** с еженедельным запуском через планировщик cron.\n\n#### Узлы выполнения:\n* **HQ-RTR**, **BR-RTR**, **BR-SRV** — настройка клиентов rsyslog и journald, пересылка на 192.168.1.10.\n* **HQ-SRV** — установка rsyslog-server-listen, отключение imuxsock, настройка шаблона /opt/ и ротации logrotate.",
+    "theory": [
       {
-        title: 'Уровни важности (Facility и Severity) в протоколе Syslog',
-        explanation: 'Syslog категоризирует события по источнику (auth, kern, daemon, local0..local7) и критичности (emerg, alert, crit, err, warning, notice, info, debug).',
+        "title": "Протокол Syslog и уровни важности сообщений (Facilities / Severities)",
+        "explanation": "Syslog категоризирует события по источнику (auth, daemon, kern, local0..7) и уровню важности (emerg, alert, crit, err, warning, notice, info, debug). Конструкция *.warn перехватывает события важности warning и более критические."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'HQ-SRV',
-        title: 'Включение приема удаленных логов по UDP в /etc/rsyslog.conf',
-        explanation: 'Активируем модуль imudp.',
-        commands: `sed -i 's/^#*module(load="imudp")/module(load="imudp")/' /etc/rsyslog.conf
-sed -i 's/^#*input(type="imudp" port="514")/input(type="imudp" port="514")/' /etc/rsyslog.conf
-systemctl restart rsyslog
-ss -ulnp | grep 514`,
+        "title": "Шаблоны динамических путей в rsyslog ($template DynFile)",
+        "explanation": "Директива $template DynFile,\"/opt/%HOSTNAME%/%PROGRAMNAME%.log\" позволяет демону rsyslog динамически создавать подкаталоги по имени передающего хоста и раскладывать лог-файлы по именам программ."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "HQ-RTR, BR-RTR, BR-SRV",
+        "title": "Шаг 1: Настройка клиентов логирования на роутерах и BR-SRV",
+        "explanation": "Включаем imjournal, пересылку journald и правило отправки *.warn на 192.168.1.10.",
+        "commands": "apt-get update && apt-get install rsyslog -y\nsed -i 's/#module(load=\"imjournal\")/module(load=\"imjournal\")/' /etc/rsyslog.d/00_common.conf 2>/dev/null || true\necho -e \"ForwardToSyslog=yes\\nMaxLevelSyslog=warning\" >> /etc/systemd/journald.conf\necho \"*.warn @192.168.1.10\" > /etc/rsyslog.d/10_to_server.conf\nsystemctl restart systemd-journald && systemctl enable --now rsyslog"
       },
+      {
+        "step_number": 2,
+        "node": "HQ-SRV",
+        "title": "Шаг 2: Установка компонентов сервера сбора логов на HQ-SRV",
+        "explanation": "Устанавливаем rsyslog-classic и rsyslog-server-listen для приема UDP-логов.",
+        "commands": "apt-get update && apt-get install rsyslog-classic rsyslog-server-listen -y"
+      },
+      {
+        "step_number": 3,
+        "node": "HQ-SRV",
+        "title": "Шаг 3: Настройка шаблона распределения по папкам /opt/%HOSTNAME%/",
+        "explanation": "Создаем файл /etc/rsyslog.d/91_template.conf для сохранения логов по подпапкам.",
+        "commands": "cat << \"EOF\" > /etc/rsyslog.d/91_template.conf\n$template DynFile,\"/opt/%HOSTNAME%/%PROGRAMNAME%.log\"\n*.* ?DynFile\n& stop\nEOF"
+      },
+      {
+        "step_number": 4,
+        "node": "HQ-SRV",
+        "title": "Шаг 4: Изоляция локальных логов сервера HQ-SRV",
+        "explanation": "Отключаем модуль imuxsock в /etc/rsyslog.d/10_classic.conf и перезапускаем демон.",
+        "commands": "sed -i 's/^module(load=\"imuxsock\")/#module(load=\"imuxsock\")/' /etc/rsyslog.d/10_classic.conf 2>/dev/null || true\nsystemctl restart rsyslogd"
+      },
+      {
+        "step_number": 5,
+        "node": "HQ-RTR, BR-RTR, BR-SRV, HQ-SRV",
+        "title": "Шаг 5: Проверка отправки и сбора логов",
+        "explanation": "Отправляем тестовое предупреждение утилитой logger и проверяем каталог /opt на HQ-SRV.",
+        "commands": "# На клиентах (HQ-RTR, BR-RTR, BR-SRV):\nlogger -p local2.warning \"Syslog test message\"\n\n# На сервере HQ-SRV:\nls -l /opt"
+      },
+      {
+        "step_number": 6,
+        "node": "HQ-SRV",
+        "title": "Шаг 6: Настройка ротации logrotate и расписания в cron",
+        "explanation": "Создаем правило /etc/logrotate.d/rsyslog (weekly, compress, minsize 10M) и добавляем в crontab.",
+        "commands": "cat << \"EOF\" > /etc/logrotate.d/rsyslog\n/opt/**/*.log\n{\nweekly\nmissingok\nnotifempty\ncompress\nminsize 10M\n}\nEOF\nlogrotate -d /etc/logrotate.d/rsyslog\n(crontab -l 2>/dev/null; echo \"0 0 * * 0 /usr/sbin/logrotate /etc/logrotate.d/rsyslog\") | crontab -"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m3_t6.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какой стандартный порт используется для передачи сообщений протокола Syslog?', placeholder: '514 (UDP / TCP)' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m3_t6.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какой символ в конфигурации rsyslog обозначает отправку логов на удаленный сервер по протоколу UDP?",
+        "options": [
+          {
+            "id": "A",
+            "text": "@"
+          },
+          {
+            "id": "B",
+            "text": "@@"
+          },
+          {
+            "id": "C",
+            "text": ">"
+          },
+          {
+            "id": "D",
+            "text": "->"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какая директива в правиле logrotate гарантирует сжатие старых архивных копий логов?",
+        "options": [
+          {
+            "id": "A",
+            "text": "compress"
+          },
+          {
+            "id": "B",
+            "text": "gzip"
+          },
+          {
+            "id": "C",
+            "text": "archive"
+          },
+          {
+            "id": "D",
+            "text": "zip-old"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "Какая утилита позволяет отправить тестовое сообщение заданной категории и важности в системный журнал из командной строки?",
+        "options": [
+          {
+            "id": "A",
+            "text": "logger"
+          },
+          {
+            "id": "B",
+            "text": "logmsg"
+          },
+          {
+            "id": "C",
+            "text": "syslog-send"
+          },
+          {
+            "id": "D",
+            "text": "journal-write"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 28,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 28,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm3-task-7',
-    slug: 'm3-task-7',
-    module_id: 'module-3',
-    task_number: 7,
-    title: 'Мониторинг устройств на HQ-SRV',
-    module_code: 'Модуль 3',
-    description: 'Конфигурирование службы мониторинга состояния сетевых интерфейсов, загрузки процессора и доступности шлюзов через SNMP и Node Exporter.',
-    nodes: ['HQ-SRV'],
-    theory: [
+    "id": "m3-task-7",
+    "slug": "m3-task-7",
+    "module_id": "module-3",
+    "task_number": 7,
+    "title": "Мониторинг устройств с помощью открытого ПО",
+    "module_code": "Модуль 3",
+    "description": "Развёртывание стека мониторинга на базе Prometheus, Grafana и Node Exporter на HQ-SRV, установка агента на BR-SRV (порт 9100), создание DNS CNAME mon.au-team.irpo -> hq-srv, подключение Prometheus в Grafana, импорт дашборда 1860 и смена пароля admin на P@ssw0rd.",
+    "nodes": [
+      "BR-SRV",
+      "HQ-SRV",
+      "HQ-CLI"
+    ],
+    "video_url": "https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d",
+    "assignment": "### Задание №7: Мониторинг устройств с помощью открытого ПО\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на сервере главного офиса (**HQ-SRV**) развёртывается стек мониторинга на базе **Prometheus**, агентов **Node Exporter** и системы визуализации **Grafana**.\n\nНа контроллере домена (**BR-SRV**) создаётся DNS-запись CNAME `mon` для перенаправления на `hq-srv.au-team.irpo`. На сервере HQ-SRV настраивается сбор метрик с серверов HQ-SRV (`192.168.1.10:9100`) и BR-SRV (`192.168.3.10:9100`), в Grafana подключается источник данных Prometheus, импортируется популярный дашборд системных метрик **1860**, а пароль администратора меняется на `P@ssw0rd`.\n\n#### Где выполнять:\n* **BR-SRV** — установка Node Exporter (порт 9100), добавление CNAME-записи mon в DNS Samba DC.\n* **HQ-SRV** — установка Prometheus, Grafana и Node Exporter, настройка prometheus.yml, запуск сервисов.\n* **HQ-CLI** — проверка веб-интерфейсов через браузер, импорт дашборда 1860 в Grafana.",
+    "theory": [
       {
-        title: 'Протокол SNMP (v2c/v3) и экспорт метрик',
-        explanation: 'SNMP опрашивает узлы по идентификаторам объектов OID из базы MIB. Демон snmpd на маршрутизаторах предоставляет данные об утилизации портов.',
+        "title": "Модель сбора метрик Prometheus (Pull-модель)",
+        "explanation": "Prometheus опрашивает (скрейпит) целевые узлы по протоколу HTTP через регулярные интервалы (scrape_interval), считывая числовые метрики временных рядов (Time-Series) с агентов Node Exporter."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'HQ-SRV',
-        title: 'Проверка доступности SNMP агентов',
-        explanation: 'Выполняем snmpwalk по community строке public.',
-        commands: `snmpwalk -v 2c -c public 192.168.100.1 1.3.6.1.2.1.1.1.0 || true`,
+        "title": "Визуализация метрик и панели мониторинга в Grafana",
+        "explanation": "Grafana выступает фронтендом аналитики: она отправляет запросы на языке PromQL в Prometheus и визуализирует графики загрузки процессора, памяти, дисков и сетевых интерфейсов."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "BR-SRV",
+        "title": "Шаг 1: Установка Node Exporter и CNAME mon на BR-SRV",
+        "explanation": "Устанавливаем prometheus-node_exporter (порт 9100) и добавляем CNAME mon в DNS Samba DC.",
+        "commands": "apt-get update && apt-get install prometheus-node_exporter -y\nsystemctl enable --now prometheus-node_exporter\nss -ltnp | grep 9100\nsamba-tool dns add br-srv.au-team.irpo au-team.irpo mon CNAME hq-srv.au-team.irpo -U Administrator\nsamba-tool dns query br-srv.au-team.irpo au-team.irpo mon CNAME -U administrator"
       },
+      {
+        "step_number": 2,
+        "node": "HQ-SRV",
+        "title": "Шаг 2: Установка стека мониторинга на HQ-SRV",
+        "explanation": "Устанавливаем prometheus, grafana и prometheus-node_exporter.",
+        "commands": "apt-get update && apt-get install prometheus grafana prometheus-node_exporter -y"
+      },
+      {
+        "step_number": 3,
+        "node": "HQ-SRV",
+        "title": "Шаг 3: Настройка сбора метрик в /etc/prometheus/prometheus.yml",
+        "explanation": "Вносим задачи сбора метрик с localhost, HQ-SRV (192.168.1.10:9100) и BR-SRV (192.168.3.10:9100).",
+        "commands": "cat << \"EOF\" > /etc/prometheus/prometheus.yml\nglobal:\n  scrape_interval: 15s\n\nscrape_configs:\n  - job_name: 'prometheus'\n    scrape_interval: 5s\n    scrape_timeout: 5s\n    static_configs:\n      - targets: ['localhost:9090']\n\n  - job_name: hq-srv\n    static_configs:\n       - targets: ['192.168.1.10:9100']\n\n  - job_name: br-srv\n    static_configs:\n      - targets: ['192.168.3.10:9100']\nEOF"
+      },
+      {
+        "step_number": 4,
+        "node": "HQ-SRV",
+        "title": "Шаг 4: Запуск и активация служб мониторинга",
+        "explanation": "Включаем и запускаем демоны prometheus, grafana-server и node_exporter.",
+        "commands": "systemctl enable --now prometheus-node_exporter\nsystemctl enable --now prometheus\nsystemctl enable --now grafana-server\nsystemctl status prometheus-node_exporter prometheus grafana-server"
+      },
+      {
+        "step_number": 5,
+        "node": "HQ-CLI",
+        "title": "Шаг 5: Настройка Grafana и дашборда 1860 через браузер",
+        "explanation": "Проверяем цели Prometheus (порт 9090), меняем пароль Grafana на P@ssw0rd (порт 3000), добавляем источник данных и импортируем дашборд ID 1860.",
+        "commands": "# В браузере HQ-CLI:\n# 1. Откройте http://hq-srv.au-team.irpo:9090 -> Status -> Targets (все UP)\n# 2. Откройте http://hq-srv.au-team.irpo:3000 (admin / admin -> новый пароль P@ssw0rd)\n# 3. Connections -> Data Sources -> Add Prometheus -> URL: http://hq-srv.au-team.irpo:9090 -> Save & Test\n# 4. Dashboards -> Import -> ID: 1860 -> Load -> Выбрать источник Prometheus -> Import\n# 5. Проверить открытие по адресу: http://mon.au-team.irpo:3000"
+      },
+      {
+        "step_number": 6,
+        "node": "Экзаменационный отчет",
+        "title": "Шаг 6: Заполнение экзаменационного отчёта",
+        "explanation": "Фиксируем стек ПО (Prometheus + Node Exporter + Grafana), порты (9100, 9090, 3000), CNAME mon и учетные данные.",
+        "commands": "# В отчёте отразите:\n# 1. ПО: Prometheus, Node Exporter, Grafana\n# 2. Порты: Node Exporter TCP 9100, Prometheus TCP 9090, Grafana TCP 3000\n# 3. DNS CNAME: mon.au-team.irpo -> hq-srv.au-team.irpo\n# 4. Реквизиты: admin / P@ssw0rd"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m3_t7.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какая версия SNMP обеспечивает аутентификацию и шифрование данных?', placeholder: 'SNMPv3' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m3_t7.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какой стандартный TCP-порт используется веб-интерфейсом Grafana?",
+        "options": [
+          {
+            "id": "A",
+            "text": "3000"
+          },
+          {
+            "id": "B",
+            "text": "9090"
+          },
+          {
+            "id": "C",
+            "text": "9100"
+          },
+          {
+            "id": "D",
+            "text": "8080"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какой порт слушает агент сбора системных метрик Node Exporter?",
+        "options": [
+          {
+            "id": "A",
+            "text": "9100"
+          },
+          {
+            "id": "B",
+            "text": "9090"
+          },
+          {
+            "id": "C",
+            "text": "9200"
+          },
+          {
+            "id": "D",
+            "text": "3000"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "Какой номер ID имеет популярный дашборд Node Exporter Full для Grafana согласно заданию?",
+        "options": [
+          {
+            "id": "A",
+            "text": "1860"
+          },
+          {
+            "id": "B",
+            "text": "11074"
+          },
+          {
+            "id": "C",
+            "text": "8919"
+          },
+          {
+            "id": "D",
+            "text": "2026"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 29,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 29,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm3-task-8',
-    slug: 'm3-task-8',
-    module_id: 'module-3',
-    task_number: 8,
-    title: 'Инвентаризация Ansible (PC-INFO)',
-    module_code: 'Модуль 3',
-    description: 'Создание автоматизированного скрипта сбора фактов Ansible (Setup module) и генерация сводного отчёта о конфигурации оборудования и ПО рабочих станций.',
-    nodes: ['BR-SRV'],
-    theory: [
+    "id": "m3-task-8",
+    "slug": "m3-task-8",
+    "module_id": "module-3",
+    "task_number": 8,
+    "title": "Инвентаризация рабочих мест через Ansible на BR-SRV",
+    "module_code": "Модуль 3",
+    "description": "Настройка автоматизированного сбора данных о компьютерах HQ-SRV и HQ-CLI с помощью плейбука Ansible get_hostname_address.yml: сбор фактов (gather_facts), сохранение локальных отчетов в формате .yml в каталог /etc/ansible/PC-INFO/ с фиксацией Hostname и IP_Address.",
+    "nodes": [
+      "BR-SRV"
+    ],
+    "video_url": "https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d",
+    "assignment": "### Задание №8: Инвентаризация рабочих мест через Ansible на BR-SRV\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на сервере управления **BR-SRV** настраивается автоматизированная инвентаризация сетевых узлов **HQ-SRV** и **HQ-CLI** с помощью инструмента автоматизации **Ansible**.\n\nПлейбук `get_hostname_address.yml` копируется с диска `Additional.iso` (или создаётся в каталоге `/etc/ansible/`). При выполнении плейбук опрашивает целевые машины через сбор фактов `gather_facts: true` и сохраняет отчёты в формате `.yml` в каталог `/etc/ansible/PC-INFO/` с именами компьютеров, фиксируя имя хоста (`Hostname`) и его сетевой IP-адрес (`IP_Address`).\n\n#### Где выполнять:\n* Все действия выполняются под пользователем root на сервере **BR-SRV**.",
+    "theory": [
       {
-        title: 'Сбор фактов ansible_facts и формирование отчётов через Jinja2',
-        explanation: 'Модуль setup автоматически собирает параметры CPU, RAM, дисков и сетевых адаптеров, которые затем шаблонизируются шаблонизатором Jinja2 в итоговый текстовый документ.',
+        "title": "Сбор фактов о целевых хостах в Ansible (gather_facts)",
+        "explanation": "Модуль setup в Ansible автоматически собирает факты о целевых системах: архитектуру, сетевые интерфейсы (ansible_default_ipv4.address), имя хоста (ansible_hostname) и версию ОС."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'BR-SRV',
-        title: 'Сбор информации о хостах в один отчёт',
-        explanation: 'Запускаем команду сбора фактов.',
-        commands: `ansible -i /opt/ansible/hosts all -m setup -a "filter=ansible_distribution*"`,
+        "title": "Делегирование задач хосту управления (delegate_to: localhost)",
+        "explanation": "Параметр delegate_to: localhost в задаче copy заставляет Ansible сохранить сгенерированный файл отчёта локально на управляющем сервере BR-SRV, а не отправлять его на удаленный хост."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "BR-SRV",
+        "title": "Шаг 1: Монтирование диска Additional.iso и проверка",
+        "explanation": "Монтируем привод компакт-диска в /mnt/ и проверяем каталог playbook.",
+        "commands": "mount -o loop /dev/sr0 /mnt/ -v 2>/dev/null || true\nls -l /mnt/"
       },
+      {
+        "step_number": 2,
+        "node": "BR-SRV",
+        "title": "Шаг 2: Подготовка каталога PC-INFO и размещение плейбука",
+        "explanation": "Создаем каталог /etc/ansible/PC-INFO и размещаем get_hostname_address.yml.",
+        "commands": "mkdir -p /etc/ansible/PC-INFO\ncp /mnt/playbook/get_hostname_address.yml /etc/ansible/ 2>/dev/null || true\ncat << \"EOF\" > /etc/ansible/get_hostname_address.yml\n---\n- name: \"Get data from hosts\"\n  gather_facts: true\n  hosts:\n    - HQ-SRV\n    - HQ-CLI\n  tasks:\n    - name: \"Creating a data file\"\n      copy:\n        dest: /etc/ansible/PC-INFO/{{ ansible_hostname }}.yml\n        content: |\n          Hostname: {{ ansible_hostname }}\n          IP_Address: {{ ansible_default_ipv4.address }}\n      delegate_to: localhost\nEOF"
+      },
+      {
+        "step_number": 3,
+        "node": "BR-SRV",
+        "title": "Шаг 3: Проверка синтаксиса плейбука",
+        "explanation": "Проверяем корректность YAML-разметки перед запуском.",
+        "commands": "cd /etc/ansible && ansible-playbook --syntax-check get_hostname_address.yml"
+      },
+      {
+        "step_number": 4,
+        "node": "BR-SRV",
+        "title": "Шаг 4: Запуск автоматизированной инвентаризации",
+        "explanation": "Выполняем плейбук против хостов HQ-SRV и HQ-CLI.",
+        "commands": "cd /etc/ansible && ansible-playbook get_hostname_address.yml"
+      },
+      {
+        "step_number": 5,
+        "node": "BR-SRV",
+        "title": "Шаг 5: Проверка сформированных отчётов инвентаризации",
+        "explanation": "Просматриваем отчеты hq-srv.yml и hq-cli.yml в директории PC-INFO.",
+        "commands": "cat /etc/ansible/PC-INFO/hq-srv.yml\ncat /etc/ansible/PC-INFO/hq-cli.yml"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m3_t8.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какой встроенный модуль Ansible отвечает за сбор фактов о системе?', placeholder: 'setup' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m3_t8.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какая директива задачи Ansible указывает выполнить действие локально на хосте управления, а не на опрашиваемой машине?",
+        "options": [
+          {
+            "id": "A",
+            "text": "delegate_to: localhost"
+          },
+          {
+            "id": "B",
+            "text": "local_action: run"
+          },
+          {
+            "id": "C",
+            "text": "target: local"
+          },
+          {
+            "id": "D",
+            "text": "master_only: true"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какая встроенная переменная фактов Ansible содержит основной IPv4-адрес целевого хоста?",
+        "options": [
+          {
+            "id": "A",
+            "text": "{{ ansible_default_ipv4.address }}"
+          },
+          {
+            "id": "B",
+            "text": "{{ ansible_ip }}"
+          },
+          {
+            "id": "C",
+            "text": "{{ ansible_net_ip4 }}"
+          },
+          {
+            "id": "D",
+            "text": "{{ ansible_host_ip }}"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "С помощью какого ключа утилиты ansible-playbook выполняется проверка синтаксиса файла без фактического применения изменений?",
+        "options": [
+          {
+            "id": "A",
+            "text": "--syntax-check"
+          },
+          {
+            "id": "B",
+            "text": "--dry-run"
+          },
+          {
+            "id": "C",
+            "text": "-C"
+          },
+          {
+            "id": "D",
+            "text": "--verify-only"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 30,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 30,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm3-task-9',
-    slug: 'm3-task-9',
-    module_id: 'module-3',
-    task_number: 9,
-    title: 'Защита SSH с помощью Fail2ban',
-    module_code: 'Модуль 3',
-    description: 'Настройка демона Fail2ban для защиты службы SSH: парсинг логов sshd, обнаружение повторных неудачных попыток входа и автоматическая блокировка IP в iptables/nftables.',
-    nodes: ['HQ-SRV'],
-    theory: [
+    "id": "m3-task-9",
+    "slug": "m3-task-9",
+    "module_id": "module-3",
+    "task_number": 9,
+    "title": "Защита службы SSH с помощью Fail2ban на HQ-SRV",
+    "module_code": "Модуль 3",
+    "description": "Установка и настройка системы защиты от подбора паролей Fail2ban на сервере HQ-SRV для нестандартного порта SSH 2026: интеграция с journald (backend = systemd), maxretry = 3, bantime = 1m в /etc/fail2ban/jail.d/sshd.conf, проверка срабатывания бана при 3 неверных попытках с рабочей станции HQ-CLI.",
+    "nodes": [
+      "HQ-SRV",
+      "HQ-CLI"
+    ],
+    "video_url": "https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d",
+    "assignment": "### Задание №9: Защита службы SSH с помощью Fail2ban на HQ-SRV\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на сервере главного офиса (**HQ-SRV**) настраивается система предотвращения вторжений **Fail2ban** для защиты службы OpenSSH, работающей на нестандартном порту 2026.\n\nДля считывания событий журнала используется модуль интеграции с systemd (`python3-module-systemd`). При обнаружении 3 неудачных попыток аутентификации подряд IP-адрес клиента автоматически блокируется на 1 минуту (`1m`).\n\n#### Где выполнять:\n* **HQ-SRV** — установка пакетов, переключение на бэкенд systemd, настройка изолятора sshd.conf в /etc/fail2ban/jail.d/ и запуск службы.\n* **HQ-CLI** — проверка срабатывания бана при 3 неверных вводах пароля.",
+    "theory": [
       {
-        title: 'Принцип работы Fail2ban: фильтры, jail и actions',
-        explanation: 'Fail2ban отслеживает файл журнала /var/log/messages (или journald) с помощью регулярных выражений. При превышении maxretry в течение findtime создается временное блокирующее правило на bantime секунд.',
+        "title": "Принцип работы службы предотвращения атак Fail2ban",
+        "explanation": "Fail2ban сканирует файлы журналов на наличие шаблонов неудачных попыток аутентификации (filter) и при превышении порога (maxretry) временно блокирует IP-адрес нарушителя через правила межсетевого экрана (nftables / iptables)."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'HQ-SRV',
-        title: 'Настройка /etc/fail2ban/jail.local для sshd',
-        explanation: 'Устанавливаем bantime = 1h и maxretry = 3.',
-        commands: `cat << 'EOF' > /etc/fail2ban/jail.local
-[sshd]
-enabled = true
-port = ssh
-filter = sshd
-maxretry = 3
-findtime = 600
-bantime = 3600
-EOF
-systemctl restart fail2ban
-fail2ban-client status sshd`,
+        "title": "Интеграция с systemd-journald (backend = systemd)",
+        "explanation": "Использование backend = systemd исключает необходимость чтения текстовых лог-файлов на диске: события о неудачных входах считываются напрямую из бинарного журнала systemd через сокет."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "HQ-SRV",
+        "title": "Шаг 1: Установка пакетов Fail2ban и модуля интеграции с systemd",
+        "explanation": "Устанавливаем fail2ban и python3-module-systemd на сервере HQ-SRV.",
+        "commands": "apt-get update && apt-get install fail2ban python3-module-systemd -y"
       },
+      {
+        "step_number": 2,
+        "node": "HQ-SRV",
+        "title": "Шаг 2: Переключение путей логов на systemd в ALT Linux",
+        "explanation": "Переключаем базовые пути на чтение из журнала systemd в /etc/fail2ban/jail.conf.",
+        "commands": "sed -i 's/before = paths-altlinux.conf/before = paths-altlinux-systemd.conf/' /etc/fail2ban/jail.conf"
+      },
+      {
+        "step_number": 3,
+        "node": "HQ-SRV",
+        "title": "Шаг 3: Создание конфигурации изолятора /etc/fail2ban/jail.d/sshd.conf",
+        "explanation": "Создаем jail для SSH на порту 2026 с maxretry 3 и bantime 1m.",
+        "commands": "cat << \"EOF\" > /etc/fail2ban/jail.d/sshd.conf\n[sshd]\nenabled = true\nport = 2026\nfilter = sshd\nbackend = systemd\nmaxretry = 3\nbantime = 1m\nEOF"
+      },
+      {
+        "step_number": 4,
+        "node": "HQ-SRV",
+        "title": "Шаг 4: Включение автозапуска и запуск службы Fail2ban",
+        "explanation": "Запускаем сервис fail2ban и проверяем статус службы и джейла sshd.",
+        "commands": "systemctl enable --now fail2ban\nsystemctl status fail2ban.service\nfail2ban-client status sshd"
+      },
+      {
+        "step_number": 5,
+        "node": "HQ-CLI",
+        "title": "Шаг 5: Проверка блокировки при подборе пароля с HQ-CLI",
+        "explanation": "Выполняем 3 неудачные попытки подключения по SSH (порт 2026) и убеждаемся в бане.",
+        "commands": "# На клиенте HQ-CLI:\nssh -p 2026 sshuser@hq-srv\n# Введите 3 раза намеренно неверный пароль -> соединение сбрасывается\n\n# На сервере HQ-SRV проверяем:\nfail2ban-client status sshd\n# В строке Banned IP list появится: 192.168.2.10 (на 1 минуту)"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m3_t9.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какая команда выводит текущее состояние и заблокированные IP-адреса для джейла sshd?', placeholder: 'fail2ban-client status sshd' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m3_t9.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какой бэкенд чтения журналов указывается в Fail2ban для считывания событий напрямую из systemd-journald?",
+        "options": [
+          {
+            "id": "A",
+            "text": "backend = systemd"
+          },
+          {
+            "id": "B",
+            "text": "backend = journal"
+          },
+          {
+            "id": "C",
+            "text": "backend = syslog"
+          },
+          {
+            "id": "D",
+            "text": "backend = systemd-socket"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какой параметр конфигурации джейла Fail2ban задает время блокировки адреса нарушителя?",
+        "options": [
+          {
+            "id": "A",
+            "text": "bantime"
+          },
+          {
+            "id": "B",
+            "text": "block_duration"
+          },
+          {
+            "id": "C",
+            "text": "jail_time"
+          },
+          {
+            "id": "D",
+            "text": "timeout"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "Какая утилита командной строки позволяет просмотреть статус фильтров, счетчик ошибок и список заблокированных IP для джейла?",
+        "options": [
+          {
+            "id": "A",
+            "text": "fail2ban-client status <jail>"
+          },
+          {
+            "id": "B",
+            "text": "fail2ban-ctl show"
+          },
+          {
+            "id": "C",
+            "text": "jailctl list"
+          },
+          {
+            "id": "D",
+            "text": "fail2ban-admin view"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 31,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    "max_score": 5,
+    "order_index": 31,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
   },
+
   {
-    id: 'm3-task-10',
-    slug: 'm3-task-10',
-    module_id: 'module-3',
-    task_number: 10,
-    title: 'Резервное копирование данных',
-    module_code: 'Модуль 3',
-    description: 'Создание скрипта инкрементного или дифференциального резервного копирования конфигураций /etc и баз данных MariaDB с расписанием в cron.',
-    nodes: ['HQ-SRV'],
-    theory: [
+    "id": "m3-task-10",
+    "slug": "m3-task-10",
+    "module_id": "module-3",
+    "task_number": 10,
+    "title": "Резервное копирование данных HQ-SRV на узел хранения HQ-CLI",
+    "module_code": "Модуль 3",
+    "description": "Развёртывание отечественной системы «Кибер Бэкап» 17.4: сервер управления и агенты Linux + MySQL/MariaDB на HQ-SRV, узел хранения (Storage Node) на HQ-CLI, настройка организации irpo, администратора irpoadmin (P@ssw0rd), хранилища backup_dir (/backup) и выполнение планов резервного копирования etc_backup и webdb_backup.",
+    "nodes": [
+      "HQ-SRV",
+      "HQ-CLI"
+    ],
+    "video_url": "https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d",
+    "assignment": "### Задание №10: Резервное копирование данных HQ-SRV на узел хранения HQ-CLI\n\n📺 **Видео-разбор задания**: [Смотреть видео](https://docker.sudostudy.dev/s/BTRAdw9Ewsczk7d)\n\nВ данном задании на сервере главного офиса (**HQ-SRV**) развёртывается сервер управления отечественной системы резервного копирования **«Кибер Бэкап»** (версия 17.4) со встроенным агентом для Linux и модулем резервного копирования СУБД MySQL/MariaDB.\n\nНа клиентской машине (**HQ-CLI**) устанавливается **Узел хранения (Storage Node)**. В веб-консоли создаётся организация `irpo`, учетная запись администратора `irpoadmin` (`P@ssw0rd`), настраивается хранилище `backup_dir` в каталоге `/backup` и выполняются два плана резервного копирования: системной директории `/etc` (`etc_backup`) и базы данных MariaDB (`webdb_backup`).\n\n#### Где выполнять:\n* **HQ-SRV** — обновление ядра, установка сервера управления «Кибер Бэкап» и агентов, создание пользователя irpoadmin, включение MariaDB.\n* **HQ-CLI** — обновление ядра, установка узла хранения (Storage Node) с привязкой к 192.168.1.10, создание планов и запуск бэкапов через веб-интерфейс.",
+    "theory": [
       {
-        title: 'Стратегия 3-2-1 и автоматизация бэкапов через cron',
-        explanation: 'Резервные копии упаковываются с помощью tar/gzip со штампом даты и контрольной суммой sha256. Старые копии автоматически ротируются через find -mtime +30 -delete.',
+        "title": "Архитектура системы «Кибер Бэкап»",
+        "explanation": "Кибер Бэкап состоит из Management Server (сервер управления, веб-порт 9877), Storage Node (узел хранения резервных копий) и агентов (Agent for Linux, Agent for MySQL/MariaDB). Снимки файловых систем создаются с помощью драйвера snapapi."
       },
-    ],
-    steps: [
       {
-        step_number: 1,
-        node: 'HQ-SRV',
-        title: 'Создание скрипта /usr/local/bin/backup.sh и задания cron',
-        explanation: 'Создаем резервную копию конфигураций /etc в каталог /opt/backup.',
-        commands: `mkdir -p /opt/backup
-cat << 'EOF' > /usr/local/bin/backup.sh
-#!/bin/bash
-DATE=$(date +%Y%m%d_%H%M%S)
-tar -czf /opt/backup/etc_backup_\$DATE.tar.gz /etc/net /etc/openssh /etc/frr 2>/dev/null
-EOF
-chmod +x /usr/local/bin/backup.sh
-/usr/local/bin/backup.sh
-ls -lh /opt/backup/`,
+        "title": "Сборка модулей ядра snapapi в ALT Linux",
+        "explanation": "Для корректной сборки модулей snapapi инсталлятору требуются актуальные заголовки ядра (kernel-headers-modules-un-def) и исходные коды, соответствующие активному ядру uname -r."
+      }
+    ],
+    "steps": [
+      {
+        "step_number": 1,
+        "node": "HQ-SRV",
+        "title": "Шаг 1: Подготовка сервера HQ-SRV и обновление ядра",
+        "explanation": "Отключаем /raid в /etc/fstab, устанавливаем сборочные пакеты, обновляем ядро и перезагружаем.",
+        "commands": "sed -i '/\\/raid/d' /etc/fstab\napt-get update && apt-get install kernel-source-6.1 kernel-headers-modules-un-def gcc make kmod-sign -y\nupdate-kernel -y && reboot"
       },
+      {
+        "step_number": 2,
+        "node": "HQ-SRV",
+        "title": "Шаг 2: Создание пользователя irpoadmin",
+        "explanation": "Создаем локального пользователя irpoadmin с паролем P@ssw0rd.",
+        "commands": "useradd irpoadmin\necho \"irpoadmin:P@ssw0rd\" | chpasswd"
+      },
+      {
+        "step_number": 3,
+        "node": "HQ-SRV",
+        "title": "Шаг 3: Установка сервера управления «Кибер Бэкап» и настройка MariaDB",
+        "explanation": "Монтируем диск, запускаем установщик (Management Server, Agent Linux, Agent MySQL/MariaDB) и включаем MariaDB.",
+        "commands": "mount /dev/sr1 /mnt 2>/dev/null || mount /dev/sr0 /mnt\n/mnt/cyberbackup_17.4.36200.x86_64 --skip-prereq-check --nodeps\nss -ltnp | grep 9877\ncontrol mysqld server && systemctl restart mysqld"
+      },
+      {
+        "step_number": 4,
+        "node": "HQ-CLI",
+        "title": "Шаг 4: Подготовка и установка Storage Node на HQ-CLI",
+        "explanation": "Обновляем ядро на HQ-CLI, перезагружаем и устанавливаем Storage Node с регистрацией на 192.168.1.10.",
+        "commands": "apt-get update && apt-get install kernel-source-6.1 kernel-headers-modules-un-def gcc make kmod-sign -y\nupdate-kernel -y && reboot\n# После перезагрузки:\nmount /dev/sr0 /mnt 2>/dev/null || mount /dev/sr1 /mnt\n/mnt/cyberbackup_17.4.36200.x86_64 --skip-prereq-check\n# Компоненты: Agent for Linux + Storage Node\n# Регистрация на сервере: 192.168.1.10 (root / toor)"
+      },
+      {
+        "step_number": 5,
+        "node": "HQ-CLI",
+        "title": "Шаг 5: Настройка организации, хранилища и планов в веб-панели",
+        "explanation": "В браузере на HQ-CLI открываем https://192.168.1.10:9877 (root / toor), создаем организацию irpo, пользователя irpoadmin, хранилище backup_dir (/backup) и планы etc_backup и webdb_backup.",
+        "commands": "# В веб-панели https://hq-srv.au-team.irpo:9877 (root / toor):\n# 1. Запустить пробную лицензию\n# 2. Настройки -> Учетные записи -> Организации -> Создать отдел: irpo\n# 3. В отделе irpo -> Добавить учетную запись: irpoadmin\n# 4. Создать план 1: etc_backup (устройство hq-srv, хранилище backup_dir на узле хранения, папка /etc)\n# 5. Создать план 2: webdb_backup (устройство hq-srv, хранилище backup_dir, приложение MariaDB)\n# 6. Запустить оба плана бэкапа и дождаться успешного завершения"
+      },
+      {
+        "step_number": 6,
+        "node": "HQ-SRV",
+        "title": "Шаг 6: Устранение ошибок MariaDB и очистка диска при необходимости",
+        "explanation": "Сброс пароля root MariaDB при сбое авторизации плана и удаление временных пакетов при нехватке места.",
+        "commands": "# При ошибке соединения с БД:\nsystemctl stop mariadb\nmysqld_safe --skip-grant-tables &\nmysql -u root -e \"FLUSH PRIVILEGES; ALTER USER 'root'@'localhost' IDENTIFIED BY 'toor'; FLUSH PRIVILEGES;\"\npkill mysqld && systemctl start mariadb"
+      }
     ],
-    script_command: 'curl -sSL https://demo.sudostudy.dev/scripts/check_m3_t10.sh | bash',
-    questions: [
-      { id: 'q1', text: 'Какой ключ утилиты tar отвечает за архивацию сжатием gzip?', placeholder: '-z (--gzip)' },
+    "script_command": "curl -sSL https://exam.sudostudy.dev/scripts/m3_t10.sh | bash",
+    "questions": [
+      {
+        "id": "q1",
+        "text": "Какой TCP-порт используется для защищенного подключения к веб-консоли управления сервера «Кибер Бэкап»?",
+        "options": [
+          {
+            "id": "A",
+            "text": "9877"
+          },
+          {
+            "id": "B",
+            "text": "8080"
+          },
+          {
+            "id": "C",
+            "text": "4433"
+          },
+          {
+            "id": "D",
+            "text": "9443"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q2",
+        "text": "Какой компонент «Кибер Бэкап» устанавливается на целевую машину для выполнения роли выделенного хранилища резервных копий?",
+        "options": [
+          {
+            "id": "A",
+            "text": "Storage Node"
+          },
+          {
+            "id": "B",
+            "text": "Backup Vault"
+          },
+          {
+            "id": "C",
+            "text": "Repository Server"
+          },
+          {
+            "id": "D",
+            "text": "Storage Proxy"
+          }
+        ],
+        "correct_answer": "A"
+      },
+      {
+        "id": "q3",
+        "text": "Какая утилита ALT Linux используется для автоматического обновления ядра системы до последней доступной версии?",
+        "options": [
+          {
+            "id": "A",
+            "text": "update-kernel"
+          },
+          {
+            "id": "B",
+            "text": "kernel-upgrade"
+          },
+          {
+            "id": "C",
+            "text": "apt-get kernel-latest"
+          },
+          {
+            "id": "D",
+            "text": "alt-update-kernel"
+          }
+        ],
+        "correct_answer": "A"
+      }
     ],
-    max_score: 5,
-    order_index: 32,
-    is_active: true,
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
-  },
+    "max_score": 5,
+    "order_index": 32,
+    "is_active": true,
+    "created_at": "2026-10-10T01:47:45.303Z",
+    "updated_at": "2026-10-10T01:47:45.303Z"
+  }
 ];

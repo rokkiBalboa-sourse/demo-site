@@ -173,7 +173,7 @@ export default async function StudentHomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {modules.map((mod) => {
-              const isLocked = mod.id === 'module-3';
+              const isLocked = false;
               const moduleTasks = allTasks.filter((t) => t.module_id === mod.id);
               const moduleTaskIds = new Set(moduleTasks.map((t) => t.id));
 
