@@ -152,8 +152,8 @@ export function StudentsManagementClient({
       };
       setStudents(prev => [...prev, updatedList].sort((a, b) => a.full_name.localeCompare(b.full_name)));
       setIsAddModalOpen(false);
-    } catch (err: any) {
-      setFormError(err.message);
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : 'Произошла ошибка');
     } finally {
       setIsSubmitting(false);
     }
@@ -208,8 +208,8 @@ export function StudentsManagementClient({
         skipped: data.skipped || [],
       });
       setBulkText('');
-    } catch (err: any) {
-      setFormError(err.message);
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : 'Произошла ошибка');
     } finally {
       setIsSubmitting(false);
     }
@@ -239,8 +239,8 @@ export function StudentsManagementClient({
         prev.map(s => (s.id === editStudent.id ? { ...s, ...data.student } : s))
       );
       setEditStudent(null);
-    } catch (err: any) {
-      setFormError(err.message);
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : 'Ошибка при сохранении');
     } finally {
       setIsSubmitting(false);
     }
@@ -269,8 +269,8 @@ export function StudentsManagementClient({
       );
       setPasswordStudent(null);
       setChangePasswordVal('');
-    } catch (err: any) {
-      setFormError(err.message);
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : 'Ошибка обновления пароля');
     } finally {
       setIsSubmitting(false);
     }
@@ -290,8 +290,8 @@ export function StudentsManagementClient({
 
       setStudents(prev => prev.filter(s => s.id !== id));
       setStudentToDelete(null);
-    } catch (err: any) {
-      alert(err.message);
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Ошибка удаления');
     } finally {
       setIsSubmitting(false);
     }

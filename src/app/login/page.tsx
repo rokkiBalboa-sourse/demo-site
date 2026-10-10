@@ -49,13 +49,12 @@ export default function LoginPage() {
 
   // Debounced check if user has 2FA enabled
   useEffect(() => {
-    const trimmed = username.trim();
-    if (trimmed.length < 2) {
-      setHas2FA(null);
-      return;
-    }
-
     const timer = setTimeout(async () => {
+      const trimmed = username.trim();
+      if (trimmed.length < 2) {
+        setHas2FA(null);
+        return;
+      }
       setIsChecking2FA(true);
       try {
         const res = await fetch('/api/auth/check-login', {

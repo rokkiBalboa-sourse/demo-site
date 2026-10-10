@@ -41,25 +41,28 @@ export function AdminSettingsClient() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const res = await fetch('/api/admin/settings');
-      if (res.ok) {
-        const data = await res.json();
-        if (data.user) {
-          setAdminId(data.user.id);
-          setUsername(data.user.username);
-          setFullName(data.user.full_name);
-          setAdmin2FAEnabled(Boolean(data.user.two_factor_enabled));
+    let isMounted = true;
+    const loadProfile = async () => {
+      try {
+        const res = await fetch('/api/admin/settings');
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          if (data.user) {
+            setAdminId(data.user.id);
+            setUsername(data.user.username);
+            setFullName(data.user.full_name);
+            setAdmin2FAEnabled(Boolean(data.user.two_factor_enabled));
+          }
         }
+      } catch {
+        // ignore
       }
-    } catch {
-      // ignore
-    }
-  };
+    };
+    void loadProfile();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const handleResetAdmin2FA = async () => {
     if (!adminId) return;

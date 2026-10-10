@@ -1,0 +1,9 @@
+node_modules
+.next
+.data
+build
+out
+dist
+public/scripts
+*.log
+package-lock.json

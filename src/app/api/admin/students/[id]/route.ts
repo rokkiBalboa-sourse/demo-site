@@ -21,9 +21,9 @@ export async function PATCH(req: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true, student: updated });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: error?.message || 'Ошибка при обновлении студента' },
+      { error: error instanceof Error ? error.message : 'Ошибка при обновлении студента' },
       { status: 400 }
     );
   }
@@ -43,9 +43,9 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: error?.message || 'Ошибка при удалении студента' },
+      { error: error instanceof Error ? error.message : 'Ошибка при удалении студента' },
       { status: 500 }
     );
   }

@@ -18,7 +18,7 @@ export function Button({
   disabled,
   ...props
 }: ButtonProps) {
-  let baseStyles =
+  const baseStyles =
     'inline-flex items-center justify-center font-mono font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer rounded-none';
 
   let sizeStyles = 'h-9 px-4 py-2 text-xs';

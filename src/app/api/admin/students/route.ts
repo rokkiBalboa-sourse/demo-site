@@ -11,9 +11,9 @@ export async function GET() {
   try {
     const students = await db.getAllStudentsWithStats();
     return NextResponse.json({ students });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: error?.message || 'Ошибка загрузки базы студентов' },
+      { error: error instanceof Error ? error.message : 'Ошибка загрузки базы студентов' },
       { status: 500 }
     );
   }
@@ -65,9 +65,9 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json({ success: true, student: created });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json(
-      { error: error?.message || 'Ошибка при сохранении студента' },
+      { error: error instanceof Error ? error.message : 'Ошибка при сохранении студента' },
       { status: 400 }
     );
   }
