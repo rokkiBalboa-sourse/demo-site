@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import {
   Download,
+  FileSpreadsheet,
   Search,
   ExternalLink,
   Clock,
@@ -80,6 +81,23 @@ export function AdminDashboardClient({
   const pendingCount = submissions.filter(s => s.status === 'pending').length;
   const reviewedCount = submissions.filter(s => s.status === 'reviewed').length;
   const totalCount = submissions.length;
+
+  const exportMatrixUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    if (selectedGroup !== 'ALL') params.set('group', selectedGroup);
+    if (selectedModule !== 'ALL') params.set('module', selectedModule);
+    const qs = params.toString();
+    return `/api/admin/export-csv${qs ? `?${qs}` : ''}`;
+  }, [selectedGroup, selectedModule]);
+
+  const exportJournalUrl = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('mode', 'journal');
+    if (selectedGroup !== 'ALL') params.set('group', selectedGroup);
+    if (selectedModule !== 'ALL') params.set('module', selectedModule);
+    if (selectedStatus !== 'ALL') params.set('status', selectedStatus);
+    return `/api/admin/export-csv?${params.toString()}`;
+  }, [selectedGroup, selectedModule, selectedStatus]);
 
   return (
     <div className="space-y-6">
@@ -155,12 +173,23 @@ export function AdminDashboardClient({
                 </div>
               </div>
 
-              <a href="/api/admin/export-csv" download="reports_summary_32_tasks.csv">
-                <Button variant="primary" size="md" className="flex items-center gap-2">
-                  <Download className="w-4 h-4" />
-                  <span>Экспорт ведомости CSV</span>
-                </Button>
-              </a>
+              <div className="flex flex-wrap items-center gap-2">
+                <a href={exportMatrixUrl} download>
+                  <Button variant="primary" size="md" className="flex items-center gap-2">
+                    <Download className="w-4 h-4" />
+                    <span>
+                      Экспорт ведомости{selectedGroup !== 'ALL' ? ` (${selectedGroup})` : ''} (CSV)
+                    </span>
+                  </Button>
+                </a>
+
+                <a href={exportJournalUrl} download>
+                  <Button variant="outline" size="md" className="flex items-center gap-2 text-xs">
+                    <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
+                    <span>Выгрузить журнал сданных отчётов (CSV)</span>
+                  </Button>
+                </a>
+              </div>
             </div>
           </div>
 

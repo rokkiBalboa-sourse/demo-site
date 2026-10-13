@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { createCsvResponse, escapeCsvValue } from '@/lib/csv-helper';
 
 export async function GET(req: NextRequest) {
   const session = await getSession();
@@ -9,11 +10,12 @@ export async function GET(req: NextRequest) {
   }
 
   const { searchParams } = new URL(req.url);
-  const groupFilter = searchParams.get('group');
+  const rawGroup = searchParams.get('group');
+  const groupFilter = rawGroup ? decodeURIComponent(rawGroup).trim() : null;
 
   let students = await db.getAllStudentsWithStats();
   if (groupFilter && groupFilter !== 'ALL') {
-    students = students.filter(s => s.group_name === groupFilter);
+    students = students.filter(s => s.group_name.trim() === groupFilter);
   }
 
   const headerCols = [
@@ -42,25 +44,10 @@ export async function GET(req: NextRequest) {
     rows.push(rowCols.map(escapeCsvValue).join(';'));
   }
 
-  // UTF-8 BOM \uFEFF ensures proper Cyrillic rendering in Microsoft Excel
-  const csvContent = '\uFEFF' + rows.join('\r\n');
-
   const filename =
     groupFilter && groupFilter !== 'ALL'
-      ? `students_${groupFilter.replace(/[^a-zA-Z0-9а-яА-Я_-]/g, '_')}_passwords.csv`
+      ? `students_${groupFilter}_passwords.csv`
       : 'students_all_passwords.csv';
 
-  return new NextResponse(csvContent, {
-    headers: {
-      'Content-Type': 'text/csv; charset=utf-8',
-      'Content-Disposition': `attachment; filename="${filename}"`,
-    },
-  });
-}
-
-function escapeCsvValue(val: string): string {
-  if (val.includes(';') || val.includes('"') || val.includes('\n') || val.includes('\r')) {
-    return `"${val.replace(/"/g, '""')}"`;
-  }
-  return val;
+  return createCsvResponse(rows, filename);
 }

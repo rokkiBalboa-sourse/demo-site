@@ -425,12 +425,14 @@ export function StudentsManagementClient({
           </Button>
 
           <a
-            href={`/api/admin/students/export-csv?group=${selectedGroup}`}
+            href={`/api/admin/students/export-csv?group=${encodeURIComponent(selectedGroup)}`}
             download
             className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-mono font-medium transition-colors"
           >
             <Download className="w-3.5 h-3.5 text-amber-400" />
-            <span>Скачать логины и пароли (CSV)</span>
+            <span>
+              Скачать логины и пароли{selectedGroup !== 'ALL' ? ` (${selectedGroup})` : ''} (CSV)
+            </span>
           </a>
         </div>
 

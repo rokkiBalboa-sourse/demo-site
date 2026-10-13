@@ -295,7 +295,7 @@ export default async function StudentHomePage() {
           <div className="flex items-center gap-2">
             <BookOpen className="w-4 h-4 text-zinc-400" />
             <span className="text-xs font-mono text-zinc-400">
-              Официальная база знаний демонстрационного экзамена 09.02.06:
+              База знаний демонстрационного экзамена 09.02.06:
             </span>
           </div>
           <a
