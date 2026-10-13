@@ -8,6 +8,7 @@ import { TerminalLog } from '@/components/ui/TerminalLog';
 import { ReviewForm } from './ReviewForm';
 import {
   ChevronLeft,
+  ChevronRight,
   User,
   Calendar,
   BookOpen,
@@ -72,20 +73,84 @@ export default async function SubmissionReviewPage({ params }: PageProps) {
     minute: '2-digit',
   });
 
+  // Calculate Next and Previous submissions for quick sequential grading
+  const allSubmissions = await db.getAllSubmissionsWithDetails();
+  const currentIndex = allSubmissions.findIndex(s => s.id === id);
+
+  const pendingSubmissions = allSubmissions.filter(s => s.status === 'pending');
+  const pendingRemaining = pendingSubmissions.filter(s => s.id !== id).length;
+
+  let nextSubmission: (typeof allSubmissions)[0] | null = null;
+  const currentPendingIndex = pendingSubmissions.findIndex(s => s.id === id);
+
+  if (currentPendingIndex !== -1) {
+    if (currentPendingIndex + 1 < pendingSubmissions.length) {
+      nextSubmission = pendingSubmissions[currentPendingIndex + 1];
+    } else if (pendingSubmissions.length > 1) {
+      nextSubmission = pendingSubmissions[0];
+    }
+  } else if (pendingSubmissions.length > 0) {
+    nextSubmission = pendingSubmissions[0];
+  }
+
+  if (!nextSubmission && currentIndex !== -1 && currentIndex + 1 < allSubmissions.length) {
+    nextSubmission = allSubmissions[currentIndex + 1];
+  }
+
+  let prevSubmission: (typeof allSubmissions)[0] | null = null;
+  if (currentIndex > 0) {
+    prevSubmission = allSubmissions[currentIndex - 1];
+  }
+
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col">
       <Header user={session} />
 
       <main className="max-w-5xl mx-auto px-4 py-6 flex-1 w-full space-y-6">
-        {/* Navigation */}
-        <div>
+        {/* Navigation Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-zinc-800/80 pb-3 font-mono">
           <Link
             href="/admin"
-            className="inline-flex items-center gap-1 text-xs font-mono text-zinc-400 hover:text-white transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
             <span>Назад в журнал отчётов</span>
           </Link>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {pendingRemaining > 0 && (
+              <span className="text-[11px] bg-amber-950/80 text-amber-300 border border-amber-500/40 px-2.5 py-1 flex items-center gap-1.5">
+                <Clock className="w-3 h-3 text-amber-400" />
+                <span>Осталось на проверке: {pendingRemaining}</span>
+              </span>
+            )}
+
+            {prevSubmission && (
+              <Link
+                href={`/admin/submissions/${prevSubmission.id}`}
+                className="inline-flex items-center gap-1 text-xs px-2.5 py-1 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 transition"
+                title={`Предыдущий: ${prevSubmission.student_name}`}
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+                <span>Назад</span>
+              </Link>
+            )}
+
+            {nextSubmission ? (
+              <Link
+                href={`/admin/submissions/${nextSubmission.id}`}
+                className="inline-flex items-center gap-1.5 text-xs px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold border border-emerald-500 transition shadow-[0_0_12px_rgba(16,185,129,0.3)] cursor-pointer"
+                title={`Следующий: ${nextSubmission.student_name}`}
+              >
+                <span>Дальше</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Link>
+            ) : (
+              <span className="text-xs px-2.5 py-1 bg-zinc-900 text-zinc-500 border border-zinc-800 cursor-not-allowed">
+                Следующего отчёта нет
+              </span>
+            )}
+          </div>
         </div>
 
         {/* Student & Task Meta Card */}
@@ -249,7 +314,11 @@ export default async function SubmissionReviewPage({ params }: PageProps) {
             </span>
           </div>
 
-          <ReviewForm submission={submission} />
+          <ReviewForm
+            submission={submission}
+            nextSubmissionId={nextSubmission?.id || null}
+            pendingCount={pendingRemaining}
+          />
         </div>
       </main>
     </div>

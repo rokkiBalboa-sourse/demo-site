@@ -1,17 +1,30 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SubmissionWithDetails } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
-import { CheckCircle2, AlertCircle, Save, Check, X, Lock, Unlock } from 'lucide-react';
+import {
+  CheckCircle2,
+  AlertCircle,
+  Save,
+  Check,
+  X,
+  Lock,
+  Unlock,
+  ArrowRight,
+  ChevronRight,
+} from 'lucide-react';
 
 interface ReviewFormProps {
   submission: SubmissionWithDetails;
+  nextSubmissionId?: string | null;
+  pendingCount?: number;
 }
 
-export function ReviewForm({ submission }: ReviewFormProps) {
+export function ReviewForm({ submission, nextSubmissionId, pendingCount }: ReviewFormProps) {
   const router = useRouter();
   const [score, setScore] = useState<string>(
     submission.score !== null ? String(submission.score) : ''
@@ -22,6 +35,7 @@ export function ReviewForm({ submission }: ReviewFormProps) {
   const [feedback, setFeedback] = useState<string>(submission.feedback || '');
   const [allowRetake, setAllowRetake] = useState<boolean>(Boolean(submission.allow_retake));
   const [isLoading, setIsLoading] = useState(false);
+  const [isSavingAndNext, setIsSavingAndNext] = useState(false);
   const [isTogglingRetake, setIsTogglingRetake] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -55,11 +69,13 @@ export function ReviewForm({ submission }: ReviewFormProps) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const saveReview = async (andNext: boolean = false) => {
     setError(null);
     setSuccessMessage(null);
     setIsLoading(true);
+    if (andNext) {
+      setIsSavingAndNext(true);
+    }
 
     try {
       const res = await fetch('/api/admin/review', {
@@ -80,12 +96,27 @@ export function ReviewForm({ submission }: ReviewFormProps) {
       }
 
       setSuccessMessage('Оценка и комментарий успешно сохранены!');
-      router.refresh();
+
+      if (andNext) {
+        if (nextSubmissionId) {
+          router.push(`/admin/submissions/${nextSubmissionId}`);
+        } else {
+          router.push('/admin');
+        }
+      } else {
+        router.refresh();
+      }
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Произошла непредвиденная ошибка');
     } finally {
       setIsLoading(false);
+      setIsSavingAndNext(false);
     }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await saveReview(false);
   };
 
   return (
@@ -301,12 +332,56 @@ export function ReviewForm({ submission }: ReviewFormProps) {
         </div>
       )}
 
-      {/* Submit Button */}
-      <div className="pt-2">
-        <Button type="submit" isLoading={isLoading} size="md" className="flex items-center gap-2">
+      {/* Submit & Next Action Buttons */}
+      <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <Button
+          type="submit"
+          isLoading={isLoading && !isSavingAndNext}
+          disabled={isLoading}
+          size="md"
+          className="flex items-center justify-center gap-2"
+        >
           <Save className="w-4 h-4" />
-          <span>Сохранить результат проверки</span>
+          <span>Сохранить результат</span>
         </Button>
+
+        {nextSubmissionId ? (
+          <Button
+            type="button"
+            variant="primary"
+            isLoading={isLoading && isSavingAndNext}
+            disabled={isLoading}
+            onClick={() => saveReview(true)}
+            size="md"
+            className="bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500 flex items-center justify-center gap-2 shadow-[0_0_15px_rgba(16,185,129,0.25)] cursor-pointer"
+          >
+            <span>Сохранить и перейти к следующему</span>
+            <ArrowRight className="w-4 h-4" />
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            variant="outline"
+            isLoading={isLoading && isSavingAndNext}
+            disabled={isLoading}
+            onClick={() => saveReview(true)}
+            size="md"
+            className="flex items-center justify-center gap-2"
+          >
+            <span>Сохранить и вернуться в журнал</span>
+            <Check className="w-4 h-4" />
+          </Button>
+        )}
+
+        {nextSubmissionId && (
+          <Link
+            href={`/admin/submissions/${nextSubmissionId}`}
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white text-xs font-mono transition cursor-pointer"
+          >
+            <span>Пропустить (Дальше)</span>
+            <ChevronRight className="w-3.5 h-3.5" />
+          </Link>
+        )}
       </div>
     </form>
   );
