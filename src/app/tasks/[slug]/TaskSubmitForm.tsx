@@ -24,14 +24,12 @@ import {
   ExternalLink,
   Activity,
   ArrowRight,
-  Settings2,
   FileText,
   Lock,
   Unlock,
   RefreshCw,
   Info,
 } from 'lucide-react';
-import { analyzeCommandBlock } from '@/lib/command-explainer';
 import { Module1AssignmentDispatcher } from './TaskModule1Assignments';
 import { Module2AssignmentDispatcher } from './TaskModule2Assignments';
 import { Module3AssignmentDispatcher } from './TaskModule3Assignments';
@@ -277,39 +275,6 @@ table ip nat {
     }
 }`;
 
-    const configBreakdown = [
-      {
-        line: '#!/usr/sbin/nft -f',
-        title: 'Шебанг сценария',
-        desc: 'Указывает ядру Linux, что файл является исполняемым сценарием правил nftables.',
-      },
-      {
-        line: 'flush ruleset',
-        title: 'Сброс правил',
-        desc: 'Очищает текущую таблицу в оперативной памяти перед загрузкой, чтобы правила не задваивались при повторном запуске.',
-      },
-      {
-        line: 'table ip nat { ... }',
-        title: 'Объявление таблицы',
-        desc: 'Создаёт таблицу для протокола IPv4 с именем nat.',
-      },
-      {
-        line: 'chain postrouting { ... }',
-        title: 'Цепочка пост-маршрутизации',
-        desc: 'Срабатывает в самый последний момент — когда маршрутизатор уже определил выходной интерфейс для пакета.',
-      },
-      {
-        line: 'type nat hook postrouting priority srcnat;',
-        title: 'Привязка хука ядра',
-        desc: 'Привязывает цепочку к стандартному хуку ядра postrouting для подмены адреса источника (srcnat).',
-      },
-      {
-        line: 'oifname "enp7s1" masquerade',
-        title: 'Правило маскировки (NAT)',
-        desc: 'Для всего трафика, уходящего через внешний интерфейс enp7s1 (Outbound Interface Name), включает динамическую маскировку IP на адрес интерфейса.',
-      },
-    ];
-
     return (
       <div className="space-y-5 font-mono text-xs">
         {/* Intro */}
@@ -374,27 +339,6 @@ table ip nat {
             </div>
             <div className="bg-zinc-900/90 border border-zinc-800 p-3.5 text-zinc-200 font-mono text-xs leading-relaxed overflow-x-auto">
               <pre className="whitespace-pre">{nftConfigCode}</pre>
-            </div>
-          </div>
-
-          {/* Line by line breakdown */}
-          <div className="space-y-2 pt-2 border-t border-zinc-800">
-            <div className="text-zinc-300 font-bold uppercase tracking-wider text-[11px] flex items-center gap-2">
-              <BookOpen className="w-3.5 h-3.5 text-zinc-400" />
-              <span>Разбор каждой строчки конфигурации:</span>
-            </div>
-            <div className="space-y-2">
-              {configBreakdown.map((item, idx) => (
-                <div key={idx} className="bg-zinc-900/60 border border-zinc-800/80 p-2.5 space-y-1">
-                  <div className="flex items-baseline justify-between gap-2 flex-wrap">
-                    <code className="text-amber-300 font-bold text-xs bg-zinc-950 px-1.5 py-0.5 border border-zinc-800">
-                      {item.line}
-                    </code>
-                    <span className="text-[10px] text-zinc-400 font-semibold">{item.title}</span>
-                  </div>
-                  <p className="text-zinc-300 text-[11px] leading-relaxed">{item.desc}</p>
-                </div>
-              ))}
             </div>
           </div>
         </div>
@@ -976,22 +920,6 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
 
   return (
     <div className="space-y-8">
-      {/* SELF-STUDY BANNER */}
-      <div className="border border-emerald-500/40 bg-emerald-500/10 p-4 flex items-start gap-3.5">
-        <BookOpen className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
-        <div className="space-y-1 font-mono text-xs">
-          <div className="font-bold text-emerald-300 uppercase tracking-wide flex items-center gap-2">
-            <span>Режим осознанного обучения и практикума ALT Linux</span>
-          </div>
-          <p className="text-zinc-300 leading-relaxed">
-            Для каждого шага задания ниже приведён{' '}
-            <strong>полный разбор команд, функций и флагов</strong>. Не копируйте команды вслепую:
-            изучайте таблицы параметров, разбирайтесь в логике работы подсистем ОС и контролируйте
-            правильность настройки встроенными командами самопроверки.
-          </p>
-        </div>
-      </div>
-
       {/* SECTION: TASK ASSIGNMENT SPECIFICATION */}
       {task.assignment && (
         <section className="border border-zinc-800 bg-zinc-900/60 p-6 space-y-4">
@@ -1325,208 +1253,113 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
           </div>
 
           <div className="space-y-5">
-            {(() => {
-              const explainedToolsAcrossSteps = new Set<string>();
+            {task.steps.map(st => {
+              const diagCommand = extractDiagnosticCommand(st.commands, st.title);
+              const targetFiles = extractTargetFiles(st.commands, st.explanation);
 
-              return task.steps.map(st => {
-                const diagCommand = extractDiagnosticCommand(st.commands, st.title);
-                const targetFiles = extractTargetFiles(st.commands, st.explanation);
-
-                const allBreakdowns = analyzeCommandBlock(st.commands);
-                const commandBreakdowns = allBreakdowns.filter(cmd => {
-                  if (explainedToolsAcrossSteps.has(cmd.binary)) {
-                    return false;
-                  }
-                  explainedToolsAcrossSteps.add(cmd.binary);
-                  return true;
-                });
-
-                return (
-                  <div key={st.step_number} className="border border-zinc-800 bg-zinc-900/90">
-                    {/* Step Header */}
-                    <div className="flex flex-wrap items-center justify-between bg-zinc-900 px-4 py-2.5 border-b border-zinc-800 gap-2">
-                      <div className="flex items-center gap-2 font-mono">
-                        <span className="text-xs font-bold text-white bg-zinc-800 px-2 py-0.5 border border-zinc-700">
-                          Шаг {st.step_number}
-                        </span>
-                        <span className="text-xs font-semibold text-zinc-200">{st.title}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 font-mono text-xs bg-zinc-950 text-zinc-300 border border-zinc-800 px-2.5 py-0.5">
-                        <Server className="w-3.5 h-3.5 text-zinc-400" />
-                        <span>
-                          Целевой узел: <strong className="text-white">{st.node}</strong>
-                        </span>
-                      </div>
+              return (
+                <div key={st.step_number} className="border border-zinc-800 bg-zinc-900/90">
+                  {/* Step Header */}
+                  <div className="flex flex-wrap items-center justify-between bg-zinc-900 px-4 py-2.5 border-b border-zinc-800 gap-2">
+                    <div className="flex items-center gap-2 font-mono">
+                      <span className="text-xs font-bold text-white bg-zinc-800 px-2 py-0.5 border border-zinc-700">
+                        Шаг {st.step_number}
+                      </span>
+                      <span className="text-xs font-semibold text-zinc-200">{st.title}</span>
                     </div>
-
-                    {/* Step Body */}
-                    <div className="p-4 space-y-4 font-mono text-xs">
-                      {/* Technical Requirement */}
-                      <div className="space-y-2">
-                        <span className="text-zinc-500 uppercase text-[10px] tracking-wider block font-semibold">
-                          Техническая задача и параметры:
-                        </span>
-                        {task.id === 'm1-task-2' ? (
-                          <Task2StepContent stepNumber={st.step_number} />
-                        ) : task.id === 'm1-task-3' ? (
-                          <Task3StepContent stepNumber={st.step_number} />
-                        ) : (
-                          <p className="text-zinc-200 leading-relaxed bg-zinc-950/60 p-3 border border-zinc-800/80 whitespace-pre-line">
-                            {st.explanation}
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Commands Block */}
-                      {st.commands && (
-                        <div className="space-y-1.5 pt-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-zinc-400 uppercase text-[10px] tracking-wider flex items-center gap-1.5 font-semibold">
-                              <Terminal className="w-3.5 h-3.5 text-zinc-300" />
-                              <span>Выполняемые команды ({st.node}):</span>
-                            </span>
-                          </div>
-                          <CodeSnippet code={st.commands} label={`Команды для узла ${st.node}`} />
-                        </div>
-                      )}
-
-                      {/* Deep-Dive: Commands, Functions, and Flags Breakdown */}
-                      {(() => {
-                        if (!commandBreakdowns || commandBreakdowns.length === 0) return null;
-
-                        return (
-                          <div className="space-y-3 pt-2">
-                            <div className="flex items-center gap-2 border-b border-zinc-800 pb-1.5">
-                              <Settings2 className="w-3.5 h-3.5 text-amber-400" />
-                              <span className="text-amber-400 uppercase text-[10px] tracking-wider font-bold">
-                                Разбор команд, функций и флагов (для осознанного выполнения):
-                              </span>
-                            </div>
-
-                            <div className="space-y-3">
-                              {commandBreakdowns.map((cmd, cIdx) => (
-                                <div
-                                  key={cIdx}
-                                  className="bg-zinc-950/80 border border-zinc-800 p-3 space-y-2.5"
-                                >
-                                  <div className="flex items-start justify-between gap-2 flex-wrap border-b border-zinc-800/80 pb-2">
-                                    <code className="text-[11px] font-mono font-bold text-amber-300 bg-zinc-900 px-2 py-0.5 border border-zinc-800">
-                                      {cmd.raw}
-                                    </code>
-                                    <span className="text-[10px] font-mono text-zinc-400 bg-zinc-900/90 px-1.5 py-0.5 border border-zinc-800">
-                                      {cmd.title}
-                                    </span>
-                                  </div>
-
-                                  <div className="text-[11px] font-mono text-zinc-300 leading-relaxed">
-                                    <strong className="text-white">Назначение: </strong>
-                                    {cmd.purpose}
-                                  </div>
-
-                                  <div className="text-[11px] font-mono text-zinc-400 leading-relaxed bg-zinc-900/40 p-2 border border-zinc-800/60">
-                                    <strong className="text-zinc-200">
-                                      Механизм работы в ОС:{' '}
-                                    </strong>
-                                    {cmd.howItWorks}
-                                  </div>
-
-                                  {cmd.flags && cmd.flags.length > 0 && (
-                                    <div className="space-y-1.5 pt-1">
-                                      <span className="text-[10px] font-mono text-zinc-400 uppercase font-semibold block">
-                                        Подробный разбор параметров и флагов:
-                                      </span>
-                                      <div className="overflow-x-auto border border-zinc-800 bg-zinc-900/60">
-                                        <table className="w-full text-left text-[11px] font-mono border-collapse">
-                                          <thead>
-                                            <tr className="border-b border-zinc-800 bg-zinc-900 text-zinc-300">
-                                              <th className="p-2 border-r border-zinc-800 w-1/4">
-                                                Флаг / Аргумент
-                                              </th>
-                                              <th className="p-2 border-r border-zinc-800 w-1/3">
-                                                Значение и роль
-                                              </th>
-                                              <th className="p-2">Почему именно так</th>
-                                            </tr>
-                                          </thead>
-                                          <tbody className="divide-y divide-zinc-800/80 text-zinc-300">
-                                            {cmd.flags.map((f, fIdx) => (
-                                              <tr key={fIdx} className="hover:bg-zinc-900/40">
-                                                <td className="p-2 border-r border-zinc-800 font-bold text-amber-300 whitespace-nowrap">
-                                                  {f.flag}
-                                                </td>
-                                                <td className="p-2 border-r border-zinc-800 text-zinc-300">
-                                                  {f.description}
-                                                </td>
-                                                <td className="p-2 text-zinc-400">{f.whyNeeded}</td>
-                                              </tr>
-                                            ))}
-                                          </tbody>
-                                        </table>
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })()}
-
-                      {/* Target Files / Directories */}
-                      {targetFiles.length > 0 && (
-                        <div className="space-y-1.5">
-                          <span className="text-zinc-500 uppercase text-[10px] tracking-wider block font-semibold">
-                            Конфигурационные файлы / каталоги:
-                          </span>
-                          <div className="flex flex-wrap gap-2">
-                            {targetFiles.map((file, fIdx) => (
-                              <code
-                                key={fIdx}
-                                className="px-2 py-0.5 bg-zinc-950 border border-zinc-800 text-zinc-300 text-[11px]"
-                              >
-                                {file}
-                              </code>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Diagnostic Check Command */}
-                      {diagCommand && (
-                        <div className="space-y-1.5 pt-1">
-                          <div className="flex items-center justify-between">
-                            <span className="text-zinc-400 uppercase text-[10px] tracking-wider flex items-center gap-1.5 font-semibold">
-                              <Activity className="w-3.5 h-3.5 text-emerald-400" />
-                              <span>Команда самопроверки и аудита узла ({st.node}):</span>
-                            </span>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyDiag(st.step_number, diagCommand)}
-                              className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[10px] flex items-center gap-1 border border-zinc-700 cursor-pointer font-mono"
-                            >
-                              {copiedDiag === st.step_number ? (
-                                <>
-                                  <Check className="w-3 h-3 text-white" />
-                                  <span>Скопировано</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3 h-3" />
-                                  <span>Скопировать команду проверки</span>
-                                </>
-                              )}
-                            </button>
-                          </div>
-                          <div className="bg-zinc-950 p-2.5 border border-zinc-800 text-zinc-300 font-mono text-[11px] overflow-x-auto">
-                            <pre className="whitespace-pre leading-relaxed">{diagCommand}</pre>
-                          </div>
-                        </div>
-                      )}
+                    <div className="flex items-center gap-1.5 font-mono text-xs bg-zinc-950 text-zinc-300 border border-zinc-800 px-2.5 py-0.5">
+                      <Server className="w-3.5 h-3.5 text-zinc-400" />
+                      <span>
+                        Целевой узел: <strong className="text-white">{st.node}</strong>
+                      </span>
                     </div>
                   </div>
-                );
-              });
-            })()}
+
+                  {/* Step Body */}
+                  <div className="p-4 space-y-4 font-mono text-xs">
+                    {/* Technical Requirement */}
+                    <div className="space-y-2">
+                      <span className="text-zinc-500 uppercase text-[10px] tracking-wider block font-semibold">
+                        Техническая задача и параметры:
+                      </span>
+                      {task.id === 'm1-task-2' ? (
+                        <Task2StepContent stepNumber={st.step_number} />
+                      ) : task.id === 'm1-task-3' ? (
+                        <Task3StepContent stepNumber={st.step_number} />
+                      ) : (
+                        <p className="text-zinc-200 leading-relaxed bg-zinc-950/60 p-3 border border-zinc-800/80 whitespace-pre-line">
+                          {st.explanation}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Commands Block */}
+                    {st.commands && (
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-zinc-400 uppercase text-[10px] tracking-wider flex items-center gap-1.5 font-semibold">
+                            <Terminal className="w-3.5 h-3.5 text-zinc-300" />
+                            <span>Выполняемые команды ({st.node}):</span>
+                          </span>
+                        </div>
+                        <CodeSnippet code={st.commands} label={`Команды для узла ${st.node}`} />
+                      </div>
+                    )}
+
+                    {/* Target Files / Directories */}
+                    {targetFiles.length > 0 && (
+                      <div className="space-y-1.5">
+                        <span className="text-zinc-500 uppercase text-[10px] tracking-wider block font-semibold">
+                          Конфигурационные файлы / каталоги:
+                        </span>
+                        <div className="flex flex-wrap gap-2">
+                          {targetFiles.map((file, fIdx) => (
+                            <code
+                              key={fIdx}
+                              className="px-2 py-0.5 bg-zinc-950 border border-zinc-800 text-zinc-300 text-[11px]"
+                            >
+                              {file}
+                            </code>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Diagnostic Check Command */}
+                    {diagCommand && (
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-zinc-400 uppercase text-[10px] tracking-wider flex items-center gap-1.5 font-semibold">
+                            <Activity className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Команда самопроверки и аудита узла ({st.node}):</span>
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyDiag(st.step_number, diagCommand)}
+                            className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[10px] flex items-center gap-1 border border-zinc-700 cursor-pointer font-mono"
+                          >
+                            {copiedDiag === st.step_number ? (
+                              <>
+                                <Check className="w-3 h-3 text-white" />
+                                <span>Скопировано</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span>Скопировать команду проверки</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                        <div className="bg-zinc-950 p-2.5 border border-zinc-800 text-zinc-300 font-mono text-[11px] overflow-x-auto">
+                          <pre className="whitespace-pre leading-relaxed">{diagCommand}</pre>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </section>
       )}
