@@ -225,19 +225,6 @@ export default async function PreparationTopicPage({ params }: PreparationPagePr
                   </div>
                 </div>
               </div>
-
-              {/* Uncompressed Video Download Button */}
-              <div className="pt-1">
-                <a
-                  href="/instr/instructions.mkv"
-                  download="instructions.mkv"
-                  className="w-full flex items-center justify-center gap-3 p-3.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs uppercase tracking-wider rounded-sm transition shadow-[0_0_25px_rgba(16,185,129,0.35)] cursor-pointer hover:scale-[1.008]"
-                >
-                  <DownloadCloud className="w-5 h-5 text-zinc-950" />
-                  <span>СКАЧАТЬ ВИДЕО-ИНСТРУКЦИЮ В ИСХОДНОМ КАЧЕСТВЕ (MKV БЕЗ СЖАТИЯ)</span>
-                  <ExternalLink className="w-4 h-4 text-zinc-950" />
-                </a>
-              </div>
             </div>
           ) : (
             <div className="border-2 border-dashed border-zinc-800 bg-zinc-950/70 p-10 flex flex-col items-center justify-center text-center space-y-3 min-h-[260px] rounded-sm">
