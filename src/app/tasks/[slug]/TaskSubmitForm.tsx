@@ -22,7 +22,6 @@ import {
   Server,
   AlertTriangle,
   ExternalLink,
-  Activity,
   ArrowRight,
   FileText,
   Lock,
@@ -37,91 +36,6 @@ import { Module3AssignmentDispatcher } from './TaskModule3Assignments';
 interface TaskSubmitFormProps {
   task: Task;
   initialSubmission: Submission | null;
-}
-
-// Helper to extract non-destructive diagnostic verification commands
-function extractDiagnosticCommand(commands?: string, title?: string): string {
-  if (!commands) {
-    const t = (title || '').toLowerCase();
-    if (t.includes('имен') || t.includes('hostname')) return 'hostnamectl status';
-    if (t.includes('ospf') || t.includes('frr')) return 'vtysh -c "show ip ospf neighbor"';
-    if (t.includes('samba') || t.includes('домен')) return 'samba-tool domain level show';
-    if (t.includes('raid') || t.includes('mdadm')) return 'cat /proc/mdstat';
-    if (t.includes('nfs')) return 'showmount -e localhost';
-    if (t.includes('chrony') || t.includes('ntp')) return 'chronyc sources -v';
-    if (t.includes('nftables') || t.includes('фаервол')) return 'nft list ruleset';
-    if (t.includes('docker')) return 'docker ps';
-    if (t.includes('сертификат') || t.includes('гост')) return 'certmgr -list';
-    if (t.includes('fail2ban')) return 'fail2ban-client status';
-    if (t.includes('dns') || t.includes('bind')) return 'systemctl status bind';
-    if (t.includes('dhcp')) return 'systemctl status dhcpd';
-    return 'ip -c --br a';
-  }
-
-  const lines = commands.split('\n');
-  const diagLines: string[] = [];
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-
-    const isDiag =
-      trimmed.startsWith('ip -c --br') ||
-      trimmed.startsWith('ip a') ||
-      trimmed.startsWith('ip r') ||
-      trimmed.startsWith('ip route') ||
-      trimmed.startsWith('ping ') ||
-      trimmed.startsWith('traceroute ') ||
-      trimmed.startsWith('systemctl status') ||
-      trimmed.startsWith('systemctl is-active') ||
-      trimmed.startsWith('vtysh -c') ||
-      trimmed.startsWith('samba-tool domain level') ||
-      trimmed.startsWith('samba-tool user list') ||
-      trimmed.startsWith('samba-tool group listmembers') ||
-      trimmed.startsWith('ss -') ||
-      trimmed.startsWith('curl ') ||
-      trimmed.startsWith('certmgr -list') ||
-      trimmed.startsWith('cryptcp -list') ||
-      trimmed.startsWith('csptest ') ||
-      trimmed.startsWith('cat /proc/mdstat') ||
-      trimmed.startsWith('mdadm --detail') ||
-      trimmed.startsWith('chronyc ') ||
-      trimmed.startsWith('nft list ruleset') ||
-      trimmed.startsWith('docker ps') ||
-      trimmed.startsWith('showmount -e') ||
-      trimmed.startsWith('fail2ban-client status') ||
-      trimmed.startsWith('hostnamectl status') ||
-      trimmed.startsWith('id ') ||
-      trimmed.startsWith('getent ') ||
-      trimmed.startsWith('timedatectl status') ||
-      trimmed.startsWith('named-checkconf') ||
-      trimmed.startsWith('named-checkzone') ||
-      trimmed.startsWith('httpd2 -t') ||
-      trimmed.startsWith('nginx -t');
-
-    if (isDiag) {
-      diagLines.push(trimmed);
-    }
-  }
-
-  if (diagLines.length > 0) {
-    return diagLines.join('\n');
-  }
-
-  const t = (title || '').toLowerCase();
-  if (t.includes('имен') || t.includes('hostname')) return 'hostnamectl status';
-  if (t.includes('ospf') || t.includes('frr')) return 'vtysh -c "show ip ospf neighbor"';
-  if (t.includes('samba') || t.includes('домен')) return 'samba-tool domain level show';
-  if (t.includes('raid') || t.includes('mdadm')) return 'cat /proc/mdstat';
-  if (t.includes('nfs')) return 'showmount -e localhost';
-  if (t.includes('chrony') || t.includes('ntp')) return 'chronyc sources -v';
-  if (t.includes('nftables') || t.includes('фаервол')) return 'nft list ruleset';
-  if (t.includes('docker')) return 'docker ps';
-  if (t.includes('сертификат') || t.includes('гост')) return 'certmgr -list';
-  if (t.includes('fail2ban')) return 'fail2ban-client status';
-  if (t.includes('dns') || t.includes('bind')) return 'systemctl status bind';
-  if (t.includes('dhcp')) return 'systemctl status dhcpd';
-  return 'ip -c --br a';
 }
 
 // Helper to extract relevant config file paths mentioned in commands or text
@@ -832,7 +746,6 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [copiedDiag, setCopiedDiag] = useState<number | null>(null);
 
   const isPending = initialSubmission?.status === 'pending';
   const isReviewed = initialSubmission?.status === 'reviewed';
@@ -853,16 +766,6 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
   const [isRetaking, setIsRetaking] = useState(false);
   const canEdit =
     (!initialSubmission || isRejected || (isRetaking && !isRetakeBlocked)) && !isRetakeBlocked;
-
-  const handleCopyDiag = async (stepNum: number, diagCmd: string) => {
-    try {
-      await navigator.clipboard.writeText(diagCmd);
-      setCopiedDiag(stepNum);
-      setTimeout(() => setCopiedDiag(null), 2000);
-    } catch (e) {
-      console.error(e);
-    }
-  };
 
   const handleAnswerChange = (questionId: string, value: string) => {
     if (!canEdit) return;
@@ -1254,7 +1157,6 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
 
           <div className="space-y-5">
             {task.steps.map(st => {
-              const diagCommand = extractDiagnosticCommand(st.commands, st.title);
               const targetFiles = extractTargetFiles(st.commands, st.explanation);
 
               return (
@@ -1321,38 +1223,6 @@ export function TaskSubmitForm({ task, initialSubmission }: TaskSubmitFormProps)
                               {file}
                             </code>
                           ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Diagnostic Check Command */}
-                    {diagCommand && (
-                      <div className="space-y-1.5 pt-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-zinc-400 uppercase text-[10px] tracking-wider flex items-center gap-1.5 font-semibold">
-                            <Activity className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>Команда самопроверки и аудита узла ({st.node}):</span>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => handleCopyDiag(st.step_number, diagCommand)}
-                            className="px-2.5 py-1 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-[10px] flex items-center gap-1 border border-zinc-700 cursor-pointer font-mono"
-                          >
-                            {copiedDiag === st.step_number ? (
-                              <>
-                                <Check className="w-3 h-3 text-white" />
-                                <span>Скопировано</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="w-3 h-3" />
-                                <span>Скопировать команду проверки</span>
-                              </>
-                            )}
-                          </button>
-                        </div>
-                        <div className="bg-zinc-950 p-2.5 border border-zinc-800 text-zinc-300 font-mono text-[11px] overflow-x-auto">
-                          <pre className="whitespace-pre leading-relaxed">{diagCommand}</pre>
                         </div>
                       </div>
                     )}
