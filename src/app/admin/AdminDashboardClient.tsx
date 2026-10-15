@@ -17,9 +17,11 @@ import {
   Users,
   ClipboardList,
   Settings,
+  GraduationCap,
 } from 'lucide-react';
 import { StudentsManagementClient } from './StudentsManagementClient';
 import { AdminSettingsClient } from './AdminSettingsClient';
+import { GradesMatrixClient } from './GradesMatrixClient';
 
 interface AdminDashboardClientProps {
   submissions: SubmissionWithDetails[];
@@ -36,7 +38,7 @@ export function AdminDashboardClient({
   availableGroups,
   students,
 }: AdminDashboardClientProps) {
-  const [activeTab, setActiveTab] = useState<'submissions' | 'students' | 'settings'>(
+  const [activeTab, setActiveTab] = useState<'submissions' | 'grades' | 'students' | 'settings'>(
     'submissions'
   );
   const [selectedModule, setSelectedModule] = useState<string>('ALL');
@@ -116,6 +118,18 @@ export function AdminDashboardClient({
         </button>
 
         <button
+          onClick={() => setActiveTab('grades')}
+          className={`px-4 py-2.5 font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-colors ${
+            activeTab === 'grades'
+              ? 'border-emerald-500 text-emerald-300 bg-zinc-900/80 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
+              : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30'
+          }`}
+        >
+          <GraduationCap className="w-3.5 h-3.5 text-emerald-400" />
+          <span>Сводная ведомость оценок</span>
+        </button>
+
+        <button
           onClick={() => setActiveTab('students')}
           className={`px-4 py-2.5 font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-colors ${
             activeTab === 'students'
@@ -123,7 +137,7 @@ export function AdminDashboardClient({
               : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30'
           }`}
         >
-          <Users className="w-3.5 h-3.5 text-emerald-400" />
+          <Users className="w-3.5 h-3.5 text-cyan-400" />
           <span>База студентов ({students.length})</span>
         </button>
 
@@ -135,7 +149,7 @@ export function AdminDashboardClient({
               : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30'
           }`}
         >
-          <Settings className="w-3.5 h-3.5 text-cyan-400" />
+          <Settings className="w-3.5 h-3.5 text-amber-400" />
           <span>Настройки и Бэкап</span>
         </button>
       </div>
@@ -144,6 +158,14 @@ export function AdminDashboardClient({
         <AdminSettingsClient />
       ) : activeTab === 'students' ? (
         <StudentsManagementClient initialStudents={students} availableGroups={availableGroups} />
+      ) : activeTab === 'grades' ? (
+        <GradesMatrixClient
+          students={students}
+          tasks={tasks}
+          submissions={submissions}
+          modules={modules}
+          availableGroups={availableGroups}
+        />
       ) : (
         <>
           {/* Top Header Actions & Stats */}
@@ -174,6 +196,17 @@ export function AdminDashboardClient({
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="md"
+                  onClick={() => setActiveTab('grades')}
+                  className="flex items-center gap-2 text-xs border-emerald-500/50 hover:bg-emerald-950/40 text-emerald-300"
+                >
+                  <GraduationCap className="w-4 h-4 text-emerald-400" />
+                  <span>Открыть сводную ведомость</span>
+                </Button>
+
                 <a href={exportMatrixUrl} download>
                   <Button variant="primary" size="md" className="flex items-center gap-2">
                     <Download className="w-4 h-4" />
