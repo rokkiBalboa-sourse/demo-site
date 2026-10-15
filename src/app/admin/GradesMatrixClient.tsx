@@ -18,8 +18,8 @@ import {
   BookOpen,
   Maximize2,
   Minimize2,
-  PanelRightClose,
-  PanelRightOpen,
+  PanelLeftClose,
+  PanelLeftOpen,
   ChevronDown,
   Users,
 } from 'lucide-react';
@@ -290,12 +290,12 @@ export function GradesMatrixClient({
             >
               {isSidebarOpen ? (
                 <>
-                  <PanelRightClose className="w-3.5 h-3.5 text-zinc-400" />
+                  <PanelLeftClose className="w-3.5 h-3.5 text-zinc-400" />
                   <span className="hidden sm:inline">Скрыть журнал</span>
                 </>
               ) : (
                 <>
-                  <PanelRightOpen className="w-3.5 h-3.5 text-zinc-400" />
+                  <PanelLeftOpen className="w-3.5 h-3.5 text-zinc-400" />
                   <span className="hidden sm:inline">Журнал</span>
                 </>
               )}
@@ -397,10 +397,157 @@ export function GradesMatrixClient({
         </div>
       </div>
 
-      {/* Main Content Area: Left Table + Right Sidebar */}
+      {/* Main Content Area: Left Sidebar 'Журнал' + Right Table */}
       <div className="flex flex-col lg:flex-row items-start gap-4 w-full">
-        {/* LEFT COLUMN: The Table / Cards (Takes all available width) */}
-        <div className="flex-1 min-w-0 w-full space-y-4 order-1">
+        {/* LEFT COLUMN: ЖУРНАЛ С ГРУППАМИ И СТУДЕНТАМИ */}
+        {isSidebarOpen && (
+          <aside className="w-full lg:w-80 xl:w-80 2xl:w-96 shrink-0 border border-zinc-800 bg-zinc-950 p-3.5 space-y-3.5 font-mono text-xs rounded shadow-2xl lg:sticky lg:top-16">
+            {/* Header: Title 'Журнал' + Year Dropdown */}
+            <div className="flex items-center justify-between gap-2 border-b border-zinc-800/80 pb-2.5">
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-4 h-4 text-zinc-300" />
+                <h3 className="font-bold text-white text-sm">Журнал</h3>
+              </div>
+
+              <div className="relative">
+                <select
+                  value={academicYear}
+                  onChange={e => setAcademicYear(e.target.value)}
+                  className="bg-zinc-900 border border-zinc-700/80 text-zinc-200 text-[11px] font-bold px-2 py-1 pr-6 rounded focus:outline-none focus:border-zinc-500 appearance-none cursor-pointer"
+                >
+                  <option value="2026/2027">2026/2027</option>
+                  <option value="2025/2026">2025/2026</option>
+                  <option value="КОД 2026">КОД 2026</option>
+                </select>
+                <ChevronDown className="w-3 h-3 text-zinc-400 absolute right-1.5 top-2 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Search Input for Groups & Students */}
+            <div className="relative">
+              <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-2.5" />
+              <input
+                type="text"
+                value={groupSearchQuery}
+                onChange={e => setGroupSearchQuery(e.target.value)}
+                placeholder="Поиск по группам и студентам..."
+                className="w-full bg-zinc-900/90 border border-zinc-800 text-zinc-200 pl-8 pr-3 py-1.5 rounded text-xs placeholder:text-zinc-500 focus:outline-none focus:border-zinc-600 font-mono"
+              />
+            </div>
+
+            {/* SECTION 1: Groups Selector (ONLY Individual Groups, no 'Все группы') */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-[11px] text-zinc-400 px-1 font-bold uppercase tracking-wider">
+                <span>Группы:</span>
+                <span className="text-zinc-500 font-normal">{availableGroups.length}</span>
+              </div>
+
+              <div className="space-y-1.5 max-h-[190px] overflow-y-auto pr-1">
+                {filteredSidebarGroups.map(grp => {
+                  const gStat = groupStats.get(grp) || {
+                    studentCount: 0,
+                    passedCount: 0,
+                    pendingCount: 0,
+                  };
+                  const isSelected = selectedGroup === grp;
+
+                  return (
+                    <button
+                      key={grp}
+                      type="button"
+                      onClick={() => setSelectedGroup(grp)}
+                      className={`w-full text-left p-2 rounded transition cursor-pointer text-xs ${
+                        isSelected
+                          ? 'bg-[#1e3a5f] border border-[#3b82f6] text-white font-bold shadow-[0_0_10px_rgba(30,58,95,0.6)]'
+                          : 'bg-zinc-900/90 hover:bg-zinc-800/90 text-zinc-300 border border-zinc-800'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs">{grp}</span>
+                        {gStat.pendingCount > 0 && (
+                          <span className="text-[9px] bg-yellow-950 text-yellow-300 border border-yellow-500/50 px-1 py-0.2 rounded animate-pulse">
+                            {gStat.pendingCount} ⏳
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        className={`text-[10px] font-normal mt-0.5 flex items-center justify-between ${
+                          isSelected ? 'text-blue-200' : 'text-zinc-400'
+                        }`}
+                      >
+                        <span>Сетевое администрирование</span>
+                        <span>{gStat.studentCount} студ.</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* SECTION 2: Students of the selected group (interactive quick selection) */}
+            <div className="space-y-2 pt-2.5 border-t border-zinc-800/80">
+              <div className="flex items-center justify-between text-[11px] px-1">
+                <span className="text-zinc-200 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Студенты ({selectedGroup || 'Группа не выбрана'})</span>
+                </span>
+                <span className="text-zinc-400 font-bold">{sidebarStudents.length} чел.</span>
+              </div>
+
+              <div className="space-y-1.5 max-h-[calc(100vh-450px)] min-h-[220px] overflow-y-auto pr-1">
+                {sidebarStudents.length === 0 ? (
+                  <div className="text-center text-zinc-500 text-[11px] py-8">
+                    Студентов в этой группе не найдено
+                  </div>
+                ) : (
+                  sidebarStudents.map(student => {
+                    const pendingForStudent = studentPendingCount(student.id);
+                    const isHighlighted = highlightedStudentId === student.id;
+
+                    return (
+                      <div
+                        key={student.id}
+                        onClick={() => handleStudentClick(student.id)}
+                        className={`p-2 rounded border transition-all cursor-pointer text-xs select-none ${
+                          isHighlighted
+                            ? 'bg-emerald-950/80 border-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.3)] ring-2 ring-emerald-500'
+                            : 'bg-zinc-900/80 hover:bg-zinc-800/90 border-zinc-800 text-zinc-200'
+                        }`}
+                        title="Нажмите, чтобы выделить студента в таблице"
+                      >
+                        <div className="flex items-start justify-between gap-1.5">
+                          <div className="font-bold truncate text-[11px] text-white hover:text-emerald-300 transition">
+                            {student.full_name}
+                          </div>
+                          <span className="text-emerald-400 font-bold text-[11px] shrink-0">
+                            {student.total_score} б.
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[10px] text-zinc-400 mt-1">
+                          <span>{student.group_name}</span>
+                          <span className="text-zinc-300 font-semibold">
+                            {student.passed_count}/32 сдано
+                          </span>
+                        </div>
+
+                        {pendingForStudent > 0 && (
+                          <div className="mt-1 pt-1 border-t border-zinc-800/60 flex items-center gap-1 text-[10px] text-yellow-300 font-bold">
+                            <Clock className="w-3 h-3 text-yellow-400" />
+                            <span>{pendingForStudent} на проверке</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </div>
+          </aside>
+        )}
+
+        {/* RIGHT COLUMN: The Table / Cards (Takes all available width) */}
+        <div className="flex-1 min-w-0 w-full space-y-4">
           {/* KPI Stats Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono text-xs">
             <div className="border border-zinc-800 bg-zinc-900/60 p-2.5 flex items-center justify-between">
@@ -892,153 +1039,6 @@ export function GradesMatrixClient({
             </div>
           )}
         </div>
-
-        {/* RIGHT COLUMN: ЖУРНАЛ С ГРУППАМИ И СТУДЕНТАМИ */}
-        {isSidebarOpen && (
-          <aside className="w-full lg:w-80 xl:w-80 2xl:w-96 shrink-0 order-2 border border-zinc-800 bg-zinc-950 p-3.5 space-y-3.5 font-mono text-xs rounded shadow-2xl lg:sticky lg:top-16">
-            {/* Header: Title 'Журнал' + Year Dropdown */}
-            <div className="flex items-center justify-between gap-2 border-b border-zinc-800/80 pb-2.5">
-              <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-zinc-300" />
-                <h3 className="font-bold text-white text-sm">Журнал</h3>
-              </div>
-
-              <div className="relative">
-                <select
-                  value={academicYear}
-                  onChange={e => setAcademicYear(e.target.value)}
-                  className="bg-zinc-900 border border-zinc-700/80 text-zinc-200 text-[11px] font-bold px-2 py-1 pr-6 rounded focus:outline-none focus:border-zinc-500 appearance-none cursor-pointer"
-                >
-                  <option value="2026/2027">2026/2027</option>
-                  <option value="2025/2026">2025/2026</option>
-                  <option value="КОД 2026">КОД 2026</option>
-                </select>
-                <ChevronDown className="w-3 h-3 text-zinc-400 absolute right-1.5 top-2 pointer-events-none" />
-              </div>
-            </div>
-
-            {/* Search Input for Groups & Students */}
-            <div className="relative">
-              <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-2.5" />
-              <input
-                type="text"
-                value={groupSearchQuery}
-                onChange={e => setGroupSearchQuery(e.target.value)}
-                placeholder="Поиск по группам и студентам..."
-                className="w-full bg-zinc-900/90 border border-zinc-800 text-zinc-200 pl-8 pr-3 py-1.5 rounded text-xs placeholder:text-zinc-500 focus:outline-none focus:border-zinc-600 font-mono"
-              />
-            </div>
-
-            {/* SECTION 1: Groups Selector (ONLY Individual Groups, no 'Все группы') */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-[11px] text-zinc-400 px-1 font-bold uppercase tracking-wider">
-                <span>Группы:</span>
-                <span className="text-zinc-500 font-normal">{availableGroups.length}</span>
-              </div>
-
-              <div className="space-y-1.5 max-h-[190px] overflow-y-auto pr-1">
-                {filteredSidebarGroups.map(grp => {
-                  const gStat = groupStats.get(grp) || {
-                    studentCount: 0,
-                    passedCount: 0,
-                    pendingCount: 0,
-                  };
-                  const isSelected = selectedGroup === grp;
-
-                  return (
-                    <button
-                      key={grp}
-                      type="button"
-                      onClick={() => setSelectedGroup(grp)}
-                      className={`w-full text-left p-2 rounded transition cursor-pointer text-xs ${
-                        isSelected
-                          ? 'bg-[#1e3a5f] border border-[#3b82f6] text-white font-bold shadow-[0_0_10px_rgba(30,58,95,0.6)]'
-                          : 'bg-zinc-900/90 hover:bg-zinc-800/90 text-zinc-300 border border-zinc-800'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="font-bold text-xs">{grp}</span>
-                        {gStat.pendingCount > 0 && (
-                          <span className="text-[9px] bg-yellow-950 text-yellow-300 border border-yellow-500/50 px-1 py-0.2 rounded animate-pulse">
-                            {gStat.pendingCount} ⏳
-                          </span>
-                        )}
-                      </div>
-                      <div
-                        className={`text-[10px] font-normal mt-0.5 flex items-center justify-between ${
-                          isSelected ? 'text-blue-200' : 'text-zinc-400'
-                        }`}
-                      >
-                        <span>Сетевое администрирование</span>
-                        <span>{gStat.studentCount} студ.</span>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* SECTION 2: Students of the selected group (interactive quick selection) */}
-            <div className="space-y-2 pt-2.5 border-t border-zinc-800/80">
-              <div className="flex items-center justify-between text-[11px] px-1">
-                <span className="text-zinc-200 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Студенты ({selectedGroup || 'Группа не выбрана'})</span>
-                </span>
-                <span className="text-zinc-400 font-bold">{sidebarStudents.length} чел.</span>
-              </div>
-
-              <div className="space-y-1.5 max-h-[calc(100vh-450px)] min-h-[220px] overflow-y-auto pr-1">
-                {sidebarStudents.length === 0 ? (
-                  <div className="text-center text-zinc-500 text-[11px] py-8">
-                    Студентов в этой группе не найдено
-                  </div>
-                ) : (
-                  sidebarStudents.map(student => {
-                    const pendingForStudent = studentPendingCount(student.id);
-                    const isHighlighted = highlightedStudentId === student.id;
-
-                    return (
-                      <div
-                        key={student.id}
-                        onClick={() => handleStudentClick(student.id)}
-                        className={`p-2 rounded border transition-all cursor-pointer text-xs select-none ${
-                          isHighlighted
-                            ? 'bg-emerald-950/80 border-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.3)] ring-2 ring-emerald-500'
-                            : 'bg-zinc-900/80 hover:bg-zinc-800/90 border-zinc-800 text-zinc-200'
-                        }`}
-                        title="Нажмите, чтобы выделить студента в таблице"
-                      >
-                        <div className="flex items-start justify-between gap-1.5">
-                          <div className="font-bold truncate text-[11px] text-white hover:text-emerald-300 transition">
-                            {student.full_name}
-                          </div>
-                          <span className="text-emerald-400 font-bold text-[11px] shrink-0">
-                            {student.total_score} б.
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between text-[10px] text-zinc-400 mt-1">
-                          <span>{student.group_name}</span>
-                          <span className="text-zinc-300 font-semibold">
-                            {student.passed_count}/32 сдано
-                          </span>
-                        </div>
-
-                        {pendingForStudent > 0 && (
-                          <div className="mt-1 pt-1 border-t border-zinc-800/60 flex items-center gap-1 text-[10px] text-yellow-300 font-bold">
-                            <Clock className="w-3 h-3 text-yellow-400" />
-                            <span>{pendingForStudent} на проверке</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </aside>
-        )}
       </div>
 
       {/* QUICK PREVIEW & REVIEW MODAL */}
