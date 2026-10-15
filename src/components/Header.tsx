@@ -12,7 +12,7 @@ interface HeaderProps {
 export function Header({ user }: HeaderProps) {
   return (
     <header className="border-b border-zinc-800 bg-zinc-950/90 backdrop-blur sticky top-0 z-40">
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
+      <div className="w-full max-w-[1920px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
         {/* Brand & Companion Link */}
         <div className="flex items-center gap-5">
           <Link href={user?.role === 'admin' ? '/admin' : '/'} className="group">

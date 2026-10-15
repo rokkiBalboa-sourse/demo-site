@@ -33,7 +33,7 @@ export default async function AdminPage() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
       <Header user={session} />
 
-      <main className="max-w-6xl mx-auto px-4 py-6 flex-1 w-full">
+      <main className="w-full px-3 sm:px-6 py-4 flex-1">
         <AdminDashboardClient
           submissions={submissions}
           tasks={tasks}
