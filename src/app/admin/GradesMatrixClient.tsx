@@ -10,7 +10,6 @@ import {
   ExternalLink,
   Clock,
   CheckCircle2,
-  AlertTriangle,
   Table,
   LayoutGrid,
   Award,
@@ -22,6 +21,7 @@ import {
   PanelRightClose,
   PanelRightOpen,
   ChevronDown,
+  Users,
 } from 'lucide-react';
 
 interface GradesMatrixClientProps {
@@ -48,6 +48,7 @@ export function GradesMatrixClient({
   const [academicYear, setAcademicYear] = useState<string>('2026/2027');
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [highlightedStudentId, setHighlightedStudentId] = useState<string | null>(null);
 
   // Selected submission modal for instant quick inspection
   const [selectedSub, setSelectedSub] = useState<SubmissionWithDetails | null>(null);
@@ -60,6 +61,19 @@ export function GradesMatrixClient({
     }
     return map;
   }, [submissions]);
+
+  // Map of pending submissions count per student
+  const studentPendingMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const sub of submissions) {
+      if (sub.status === 'pending') {
+        map.set(sub.user_id, (map.get(sub.user_id) || 0) + 1);
+      }
+    }
+    return map;
+  }, [submissions]);
+
+  const studentPendingCount = (studentId: string) => studentPendingMap.get(studentId) || 0;
 
   // Aggregate stats per group for the sidebar
   const groupStats = useMemo(() => {
@@ -101,7 +115,24 @@ export function GradesMatrixClient({
     return availableGroups.filter(g => g.toLowerCase().includes(q));
   }, [availableGroups, groupSearchQuery]);
 
-  // Filter and sort students
+  // Filter students in the sidebar by selectedGroup and groupSearchQuery
+  const sidebarStudents = useMemo(() => {
+    return students.filter(s => {
+      if (selectedGroup !== 'ALL' && s.group_name !== selectedGroup) {
+        return false;
+      }
+      if (groupSearchQuery.trim()) {
+        const q = groupSearchQuery.toLowerCase();
+        const matchName = s.full_name.toLowerCase().includes(q);
+        const matchGroup = s.group_name.toLowerCase().includes(q);
+        const matchUser = s.username.toLowerCase().includes(q);
+        if (!matchName && !matchGroup && !matchUser) return false;
+      }
+      return true;
+    });
+  }, [students, selectedGroup, groupSearchQuery]);
+
+  // Filter and sort students for the main table/cards
   const filteredStudents = useMemo(() => {
     let result = students.filter(s => {
       if (selectedGroup !== 'ALL' && s.group_name !== selectedGroup) {
@@ -178,6 +209,19 @@ export function GradesMatrixClient({
     return `/api/admin/export-csv${qs ? `?${qs}` : ''}`;
   }, [selectedGroup, selectedModule]);
 
+  // Handler to scroll and highlight a student in the table
+  const handleStudentClick = (studentId: string) => {
+    if (highlightedStudentId === studentId) {
+      setHighlightedStudentId(null);
+    } else {
+      setHighlightedStudentId(studentId);
+      const el = document.getElementById(`student-row-${studentId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  };
+
   return (
     <div
       className={
@@ -237,17 +281,17 @@ export function GradesMatrixClient({
               type="button"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="px-2.5 py-1.5 border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-mono flex items-center gap-1.5 rounded transition cursor-pointer"
-              title={isSidebarOpen ? 'Скрыть список групп' : 'Показать список групп'}
+              title={isSidebarOpen ? 'Скрыть панель журнала' : 'Показать панель журнала'}
             >
               {isSidebarOpen ? (
                 <>
                   <PanelRightClose className="w-3.5 h-3.5 text-zinc-400" />
-                  <span className="hidden sm:inline">Скрыть группы</span>
+                  <span className="hidden sm:inline">Скрыть журнал</span>
                 </>
               ) : (
                 <>
                   <PanelRightOpen className="w-3.5 h-3.5 text-zinc-400" />
-                  <span className="hidden sm:inline">Выбор групп</span>
+                  <span className="hidden sm:inline">Журнал студентов</span>
                 </>
               )}
             </button>
@@ -318,7 +362,7 @@ export function GradesMatrixClient({
           {/* Search by Student Name */}
           <div>
             <label className="block text-[11px] uppercase text-zinc-400 mb-1">
-              Поиск студента:
+              Поиск по студентам:
             </label>
             <div className="relative">
               <input
@@ -552,11 +596,24 @@ export function GradesMatrixClient({
                         const pct = Math.round((passedCount / filteredTasks.length) * 100);
                         const avg =
                           passedCount > 0 ? (studentScoreSum / passedCount).toFixed(1) : '—';
+                        const isHighlighted = highlightedStudentId === student.id;
 
                         return (
-                          <tr key={student.id} className="hover:bg-zinc-800/40 transition-colors">
+                          <tr
+                            key={student.id}
+                            id={`student-row-${student.id}`}
+                            className={`transition-colors ${
+                              isHighlighted
+                                ? 'bg-emerald-950/40 ring-1 ring-emerald-500 font-semibold'
+                                : 'hover:bg-zinc-800/40'
+                            }`}
+                          >
                             {/* Sticky Left Name column */}
-                            <td className="p-2.5 sticky left-0 bg-zinc-900 z-20 border-r border-zinc-800 whitespace-nowrap shadow-[3px_0_8px_rgba(0,0,0,0.6)]">
+                            <td
+                              className={`p-2.5 sticky left-0 z-20 border-r border-zinc-800 whitespace-nowrap shadow-[3px_0_8px_rgba(0,0,0,0.6)] ${
+                                isHighlighted ? 'bg-zinc-800 text-emerald-300' : 'bg-zinc-900'
+                              }`}
+                            >
                               <div className="font-bold text-white hover:text-emerald-400 transition">
                                 {student.full_name}
                               </div>
@@ -828,9 +885,9 @@ export function GradesMatrixClient({
           )}
         </div>
 
-        {/* RIGHT COLUMN: JOURNALS & GROUPS SELECTOR (Styled per user screenshot) */}
+        {/* RIGHT COLUMN: JOURNALS & GROUPS + STUDENTS LIST */}
         {isSidebarOpen && (
-          <aside className="w-full xl:w-72 2xl:w-80 shrink-0 border border-zinc-800 bg-zinc-950 p-3.5 space-y-3 font-mono text-xs rounded shadow-2xl xl:sticky xl:top-16">
+          <aside className="w-full xl:w-80 2xl:w-96 shrink-0 border border-zinc-800 bg-zinc-950 p-3.5 space-y-3.5 font-mono text-xs rounded shadow-2xl xl:sticky xl:top-16">
             {/* Header: Title 'Журналы' + Year Dropdown */}
             <div className="flex items-center justify-between gap-2 border-b border-zinc-800/80 pb-2.5">
               <div className="flex items-center gap-2">
@@ -852,29 +909,33 @@ export function GradesMatrixClient({
               </div>
             </div>
 
-            {/* Search Input matching screenshot */}
+            {/* Search Input for Groups & Students */}
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-2.5" />
               <input
                 type="text"
                 value={groupSearchQuery}
                 onChange={e => setGroupSearchQuery(e.target.value)}
-                placeholder="Поиск..."
+                placeholder="Поиск по группам и студентам..."
                 className="w-full bg-zinc-900/90 border border-zinc-800 text-zinc-200 pl-8 pr-3 py-1.5 rounded text-xs placeholder:text-zinc-500 focus:outline-none focus:border-zinc-600 font-mono"
               />
             </div>
 
-            {/* List of Groups / Journals matching screenshot */}
-            <div className="space-y-3 max-h-[calc(100vh-270px)] overflow-y-auto pr-1">
-              {/* Option: Все группы (Сводная ведомость) */}
-              <div className="space-y-1">
-                <div className="text-white font-bold text-xs px-1">Сводная ведомость</div>
+            {/* SECTION 1: Groups Selector (Pill List matching screenshot) */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-[11px] text-zinc-400 px-1 font-bold uppercase tracking-wider">
+                <span>Группы:</span>
+                <span className="text-zinc-500 font-normal">{availableGroups.length}</span>
+              </div>
+
+              <div className="space-y-1.5 max-h-[190px] overflow-y-auto pr-1">
+                {/* Option: Все группы (Сводная ведомость) */}
                 <button
                   type="button"
                   onClick={() => setSelectedGroup('ALL')}
-                  className={`w-full text-left p-2.5 rounded transition cursor-pointer text-xs ${
+                  className={`w-full text-left p-2 rounded transition cursor-pointer text-xs ${
                     selectedGroup === 'ALL'
-                      ? 'bg-[#1e3a5f] border border-[#3b82f6] text-white font-bold shadow-[0_0_12px_rgba(30,58,95,0.6)]'
+                      ? 'bg-[#1e3a5f] border border-[#3b82f6] text-white font-bold shadow-[0_0_10px_rgba(30,58,95,0.6)]'
                       : 'bg-zinc-900/90 hover:bg-zinc-800/90 text-zinc-300 border border-zinc-800'
                   }`}
                 >
@@ -887,52 +948,106 @@ export function GradesMatrixClient({
                     {students.length} студентов • 32 задания
                   </div>
                 </button>
-              </div>
 
-              {/* Individual Groups */}
-              {filteredSidebarGroups.map(grp => {
-                const gStat = groupStats.get(grp) || {
-                  studentCount: 0,
-                  passedCount: 0,
-                  pendingCount: 0,
-                };
-                const isSelected = selectedGroup === grp;
+                {/* Individual Groups */}
+                {filteredSidebarGroups.map(grp => {
+                  const gStat = groupStats.get(grp) || {
+                    studentCount: 0,
+                    passedCount: 0,
+                    pendingCount: 0,
+                  };
+                  const isSelected = selectedGroup === grp;
 
-                return (
-                  <div key={grp} className="space-y-1">
-                    {/* Group Title in white */}
-                    <div className="text-white font-bold text-xs px-1 flex items-center justify-between">
-                      <span>{grp}</span>
-                      {gStat.pendingCount > 0 && (
-                        <span className="text-[9px] bg-yellow-950 text-yellow-300 border border-yellow-500/50 px-1 py-0.2 rounded animate-pulse">
-                          {gStat.pendingCount} на проверке
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Dark Pill Button matching user's screenshot */}
+                  return (
                     <button
+                      key={grp}
                       type="button"
                       onClick={() => setSelectedGroup(grp)}
-                      className={`w-full text-left p-2.5 rounded transition cursor-pointer text-xs ${
+                      className={`w-full text-left p-2 rounded transition cursor-pointer text-xs ${
                         isSelected
-                          ? 'bg-[#1e3a5f] border border-[#3b82f6] text-white font-bold shadow-[0_0_12px_rgba(30,58,95,0.6)]'
+                          ? 'bg-[#1e3a5f] border border-[#3b82f6] text-white font-bold shadow-[0_0_10px_rgba(30,58,95,0.6)]'
                           : 'bg-zinc-900/90 hover:bg-zinc-800/90 text-zinc-300 border border-zinc-800'
                       }`}
                     >
-                      <div className="truncate">Сетевое администрирование</div>
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-xs">{grp}</span>
+                        {gStat.pendingCount > 0 && (
+                          <span className="text-[9px] bg-yellow-950 text-yellow-300 border border-yellow-500/50 px-1 py-0.2 rounded animate-pulse">
+                            {gStat.pendingCount} ⏳
+                          </span>
+                        )}
+                      </div>
                       <div
                         className={`text-[10px] font-normal mt-0.5 flex items-center justify-between ${
                           isSelected ? 'text-blue-200' : 'text-zinc-400'
                         }`}
                       >
-                        <span>{gStat.studentCount} студентов</span>
-                        <span className="font-bold">{gStat.passedCount} зачтено</span>
+                        <span>Сетевое администрирование</span>
+                        <span>{gStat.studentCount} студ.</span>
                       </div>
                     </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* SECTION 2: Students of the selected group / journal */}
+            <div className="space-y-2 pt-2.5 border-t border-zinc-800/80">
+              <div className="flex items-center justify-between text-[11px] px-1">
+                <span className="text-zinc-200 font-bold uppercase tracking-wider flex items-center gap-1.5">
+                  <Users className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Студенты {selectedGroup === 'ALL' ? '' : `(${selectedGroup})`}</span>
+                </span>
+                <span className="text-zinc-400 font-bold">{sidebarStudents.length} чел.</span>
+              </div>
+
+              <div className="space-y-1.5 max-h-[calc(100vh-450px)] min-h-[220px] overflow-y-auto pr-1">
+                {sidebarStudents.length === 0 ? (
+                  <div className="text-center text-zinc-500 text-[11px] py-8">
+                    Студентов в этой группе не найдено
                   </div>
-                );
-              })}
+                ) : (
+                  sidebarStudents.map(student => {
+                    const pendingForStudent = studentPendingCount(student.id);
+                    const isHighlighted = highlightedStudentId === student.id;
+
+                    return (
+                      <div
+                        key={student.id}
+                        onClick={() => handleStudentClick(student.id)}
+                        className={`p-2 rounded border transition-all cursor-pointer text-xs select-none ${
+                          isHighlighted
+                            ? 'bg-emerald-950/80 border-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.3)] ring-1 ring-emerald-500'
+                            : 'bg-zinc-900/80 hover:bg-zinc-800/90 border-zinc-800 text-zinc-200'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between gap-1.5">
+                          <div className="font-bold truncate text-[11px] text-white hover:text-emerald-300 transition">
+                            {student.full_name}
+                          </div>
+                          <span className="text-emerald-400 font-bold text-[11px] shrink-0">
+                            {student.total_score} б.
+                          </span>
+                        </div>
+
+                        <div className="flex items-center justify-between text-[10px] text-zinc-400 mt-1">
+                          <span>{student.group_name}</span>
+                          <span className="text-zinc-300 font-semibold">
+                            {student.passed_count}/32 сдано
+                          </span>
+                        </div>
+
+                        {pendingForStudent > 0 && (
+                          <div className="mt-1 pt-1 border-t border-zinc-800/60 flex items-center gap-1 text-[10px] text-yellow-300 font-bold">
+                            <Clock className="w-3 h-3 text-yellow-400" />
+                            <span>{pendingForStudent} на проверке</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           </aside>
         )}
