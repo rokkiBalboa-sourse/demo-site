@@ -398,9 +398,9 @@ export function GradesMatrixClient({
       </div>
 
       {/* Main Content Area: Left Table + Right Sidebar */}
-      <div className="flex flex-col xl:flex-row items-start gap-4 w-full">
+      <div className="flex flex-col lg:flex-row items-start gap-4 w-full">
         {/* LEFT COLUMN: The Table / Cards (Takes all available width) */}
-        <div className="flex-1 min-w-0 w-full space-y-4">
+        <div className="flex-1 min-w-0 w-full space-y-4 order-1">
           {/* KPI Stats Bar */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 font-mono text-xs">
             <div className="border border-zinc-800 bg-zinc-900/60 p-2.5 flex items-center justify-between">
@@ -895,12 +895,12 @@ export function GradesMatrixClient({
 
         {/* RIGHT COLUMN: ЖУРНАЛ С ГРУППАМИ И СТУДЕНТАМИ */}
         {isSidebarOpen && (
-          <aside className="w-full xl:w-80 2xl:w-96 shrink-0 border border-zinc-800 bg-zinc-950 p-3.5 space-y-3.5 font-mono text-xs rounded shadow-2xl xl:sticky xl:top-16">
-            {/* Header: Title 'Журналы' + Year Dropdown */}
+          <aside className="w-full lg:w-80 xl:w-80 2xl:w-96 shrink-0 order-2 border border-zinc-800 bg-zinc-950 p-3.5 space-y-3.5 font-mono text-xs rounded shadow-2xl lg:sticky lg:top-16">
+            {/* Header: Title 'Журнал' + Year Dropdown */}
             <div className="flex items-center justify-between gap-2 border-b border-zinc-800/80 pb-2.5">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-zinc-300" />
-                <h3 className="font-bold text-white text-sm">Журналы</h3>
+                <h3 className="font-bold text-white text-sm">Журнал</h3>
               </div>
 
               <div className="relative">
