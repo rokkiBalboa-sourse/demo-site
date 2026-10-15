@@ -22,6 +22,7 @@ import {
   PanelRightOpen,
   ChevronDown,
   Users,
+  ArrowLeftRight,
 } from 'lucide-react';
 
 interface GradesMatrixClientProps {
@@ -48,6 +49,7 @@ export function GradesMatrixClient({
   const [academicYear, setAcademicYear] = useState<string>('2026/2027');
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [studentSide, setStudentSide] = useState<'left' | 'right'>('right');
   const [highlightedStudentId, setHighlightedStudentId] = useState<string | null>(null);
 
   // Selected submission modal for instant quick inspection
@@ -114,23 +116,6 @@ export function GradesMatrixClient({
     const q = groupSearchQuery.toLowerCase();
     return availableGroups.filter(g => g.toLowerCase().includes(q));
   }, [availableGroups, groupSearchQuery]);
-
-  // Filter students in the sidebar by selectedGroup and groupSearchQuery
-  const sidebarStudents = useMemo(() => {
-    return students.filter(s => {
-      if (selectedGroup !== 'ALL' && s.group_name !== selectedGroup) {
-        return false;
-      }
-      if (groupSearchQuery.trim()) {
-        const q = groupSearchQuery.toLowerCase();
-        const matchName = s.full_name.toLowerCase().includes(q);
-        const matchGroup = s.group_name.toLowerCase().includes(q);
-        const matchUser = s.username.toLowerCase().includes(q);
-        if (!matchName && !matchGroup && !matchUser) return false;
-      }
-      return true;
-    });
-  }, [students, selectedGroup, groupSearchQuery]);
 
   // Filter and sort students for the main table/cards
   const filteredStudents = useMemo(() => {
@@ -276,22 +261,40 @@ export function GradesMatrixClient({
               )}
             </button>
 
+            {/* Student Columns Position Toggle (Right/Left) */}
+            {viewMode === 'matrix' && (
+              <button
+                type="button"
+                onClick={() => setStudentSide(prev => (prev === 'right' ? 'left' : 'right'))}
+                className="px-2.5 py-1.5 border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-mono flex items-center gap-1.5 rounded transition cursor-pointer"
+                title="Переключить положение колонок со студентами (справа / слева)"
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5 text-emerald-400" />
+                <span className="hidden sm:inline">
+                  Студенты:{' '}
+                  <strong className="text-emerald-300">
+                    {studentSide === 'right' ? 'Справа' : 'Слева'}
+                  </strong>
+                </span>
+              </button>
+            )}
+
             {/* Toggle Sidebar */}
             <button
               type="button"
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="px-2.5 py-1.5 border border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-mono flex items-center gap-1.5 rounded transition cursor-pointer"
-              title={isSidebarOpen ? 'Скрыть панель журнала' : 'Показать панель журнала'}
+              title={isSidebarOpen ? 'Скрыть панель групп' : 'Показать панель групп'}
             >
               {isSidebarOpen ? (
                 <>
                   <PanelRightClose className="w-3.5 h-3.5 text-zinc-400" />
-                  <span className="hidden sm:inline">Скрыть журнал</span>
+                  <span className="hidden sm:inline">Скрыть группы</span>
                 </>
               ) : (
                 <>
                   <PanelRightOpen className="w-3.5 h-3.5 text-zinc-400" />
-                  <span className="hidden sm:inline">Журнал студентов</span>
+                  <span className="hidden sm:inline">Выбор групп</span>
                 </>
               )}
             </button>
@@ -496,18 +499,23 @@ export function GradesMatrixClient({
                   <thead className="bg-zinc-950 text-zinc-300 uppercase sticky top-0 z-30 shadow-md">
                     {/* Super Header: Grouping by Module */}
                     <tr className="border-b border-zinc-800 text-[10px]">
-                      <th
-                        className="p-2.5 sticky left-0 bg-zinc-950 z-40 border-r border-zinc-800 min-w-[210px]"
-                        colSpan={2}
-                      >
-                        Студент / Группа
-                      </th>
-                      <th
-                        className="p-2 border-r border-zinc-800 text-center bg-zinc-950/90"
-                        colSpan={4}
-                      >
-                        Сводка
-                      </th>
+                      {studentSide === 'left' && (
+                        <>
+                          <th
+                            className="p-2.5 sticky left-0 bg-zinc-950 z-40 border-r border-zinc-800 min-w-[210px]"
+                            colSpan={2}
+                          >
+                            Студент / Группа
+                          </th>
+                          <th
+                            className="p-2 border-r border-zinc-800 text-center bg-zinc-950/90"
+                            colSpan={4}
+                          >
+                            Сводка
+                          </th>
+                        </>
+                      )}
+
                       {selectedModule === 'ALL' || selectedModule === 'module-1' ? (
                         <th
                           className="p-2 border-r border-zinc-800 text-center bg-sky-950/50 text-sky-300 font-bold"
@@ -532,28 +540,51 @@ export function GradesMatrixClient({
                           Модуль 3: Информационная безопасность (10 заданий)
                         </th>
                       ) : null}
+
+                      {studentSide === 'right' && (
+                        <>
+                          <th
+                            style={{ right: '240px' }}
+                            className="p-2.5 sticky z-40 border-r border-zinc-800 border-l border-zinc-700 bg-zinc-950 shadow-[-4px_0_12px_rgba(0,0,0,0.6)]"
+                            colSpan={2}
+                          >
+                            Студент / Группа
+                          </th>
+                          <th
+                            style={{ right: '0px' }}
+                            className="p-2 sticky z-40 border-r border-zinc-800 text-center bg-zinc-950"
+                            colSpan={4}
+                          >
+                            Сводка
+                          </th>
+                        </>
+                      )}
                     </tr>
 
                     {/* Task Numbers Sub-header */}
                     <tr className="border-b border-zinc-800 text-[11px]">
-                      <th className="p-2.5 sticky left-0 bg-zinc-950 z-40 border-r border-zinc-800">
-                        ФИО студента
-                      </th>
-                      <th className="p-2 border-r border-zinc-800 text-center min-w-[75px]">
-                        Группа
-                      </th>
-                      <th className="p-2 border-r border-zinc-800 text-center min-w-[65px] text-emerald-400">
-                        Сдано
-                      </th>
-                      <th className="p-2 border-r border-zinc-800 text-center min-w-[55px] text-cyan-400">
-                        %
-                      </th>
-                      <th className="p-2 border-r border-zinc-800 text-center min-w-[65px] text-white">
-                        Балл
-                      </th>
-                      <th className="p-2 border-r border-zinc-800 text-center min-w-[55px] text-zinc-400">
-                        Ср.
-                      </th>
+                      {studentSide === 'left' && (
+                        <>
+                          <th className="p-2.5 sticky left-0 bg-zinc-950 z-40 border-r border-zinc-800">
+                            ФИО студента
+                          </th>
+                          <th className="p-2 border-r border-zinc-800 text-center min-w-[75px]">
+                            Группа
+                          </th>
+                          <th className="p-2 border-r border-zinc-800 text-center min-w-[65px] text-emerald-400">
+                            Сдано
+                          </th>
+                          <th className="p-2 border-r border-zinc-800 text-center min-w-[55px] text-cyan-400">
+                            %
+                          </th>
+                          <th className="p-2 border-r border-zinc-800 text-center min-w-[65px] text-white">
+                            Балл
+                          </th>
+                          <th className="p-2 border-r border-zinc-800 text-center min-w-[55px] text-zinc-400">
+                            Ср.
+                          </th>
+                        </>
+                      )}
 
                       {filteredTasks.map(t => (
                         <th
@@ -567,6 +598,47 @@ export function GradesMatrixClient({
                           <span className="text-[11px] font-bold text-white">№{t.task_number}</span>
                         </th>
                       ))}
+
+                      {studentSide === 'right' && (
+                        <>
+                          <th
+                            style={{ right: '320px', width: '220px', minWidth: '220px' }}
+                            className="p-2.5 sticky z-40 border-r border-zinc-800 border-l border-zinc-700 bg-zinc-950 shadow-[-4px_0_12px_rgba(0,0,0,0.6)]"
+                          >
+                            ФИО студента
+                          </th>
+                          <th
+                            style={{ right: '240px', width: '80px', minWidth: '80px' }}
+                            className="p-2 sticky z-40 border-r border-zinc-800 text-center bg-zinc-950"
+                          >
+                            Группа
+                          </th>
+                          <th
+                            style={{ right: '175px', width: '65px', minWidth: '65px' }}
+                            className="p-2 sticky z-40 border-r border-zinc-800 text-center min-w-[65px] text-emerald-400 bg-zinc-950"
+                          >
+                            Сдано
+                          </th>
+                          <th
+                            style={{ right: '120px', width: '55px', minWidth: '55px' }}
+                            className="p-2 sticky z-40 border-r border-zinc-800 text-center min-w-[55px] text-cyan-400 bg-zinc-950"
+                          >
+                            %
+                          </th>
+                          <th
+                            style={{ right: '55px', width: '65px', minWidth: '65px' }}
+                            className="p-2 sticky z-40 border-r border-zinc-800 text-center min-w-[65px] text-white bg-zinc-950"
+                          >
+                            Балл
+                          </th>
+                          <th
+                            style={{ right: '0px', width: '55px', minWidth: '55px' }}
+                            className="p-2 sticky z-40 border-r border-zinc-800 text-center min-w-[55px] text-zinc-400 bg-zinc-950"
+                          >
+                            Ср.
+                          </th>
+                        </>
+                      )}
                     </tr>
                   </thead>
 
@@ -597,6 +669,142 @@ export function GradesMatrixClient({
                         const avg =
                           passedCount > 0 ? (studentScoreSum / passedCount).toFixed(1) : '—';
                         const isHighlighted = highlightedStudentId === student.id;
+                        const rowBg = isHighlighted ? 'bg-zinc-800' : 'bg-zinc-900';
+
+                        const renderStudentCells = () => {
+                          if (studentSide === 'left') {
+                            return (
+                              <>
+                                {/* Sticky Left Name column */}
+                                <td
+                                  className={`p-2.5 sticky left-0 z-20 border-r border-zinc-800 whitespace-nowrap shadow-[3px_0_8px_rgba(0,0,0,0.6)] ${
+                                    isHighlighted ? 'bg-zinc-800 text-emerald-300' : 'bg-zinc-900'
+                                  }`}
+                                >
+                                  <div className="font-bold text-white hover:text-emerald-400 transition truncate max-w-[210px]">
+                                    {student.full_name}
+                                  </div>
+                                  <div className="text-[10px] text-zinc-500 font-mono">
+                                    {student.username}
+                                  </div>
+                                </td>
+
+                                {/* Group badge */}
+                                <td className="p-2 border-r border-zinc-800 text-center whitespace-nowrap text-zinc-300">
+                                  <span className="bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-[10px]">
+                                    {student.group_name}
+                                  </span>
+                                </td>
+
+                                {/* Passed / Total */}
+                                <td className="p-2 border-r border-zinc-800 text-center whitespace-nowrap font-bold text-emerald-400">
+                                  {passedCount}/{filteredTasks.length}
+                                </td>
+
+                                {/* Percentage */}
+                                <td className="p-2 border-r border-zinc-800 text-center whitespace-nowrap">
+                                  <span
+                                    className={`font-bold text-[11px] ${
+                                      pct >= 80
+                                        ? 'text-emerald-400'
+                                        : pct >= 50
+                                          ? 'text-cyan-400'
+                                          : pct >= 20
+                                            ? 'text-amber-400'
+                                            : 'text-zinc-500'
+                                    }`}
+                                  >
+                                    {pct}%
+                                  </span>
+                                </td>
+
+                                {/* Total Score */}
+                                <td className="p-2 border-r border-zinc-800 text-center whitespace-nowrap font-bold text-white">
+                                  {studentScoreSum} б.
+                                </td>
+
+                                {/* Average */}
+                                <td className="p-2 border-r border-zinc-800 text-center whitespace-nowrap text-zinc-400">
+                                  {avg}
+                                </td>
+                              </>
+                            );
+                          }
+
+                          // studentSide === 'right'
+                          return (
+                            <>
+                              {/* Sticky Right Name column */}
+                              <td
+                                style={{ right: '320px', width: '220px', minWidth: '220px' }}
+                                className={`p-2.5 sticky z-20 border-r border-zinc-800 border-l border-zinc-700 whitespace-nowrap shadow-[-4px_0_12px_rgba(0,0,0,0.6)] ${
+                                  isHighlighted ? 'bg-zinc-800 text-emerald-300' : 'bg-zinc-900'
+                                }`}
+                              >
+                                <div className="font-bold text-white hover:text-emerald-400 transition truncate max-w-[210px]">
+                                  {student.full_name}
+                                </div>
+                                <div className="text-[10px] text-zinc-500 font-mono">
+                                  {student.username}
+                                </div>
+                              </td>
+
+                              {/* Group badge */}
+                              <td
+                                style={{ right: '240px', width: '80px', minWidth: '80px' }}
+                                className={`p-2 sticky z-20 border-r border-zinc-800 text-center whitespace-nowrap text-zinc-300 ${rowBg}`}
+                              >
+                                <span className="bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-[10px]">
+                                  {student.group_name}
+                                </span>
+                              </td>
+
+                              {/* Passed / Total */}
+                              <td
+                                style={{ right: '175px', width: '65px', minWidth: '65px' }}
+                                className={`p-2 sticky z-20 border-r border-zinc-800 text-center whitespace-nowrap font-bold text-emerald-400 ${rowBg}`}
+                              >
+                                {passedCount}/{filteredTasks.length}
+                              </td>
+
+                              {/* Percentage */}
+                              <td
+                                style={{ right: '120px', width: '55px', minWidth: '55px' }}
+                                className={`p-2 sticky z-20 border-r border-zinc-800 text-center whitespace-nowrap ${rowBg}`}
+                              >
+                                <span
+                                  className={`font-bold text-[11px] ${
+                                    pct >= 80
+                                      ? 'text-emerald-400'
+                                      : pct >= 50
+                                        ? 'text-cyan-400'
+                                        : pct >= 20
+                                          ? 'text-amber-400'
+                                          : 'text-zinc-500'
+                                  }`}
+                                >
+                                  {pct}%
+                                </span>
+                              </td>
+
+                              {/* Total Score */}
+                              <td
+                                style={{ right: '55px', width: '65px', minWidth: '65px' }}
+                                className={`p-2 sticky z-20 border-r border-zinc-800 text-center whitespace-nowrap font-bold text-white ${rowBg}`}
+                              >
+                                {studentScoreSum} б.
+                              </td>
+
+                              {/* Average */}
+                              <td
+                                style={{ right: '0px', width: '55px', minWidth: '55px' }}
+                                className={`p-2 sticky z-20 border-r border-zinc-800 text-center whitespace-nowrap text-zinc-400 ${rowBg}`}
+                              >
+                                {avg}
+                              </td>
+                            </>
+                          );
+                        };
 
                         return (
                           <tr
@@ -608,58 +816,7 @@ export function GradesMatrixClient({
                                 : 'hover:bg-zinc-800/40'
                             }`}
                           >
-                            {/* Sticky Left Name column */}
-                            <td
-                              className={`p-2.5 sticky left-0 z-20 border-r border-zinc-800 whitespace-nowrap shadow-[3px_0_8px_rgba(0,0,0,0.6)] ${
-                                isHighlighted ? 'bg-zinc-800 text-emerald-300' : 'bg-zinc-900'
-                              }`}
-                            >
-                              <div className="font-bold text-white hover:text-emerald-400 transition">
-                                {student.full_name}
-                              </div>
-                              <div className="text-[10px] text-zinc-500 font-mono">
-                                {student.username}
-                              </div>
-                            </td>
-
-                            {/* Group badge */}
-                            <td className="p-2 border-r border-zinc-800 text-center whitespace-nowrap text-zinc-300">
-                              <span className="bg-zinc-950 border border-zinc-800 px-1.5 py-0.5 rounded text-[10px]">
-                                {student.group_name}
-                              </span>
-                            </td>
-
-                            {/* Passed / Total */}
-                            <td className="p-2 border-r border-zinc-800 text-center whitespace-nowrap font-bold text-emerald-400">
-                              {passedCount}/{filteredTasks.length}
-                            </td>
-
-                            {/* Percentage */}
-                            <td className="p-2 border-r border-zinc-800 text-center whitespace-nowrap">
-                              <span
-                                className={`font-bold text-[11px] ${
-                                  pct >= 80
-                                    ? 'text-emerald-400'
-                                    : pct >= 50
-                                      ? 'text-cyan-400'
-                                      : pct >= 20
-                                        ? 'text-amber-400'
-                                        : 'text-zinc-500'
-                                }`}
-                              >
-                                {pct}%
-                              </span>
-                            </td>
-
-                            {/* Total Score */}
-                            <td className="p-2 border-r border-zinc-800 text-center whitespace-nowrap font-bold text-white">
-                              {studentScoreSum} б.
-                            </td>
-
-                            {/* Average */}
-                            <td className="p-2 border-r border-zinc-800 text-center whitespace-nowrap text-zinc-400">
-                              {avg}
-                            </td>
+                            {studentSide === 'left' && renderStudentCells()}
 
                             {/* 32 Task cells */}
                             {filteredTasks.map(task => {
@@ -743,6 +900,8 @@ export function GradesMatrixClient({
                                 </td>
                               );
                             })}
+
+                            {studentSide === 'right' && renderStudentCells()}
                           </tr>
                         );
                       })
@@ -885,14 +1044,14 @@ export function GradesMatrixClient({
           )}
         </div>
 
-        {/* RIGHT COLUMN: JOURNALS & GROUPS + STUDENTS LIST */}
+        {/* RIGHT COLUMN: GROUPS SIDEBAR */}
         {isSidebarOpen && (
           <aside className="w-full xl:w-80 2xl:w-96 shrink-0 border border-zinc-800 bg-zinc-950 p-3.5 space-y-3.5 font-mono text-xs rounded shadow-2xl xl:sticky xl:top-16">
-            {/* Header: Title 'Журналы' + Year Dropdown */}
+            {/* Header: Title 'Журналы групп' + Year Dropdown */}
             <div className="flex items-center justify-between gap-2 border-b border-zinc-800/80 pb-2.5">
               <div className="flex items-center gap-2">
                 <BookOpen className="w-4 h-4 text-zinc-300" />
-                <h3 className="font-bold text-white text-sm">Журналы</h3>
+                <h3 className="font-bold text-white text-sm">Журналы групп</h3>
               </div>
 
               <div className="relative">
@@ -909,31 +1068,31 @@ export function GradesMatrixClient({
               </div>
             </div>
 
-            {/* Search Input for Groups & Students */}
+            {/* Search Input for Groups */}
             <div className="relative">
               <Search className="w-3.5 h-3.5 text-zinc-500 absolute left-2.5 top-2.5" />
               <input
                 type="text"
                 value={groupSearchQuery}
                 onChange={e => setGroupSearchQuery(e.target.value)}
-                placeholder="Поиск по группам и студентам..."
+                placeholder="Поиск по группам..."
                 className="w-full bg-zinc-900/90 border border-zinc-800 text-zinc-200 pl-8 pr-3 py-1.5 rounded text-xs placeholder:text-zinc-500 focus:outline-none focus:border-zinc-600 font-mono"
               />
             </div>
 
-            {/* SECTION 1: Groups Selector (Pill List matching screenshot) */}
+            {/* Groups Selector (Pill List matching screenshot) */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-[11px] text-zinc-400 px-1 font-bold uppercase tracking-wider">
                 <span>Группы:</span>
                 <span className="text-zinc-500 font-normal">{availableGroups.length}</span>
               </div>
 
-              <div className="space-y-1.5 max-h-[190px] overflow-y-auto pr-1">
+              <div className="space-y-1.5 max-h-[calc(100vh-260px)] min-h-[300px] overflow-y-auto pr-1">
                 {/* Option: Все группы (Сводная ведомость) */}
                 <button
                   type="button"
                   onClick={() => setSelectedGroup('ALL')}
-                  className={`w-full text-left p-2 rounded transition cursor-pointer text-xs ${
+                  className={`w-full text-left p-2.5 rounded transition cursor-pointer text-xs ${
                     selectedGroup === 'ALL'
                       ? 'bg-[#1e3a5f] border border-[#3b82f6] text-white font-bold shadow-[0_0_10px_rgba(30,58,95,0.6)]'
                       : 'bg-zinc-900/90 hover:bg-zinc-800/90 text-zinc-300 border border-zinc-800'
@@ -963,7 +1122,7 @@ export function GradesMatrixClient({
                       key={grp}
                       type="button"
                       onClick={() => setSelectedGroup(grp)}
-                      className={`w-full text-left p-2 rounded transition cursor-pointer text-xs ${
+                      className={`w-full text-left p-2.5 rounded transition cursor-pointer text-xs ${
                         isSelected
                           ? 'bg-[#1e3a5f] border border-[#3b82f6] text-white font-bold shadow-[0_0_10px_rgba(30,58,95,0.6)]'
                           : 'bg-zinc-900/90 hover:bg-zinc-800/90 text-zinc-300 border border-zinc-800'
@@ -988,65 +1147,6 @@ export function GradesMatrixClient({
                     </button>
                   );
                 })}
-              </div>
-            </div>
-
-            {/* SECTION 2: Students of the selected group / journal */}
-            <div className="space-y-2 pt-2.5 border-t border-zinc-800/80">
-              <div className="flex items-center justify-between text-[11px] px-1">
-                <span className="text-zinc-200 font-bold uppercase tracking-wider flex items-center gap-1.5">
-                  <Users className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Студенты {selectedGroup === 'ALL' ? '' : `(${selectedGroup})`}</span>
-                </span>
-                <span className="text-zinc-400 font-bold">{sidebarStudents.length} чел.</span>
-              </div>
-
-              <div className="space-y-1.5 max-h-[calc(100vh-450px)] min-h-[220px] overflow-y-auto pr-1">
-                {sidebarStudents.length === 0 ? (
-                  <div className="text-center text-zinc-500 text-[11px] py-8">
-                    Студентов в этой группе не найдено
-                  </div>
-                ) : (
-                  sidebarStudents.map(student => {
-                    const pendingForStudent = studentPendingCount(student.id);
-                    const isHighlighted = highlightedStudentId === student.id;
-
-                    return (
-                      <div
-                        key={student.id}
-                        onClick={() => handleStudentClick(student.id)}
-                        className={`p-2 rounded border transition-all cursor-pointer text-xs select-none ${
-                          isHighlighted
-                            ? 'bg-emerald-950/80 border-emerald-500 text-white shadow-[0_0_12px_rgba(16,185,129,0.3)] ring-1 ring-emerald-500'
-                            : 'bg-zinc-900/80 hover:bg-zinc-800/90 border-zinc-800 text-zinc-200'
-                        }`}
-                      >
-                        <div className="flex items-start justify-between gap-1.5">
-                          <div className="font-bold truncate text-[11px] text-white hover:text-emerald-300 transition">
-                            {student.full_name}
-                          </div>
-                          <span className="text-emerald-400 font-bold text-[11px] shrink-0">
-                            {student.total_score} б.
-                          </span>
-                        </div>
-
-                        <div className="flex items-center justify-between text-[10px] text-zinc-400 mt-1">
-                          <span>{student.group_name}</span>
-                          <span className="text-zinc-300 font-semibold">
-                            {student.passed_count}/32 сдано
-                          </span>
-                        </div>
-
-                        {pendingForStudent > 0 && (
-                          <div className="mt-1 pt-1 border-t border-zinc-800/60 flex items-center gap-1 text-[10px] text-yellow-300 font-bold">
-                            <Clock className="w-3 h-3 text-yellow-400" />
-                            <span>{pendingForStudent} на проверке</span>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })
-                )}
               </div>
             </div>
           </aside>
