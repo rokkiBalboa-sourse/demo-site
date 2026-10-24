@@ -10,6 +10,7 @@ import {
   StudentWithStats,
 } from './types';
 import { MODULES_LIST, TASKS_DATA } from './tasks-data';
+import { hashPassword } from './security';
 
 // Initial Seed Users
 const INITIAL_USERS: User[] = [
@@ -184,7 +185,11 @@ function ensureDataFile(): LocalStore {
     const admin = users.find(u => u.role === 'admin');
     if (admin) {
       if (envAdminUser) admin.username = envAdminUser;
-      if (envAdminPass) admin.password_hash = envAdminPass;
+      if (envAdminPass) {
+        admin.password_hash = envAdminPass.startsWith('scrypt$')
+          ? envAdminPass
+          : hashPassword(envAdminPass);
+      }
       if (envAdminName) admin.full_name = envAdminName;
     }
   };
@@ -342,7 +347,9 @@ export const db = {
     const newUser: User = {
       id: `usr-std-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       username: data.username.trim(),
-      password_hash: data.password_hash.trim(),
+      password_hash: data.password_hash.startsWith('scrypt$')
+        ? data.password_hash.trim()
+        : hashPassword(data.password_hash),
       full_name: data.full_name.trim(),
       group_name: data.group_name.trim(),
       role: data.role || 'student',
@@ -456,7 +463,7 @@ export const db = {
       const newUser: User = {
         id: `usr-std-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
         username,
-        password_hash: password,
+        password_hash: hashPassword(password),
         full_name: item.full_name.trim(),
         group_name: groupName,
         role: 'student',
@@ -498,17 +505,38 @@ export const db = {
       }
     }
 
-    store.users[idx] = {
-      ...store.users[idx],
-      ...updates,
-      ...(updates.username ? { username: updates.username.trim() } : {}),
-      ...(updates.full_name ? { full_name: updates.full_name.trim() } : {}),
-      ...(updates.group_name ? { group_name: updates.group_name.trim() } : {}),
-      ...(updates.password_hash ? { password_hash: updates.password_hash.trim() } : {}),
-      updated_at: new Date().toISOString(),
-    };
+    // Strict whitelist: prevent mass assignment and role escalation
+    const userToUpdate = store.users[idx];
+    if (typeof updates.username === 'string' && updates.username.trim()) {
+      userToUpdate.username = updates.username.trim();
+    }
+    if (typeof updates.full_name === 'string' && updates.full_name.trim()) {
+      userToUpdate.full_name = updates.full_name.trim();
+    }
+    if (typeof updates.group_name === 'string' && updates.group_name.trim()) {
+      userToUpdate.group_name = updates.group_name.trim();
+    }
+    if (typeof updates.is_active === 'boolean') {
+      userToUpdate.is_active = updates.is_active;
+    }
+    if (typeof updates.password_hash === 'string' && updates.password_hash.trim()) {
+      userToUpdate.password_hash = updates.password_hash.startsWith('scrypt$')
+        ? updates.password_hash.trim()
+        : hashPassword(updates.password_hash);
+    }
+    userToUpdate.updated_at = new Date().toISOString();
+
     saveStore(store);
-    return store.users[idx];
+    return userToUpdate;
+  },
+
+  async updateUserPasswordHash(id: string, hash: string): Promise<void> {
+    const store = ensureDataFile();
+    const idx = store.users.findIndex(u => u.id === id);
+    if (idx === -1) return;
+    store.users[idx].password_hash = hash;
+    store.users[idx].updated_at = new Date().toISOString();
+    saveStore(store);
   },
 
   async deleteUser(id: string): Promise<boolean> {
@@ -812,7 +840,7 @@ export const db = {
     }
 
     if (data.password && data.password.trim()) {
-      store.users[adminIndex].password_hash = data.password.trim();
+      store.users[adminIndex].password_hash = hashPassword(data.password.trim());
     }
 
     if (data.fullName && data.fullName.trim()) {

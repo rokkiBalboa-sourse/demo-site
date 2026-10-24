@@ -7,6 +7,7 @@ import {
   getSessionCookieOptions,
 } from '@/lib/auth';
 import { verifyTotpCode } from '@/lib/totp';
+import { verifyToken } from '@/lib/security';
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,13 +20,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Decode setupToken
-    let payload: { userId: string; exp: number };
-    try {
-      const decoded = Buffer.from(setupToken, 'base64').toString('utf-8');
-      payload = JSON.parse(decoded);
-    } catch {
-      return NextResponse.json({ error: 'Некорректный токен настройки 2FA' }, { status: 400 });
+    // Verify HMAC-SHA256 signature on setupToken
+    const payload = verifyToken<{ type?: string; userId: string; exp: number }>(setupToken);
+    if (
+      !payload ||
+      payload.type !== '2fa_setup' ||
+      !payload.userId ||
+      typeof payload.exp !== 'number'
+    ) {
+      return NextResponse.json(
+        { error: 'Некорректный или поддельный токен настройки 2FA' },
+        { status: 400 }
+      );
     }
 
     if (Date.now() > payload.exp) {

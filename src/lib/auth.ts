@@ -1,11 +1,12 @@
 import { cookies } from 'next/headers';
 import { db } from './db';
 import { SessionUser } from './types';
+import { signToken, verifyToken } from './security';
 
 export const SESSION_COOKIE_NAME = 'sudostudy_session';
 
 export function createSessionToken(userId: string): string {
-  return Buffer.from(JSON.stringify({ userId, timestamp: Date.now() })).toString('base64');
+  return signToken({ userId, timestamp: Date.now() });
 }
 
 export function getSessionCookieOptions() {
@@ -28,12 +29,11 @@ export async function getSession(): Promise<SessionUser | null> {
   }
 
   try {
-    // Decodes base64 payload { userId, timestamp }
-    const decoded = Buffer.from(sessionToken, 'base64').toString('utf-8');
-    const { userId } = JSON.parse(decoded);
-    if (!userId) return null;
+    // Verifies HMAC-SHA256 signature on session token
+    const payload = verifyToken<{ userId: string; timestamp?: number }>(sessionToken);
+    if (!payload || !payload.userId) return null;
 
-    const user = await db.findUserById(userId);
+    const user = await db.findUserById(payload.userId);
     if (!user || !user.is_active) return null;
 
     return {

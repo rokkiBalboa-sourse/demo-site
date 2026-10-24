@@ -72,10 +72,18 @@ export function makeContentDisposition(filename: string): string {
 
 /**
  * Escapes a cell value for CSV (delimited by semicolon for Excel compatibility).
+ * Also sanitizes against CSV Formula Injection (DDE attacks) by prefixing
+ * formula characters (=, +, -, @, \t, \r) with a single quote.
  */
 export function escapeCsvValue(val: string | number | null | undefined): string {
   if (val === null || val === undefined) return '';
-  const str = String(val);
+  let str = String(val);
+
+  // Prevent CSV Formula Injection
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'${str}`;
+  }
+
   if (str.includes(';') || str.includes('"') || str.includes('\n') || str.includes('\r')) {
     return `"${str.replace(/"/g, '""')}"`;
   }

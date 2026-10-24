@@ -15,6 +15,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Задание и вывод скрипта обязательны' }, { status: 400 });
     }
 
+    const cleanLog = String(logOutput).trim();
+    if (cleanLog.length > 512 * 1024) {
+      return NextResponse.json(
+        { error: 'Размер вывода проверки превышает допустимый лимит (512 КБ)' },
+        { status: 413 }
+      );
+    }
+
+    if (answers && typeof answers === 'object') {
+      const answersStr = JSON.stringify(answers);
+      if (answersStr.length > 64 * 1024) {
+        return NextResponse.json(
+          { error: 'Размер ответов превышает допустимый лимит (64 КБ)' },
+          { status: 413 }
+        );
+      }
+    }
+
     const task = await db.getTaskById(taskId);
     if (!task) {
       return NextResponse.json({ error: 'Задание не найдено' }, { status: 404 });
@@ -23,7 +41,7 @@ export async function POST(req: NextRequest) {
     const submission = await db.createOrUpdateSubmission({
       userId: session.id,
       taskId: task.id,
-      logOutput: String(logOutput).trim(),
+      logOutput: cleanLog,
       answers: answers || {},
     });
 
