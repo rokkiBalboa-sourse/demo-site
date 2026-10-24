@@ -647,35 +647,33 @@ export const mysqlDb = {
       };
     }
 
-    const tasks = await this.getAllTasks();
-    const now = new Date().toISOString();
+    const studentIds = targetStudents.map(s => s.id);
     let affectedCount = 0;
+    const affectedStudentsSet = new Set<string>();
+    const now = new Date().toISOString();
 
-    for (const student of targetStudents) {
-      for (const task of tasks) {
-        const existing = await this.getSubmissionByUserAndTask(student.id, task.id);
-        const subId = existing
-          ? existing.id
-          : `sub-${Date.now()}-${Math.random().toString(36).substring(2, 7)}-${task.id}`;
-        const logOutput =
-          existing?.log_output || '[АВТОМАТИЧЕСКАЯ ОЦЕНКА] Работа зачтена на 5 администратором.';
+    if (studentIds.length > 0) {
+      const placeholders = studentIds.map(() => '?').join(', ');
+      const pendingRows = await query<RowDataPacket[]>(
+        `SELECT id, user_id FROM submissions WHERE status = 'pending' AND user_id IN (${placeholders})`,
+        studentIds
+      );
+      affectedCount = pendingRows.length;
+      pendingRows.forEach(r => affectedStudentsSet.add(r.user_id));
 
+      if (affectedCount > 0) {
         await query(
-          `INSERT INTO submissions (
-            id, user_id, task_id, log_output, answers, status,
-            score, is_passed, feedback, reviewed_by, submitted_at, reviewed_at, allow_retake
-          ) VALUES (?, ?, ?, ?, '{}', 'reviewed', 5, 1, 'Зачтено на 5 (автоматически преподавателем)', ?, ?, ?, 0)
-          ON DUPLICATE KEY UPDATE
-            status = 'reviewed',
-            score = 5,
-            is_passed = 1,
-            feedback = 'Зачтено на 5 (автоматически преподавателем)',
-            reviewed_by = VALUES(reviewed_by),
-            reviewed_at = VALUES(reviewed_at),
-            allow_retake = 0`,
-          [subId, student.id, task.id, logOutput, reviewerId, now, now]
+          `UPDATE submissions
+           SET status = 'reviewed',
+               score = 5,
+               is_passed = 1,
+               feedback = 'Зачтено на 5 (массовая проверка преподавателем)',
+               reviewed_by = ?,
+               reviewed_at = ?,
+               allow_retake = 0
+           WHERE status = 'pending' AND user_id IN (${placeholders})`,
+          [reviewerId, now, ...studentIds]
         );
-        affectedCount++;
       }
     }
 
@@ -684,7 +682,7 @@ export const mysqlDb = {
 
     return {
       count: affectedCount,
-      studentsCount: targetStudents.length,
+      studentsCount: affectedStudentsSet.size,
       updatedSubmissions: allSubs,
       updatedStudents: allStudentsWithStats,
     };

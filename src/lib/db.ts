@@ -764,44 +764,21 @@ const localJsonDb = {
       targetStudents = targetStudents.filter(u => u.group_name === options.groupId);
     }
 
+    const targetStudentIds = new Set(targetStudents.map(u => u.id));
     let affectedCount = 0;
+    const affectedStudentsSet = new Set<string>();
 
-    for (const student of targetStudents) {
-      for (const task of tasks) {
-        const existingIndex = store.submissions.findIndex(
-          s => s.user_id === student.id && s.task_id === task.id
-        );
-
-        if (existingIndex !== -1) {
-          store.submissions[existingIndex] = {
-            ...store.submissions[existingIndex],
-            status: 'reviewed',
-            score: 5,
-            is_passed: true,
-            feedback: 'Зачтено на 5 (автоматически преподавателем)',
-            reviewed_by: reviewerId,
-            reviewed_at: now,
-            allow_retake: false,
-          };
-        } else {
-          const newSub: Submission = {
-            id: `sub-${Date.now()}-${Math.random().toString(36).substring(2, 7)}-${task.id}`,
-            user_id: student.id,
-            task_id: task.id,
-            log_output: 'Автоматический зачёт задания преподавателем',
-            answers: {},
-            status: 'reviewed',
-            score: 5,
-            is_passed: true,
-            feedback: 'Зачтено на 5 (автоматически преподавателем)',
-            reviewed_by: reviewerId,
-            submitted_at: now,
-            reviewed_at: now,
-            allow_retake: false,
-          };
-          store.submissions.push(newSub);
-        }
+    for (const sub of store.submissions) {
+      if (targetStudentIds.has(sub.user_id) && sub.status === 'pending') {
+        sub.status = 'reviewed';
+        sub.score = 5;
+        sub.is_passed = true;
+        sub.feedback = 'Зачтено на 5 (массовая проверка преподавателем)';
+        sub.reviewed_by = reviewerId;
+        sub.reviewed_at = now;
+        sub.allow_retake = false;
         affectedCount++;
+        affectedStudentsSet.add(sub.user_id);
       }
     }
 
@@ -812,7 +789,7 @@ const localJsonDb = {
 
     return {
       count: affectedCount,
-      studentsCount: targetStudents.length,
+      studentsCount: affectedStudentsSet.size,
       updatedSubmissions,
       updatedStudents,
     };

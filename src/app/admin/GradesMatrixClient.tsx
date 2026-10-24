@@ -22,6 +22,12 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Check,
+  Save,
+  ArrowRight,
   Users,
   CheckCheck,
   Loader2,
@@ -34,6 +40,392 @@ interface GradesMatrixClientProps {
   submissions: SubmissionWithDetails[];
   modules: ModuleInfo[];
   availableGroups: string[];
+}
+
+interface SubmissionQuickReviewModalProps {
+  submission: SubmissionWithDetails;
+  studentSubmissions: SubmissionWithDetails[];
+  onClose: () => void;
+  onNavigateToSub: (sub: SubmissionWithDetails) => void;
+  onOpenBulkModal: (studentId: string) => void;
+  onUpdateSubmission: (updatedSub: SubmissionWithDetails) => void;
+}
+
+function SubmissionQuickReviewModal({
+  submission,
+  studentSubmissions,
+  onClose,
+  onNavigateToSub,
+  onOpenBulkModal,
+  onUpdateSubmission,
+}: SubmissionQuickReviewModalProps) {
+  const [reviewScore, setReviewScore] = useState<number | null>(
+    submission.score !== null ? Number(submission.score) : 5
+  );
+  const [reviewIsPassed, setReviewIsPassed] = useState<boolean>(
+    submission.is_passed !== null ? Boolean(submission.is_passed) : true
+  );
+  const [reviewFeedback, setReviewFeedback] = useState<string>(submission.feedback || '');
+  const [reviewAllowRetake, setReviewAllowRetake] = useState<boolean>(
+    Boolean(submission.allow_retake)
+  );
+  const [isSavingReview, setIsSavingReview] = useState<boolean>(false);
+  const [reviewSuccessMsg, setReviewSuccessMsg] = useState<string | null>(null);
+  const [logCopied, setLogCopied] = useState<boolean>(false);
+
+  const currentSubIndex = studentSubmissions.findIndex(s => s.id === submission.id);
+  const prevStudentSub = currentSubIndex > 0 ? studentSubmissions[currentSubIndex - 1] : null;
+  const nextStudentSub =
+    currentSubIndex !== -1 && currentSubIndex < studentSubmissions.length - 1
+      ? studentSubmissions[currentSubIndex + 1]
+      : null;
+
+  const handleSaveReview = async (andNext: boolean = false) => {
+    setIsSavingReview(true);
+    setReviewSuccessMsg(null);
+    try {
+      const res = await fetch('/api/admin/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          submissionId: submission.id,
+          score: reviewScore,
+          isPassed: reviewIsPassed,
+          feedback: reviewFeedback,
+          allowRetake: reviewAllowRetake,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Ошибка при сохранении оценки');
+
+      const updatedSub = data.submission as SubmissionWithDetails;
+      onUpdateSubmission(updatedSub);
+      setReviewSuccessMsg('Оценка успешно сохранена!');
+      setTimeout(() => setReviewSuccessMsg(null), 3000);
+
+      if (andNext && nextStudentSub) {
+        onNavigateToSub(nextStudentSub);
+      }
+    } catch (err: unknown) {
+      alert(err instanceof Error ? err.message : 'Ошибка сохранения оценки');
+    } finally {
+      setIsSavingReview(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
+      <div className="bg-zinc-900 border border-zinc-700 max-w-3xl w-full p-5 sm:p-6 shadow-2xl space-y-4 font-mono text-xs animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] flex flex-col rounded">
+        {/* Modal Header */}
+        <div className="flex items-start justify-between border-b border-zinc-800 pb-3 shrink-0">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5">
+                Проверка отчёта
+              </span>
+              <span className="text-zinc-500 text-[10px]">
+                {submission.task_module?.toUpperCase()} • Задание №{submission.task_number}
+              </span>
+              {submission.status === 'pending' && (
+                <span className="text-[10px] px-2 py-0.5 rounded bg-amber-950/80 text-amber-300 border border-amber-500/40 animate-pulse">
+                  ⏳ На проверке
+                </span>
+              )}
+              {submission.status === 'reviewed' && submission.is_passed && (
+                <span className="text-[10px] px-2 py-0.5 rounded bg-emerald-950/80 text-emerald-300 border border-emerald-500/40">
+                  ✓ Зачтено ({submission.score} б.)
+                </span>
+              )}
+              {submission.status === 'reviewed' && !submission.is_passed && (
+                <span className="text-[10px] px-2 py-0.5 rounded bg-rose-950/80 text-rose-300 border border-rose-500/40">
+                  ✗ Не зачтено
+                </span>
+              )}
+            </div>
+            <h3 className="text-base font-bold text-white flex items-center gap-2">
+              <span>{submission.student_name}</span>
+              <span className="text-xs text-zinc-400 font-normal">
+                (Группа: <strong className="text-zinc-200">{submission.student_group}</strong>)
+              </span>
+            </h3>
+            <p className="text-zinc-300 text-xs">{submission.task_title}</p>
+          </div>
+
+          {/* Top Navigation & Close */}
+          <div className="flex items-center gap-2 shrink-0">
+            {studentSubmissions.length > 1 && (
+              <div className="flex items-center gap-1 bg-zinc-950 border border-zinc-800 px-2 py-1 text-[11px] text-zinc-400 rounded">
+                <button
+                  type="button"
+                  disabled={!prevStudentSub}
+                  onClick={() => prevStudentSub && onNavigateToSub(prevStudentSub)}
+                  className="hover:text-white disabled:opacity-30 disabled:hover:text-zinc-400 p-0.5 cursor-pointer"
+                  title="Предыдущая работа этого студента"
+                >
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                </button>
+                <span>
+                  {currentSubIndex !== -1 ? currentSubIndex + 1 : '?'}/{studentSubmissions.length}
+                </span>
+                <button
+                  type="button"
+                  disabled={!nextStudentSub}
+                  onClick={() => nextStudentSub && onNavigateToSub(nextStudentSub)}
+                  className="hover:text-white disabled:opacity-30 disabled:hover:text-zinc-400 p-0.5 cursor-pointer"
+                  title="Следующая работа этого студента"
+                >
+                  <ChevronRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={onClose}
+              className="text-zinc-400 hover:text-white p-1 cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+
+        {/* Scrollable Content: Report details + Review form */}
+        <div className="overflow-y-auto space-y-4 pr-1 flex-1">
+          {reviewSuccessMsg && (
+            <div className="p-2.5 bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 text-xs flex items-center gap-2 rounded">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
+              <span>{reviewSuccessMsg}</span>
+            </div>
+          )}
+
+          {/* Student Report Terminal Output */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-zinc-400 uppercase font-bold flex items-center gap-1.5">
+                <span>Текст отчёта / Лог выполнения</span>
+                <span className="text-[10px] text-zinc-500 font-normal">
+                  (сдан {new Date(submission.submitted_at).toLocaleString('ru-RU')})
+                </span>
+              </span>
+              {submission.log_output && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(submission.log_output);
+                    setLogCopied(true);
+                    setTimeout(() => setLogCopied(false), 2000);
+                  }}
+                  className="text-zinc-400 hover:text-zinc-200 flex items-center gap-1 text-[10px] cursor-pointer"
+                >
+                  {logCopied ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-400" />
+                      <span className="text-emerald-400">Скопировано</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>Скопировать</span>
+                    </>
+                  )}
+                </button>
+              )}
+            </div>
+
+            <div className="bg-black border border-zinc-800 p-3 text-[11px] font-mono text-zinc-300 rounded max-h-56 overflow-y-auto whitespace-pre-wrap select-text leading-relaxed">
+              {submission.log_output || (
+                <span className="text-zinc-600 italic">Студент не прикрепил лог вывода</span>
+              )}
+            </div>
+          </div>
+
+          {/* Answers to questions if present */}
+          {submission.answers && Object.keys(submission.answers).length > 0 && (
+            <div className="space-y-1.5 bg-zinc-950 p-3 border border-zinc-800 rounded">
+              <span className="text-zinc-400 uppercase font-bold text-[11px] block">
+                Ответы студента на контрольные вопросы:
+              </span>
+              <div className="space-y-2 mt-2">
+                {Object.entries(submission.answers).map(([key, val]) => (
+                  <div key={key} className="text-xs border-l-2 border-emerald-500/50 pl-2">
+                    <span className="text-zinc-400 block text-[10px] uppercase font-bold">
+                      {key}:
+                    </span>
+                    <span className="text-zinc-100">{String(val)}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Grading & Feedback Form */}
+          <div className="bg-zinc-950/80 border border-zinc-800 p-4 space-y-3.5 rounded">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              {/* Score Selector */}
+              <div>
+                <label className="block text-[11px] text-zinc-400 uppercase font-bold mb-1.5">
+                  Оценка (балл):
+                </label>
+                <div className="flex items-center gap-1.5">
+                  {[1, 2, 3, 4, 5].map(scoreVal => (
+                    <button
+                      key={scoreVal}
+                      type="button"
+                      onClick={() => {
+                        setReviewScore(scoreVal);
+                        if (scoreVal >= 3) setReviewIsPassed(true);
+                        if (scoreVal < 3) setReviewIsPassed(false);
+                      }}
+                      className={`w-8 h-8 font-bold text-xs rounded transition flex items-center justify-center cursor-pointer ${
+                        reviewScore === scoreVal
+                          ? scoreVal >= 4
+                            ? 'bg-emerald-600 text-white shadow-[0_0_10px_rgba(16,185,129,0.4)]'
+                            : scoreVal === 3
+                              ? 'bg-amber-600 text-white shadow-[0_0_10px_rgba(245,158,11,0.4)]'
+                              : 'bg-rose-600 text-white shadow-[0_0_10px_rgba(225,29,72,0.4)]'
+                          : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:border-zinc-600'
+                      }`}
+                    >
+                      {scoreVal}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Verdict Toggle */}
+              <div className="space-y-1.5">
+                <label className="block text-[11px] text-zinc-400 uppercase font-bold mb-1.5">
+                  Вердикт:
+                </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setReviewIsPassed(true)}
+                    className={`h-8 px-3 text-xs font-bold rounded flex items-center gap-1 transition cursor-pointer ${
+                      reviewIsPassed
+                        ? 'bg-emerald-950 border border-emerald-500 text-emerald-300'
+                        : 'bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    ✓ Зачтено
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setReviewIsPassed(false)}
+                    className={`h-8 px-3 text-xs font-bold rounded flex items-center gap-1 transition cursor-pointer ${
+                      !reviewIsPassed
+                        ? 'bg-rose-950 border border-rose-500 text-rose-300'
+                        : 'bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                    }`}
+                  >
+                    ✗ Не зачтено
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Retake checkbox */}
+            <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={reviewAllowRetake}
+                onChange={e => setReviewAllowRetake(e.target.checked)}
+                className="cursor-pointer"
+              />
+              <span>Разрешить студенту повторную сдачу (пересдачу) задания</span>
+            </label>
+
+            {/* Feedback Comment */}
+            <div>
+              <label className="block text-[11px] text-zinc-400 uppercase font-bold mb-1">
+                Комментарий / Рецензия преподавателя:
+              </label>
+              <textarea
+                rows={2}
+                value={reviewFeedback}
+                onChange={e => setReviewFeedback(e.target.value)}
+                placeholder="Например: Отличная работа! Все сервисы настроены верно..."
+                className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 p-2 text-xs font-mono focus:outline-none focus:border-emerald-500 rounded resize-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Modal Footer Actions */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-zinc-800 gap-2 shrink-0">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              isLoading={isSavingReview}
+              onClick={() => handleSaveReview(false)}
+              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-1.5"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Сохранить оценку</span>
+            </Button>
+
+            {nextStudentSub && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={isSavingReview}
+                onClick={() => handleSaveReview(true)}
+                className="border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 flex items-center gap-1.5"
+              >
+                <span>Сохранить и след.</span>
+                <ArrowRight className="w-3.5 h-3.5 text-cyan-400" />
+              </Button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 flex-wrap">
+            {nextStudentSub && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => onNavigateToSub(nextStudentSub)}
+                className="border-zinc-700 text-zinc-300 hover:text-white flex items-center gap-1"
+              >
+                <span>След. работа студента</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </Button>
+            )}
+
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => onOpenBulkModal(submission.user_id)}
+              className="border-emerald-500/40 text-emerald-300 hover:bg-emerald-950/60 flex items-center gap-1"
+            >
+              <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Закрыть работы на 5</span>
+            </Button>
+
+            <Link
+              href={`/admin/submissions/${submission.id}`}
+              className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-200 transition underline underline-offset-4 px-1"
+            >
+              <span>Полная страница</span>
+              <ExternalLink className="w-3 h-3" />
+            </Link>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={onClose}
+            >
+              Закрыть
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function GradesMatrixClient({
@@ -75,8 +467,21 @@ export function GradesMatrixClient({
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [highlightedStudentId, setHighlightedStudentId] = useState<string | null>(null);
 
-  // Selected submission modal for instant inspection
+  // Selected submission modal for instant inspection & grading
   const [selectedSub, setSelectedSub] = useState<SubmissionWithDetails | null>(null);
+
+  // All submissions of the currently selected student
+  const studentSubmissions = useMemo(() => {
+    if (!selectedSub) return [];
+    return currentSubmissions
+      .filter(s => s.user_id === selectedSub.user_id)
+      .sort((a, b) => {
+        if (a.task_module_id !== b.task_module_id) {
+          return a.task_module_id.localeCompare(b.task_module_id);
+        }
+        return (a.task_number || 0) - (b.task_number || 0);
+      });
+  }, [currentSubmissions, selectedSub?.user_id]);
 
   const highlightedStudent = useMemo(() => {
     const targetId = bulkTargetStudentId || highlightedStudentId;
@@ -416,7 +821,7 @@ export function GradesMatrixClient({
                 setIsBulkModalOpen(true);
               }}
               className="px-2.5 py-1.5 border border-emerald-500/80 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 text-xs font-mono font-bold flex items-center gap-1.5 rounded transition cursor-pointer shadow-[0_0_12px_rgba(16,185,129,0.25)] hover:shadow-[0_0_16px_rgba(16,185,129,0.4)]"
-              title="Закрыть все 32 задания на оценку 5"
+              title="Закрыть работы на проверке на оценку 5"
             >
               <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span>Закрыть все на 5</span>
@@ -632,7 +1037,7 @@ export function GradesMatrixClient({
                                 setIsBulkModalOpen(true);
                               }}
                               className="px-1 py-0.5 rounded bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/50 text-emerald-300 text-[9px] font-bold flex items-center gap-0.5 transition cursor-pointer"
-                              title="Закрыть все 32 задания студента на 5"
+                              title="Закрыть работы студента на проверке на 5"
                             >
                               <CheckCheck className="w-2.5 h-2.5" />
                               <span>Все на 5</span>
@@ -1150,113 +1555,33 @@ export function GradesMatrixClient({
         </div>
       </div>
 
-      {/* QUICK PREVIEW & REVIEW MODAL */}
+      {/* QUICK PREVIEW & FULL REVIEW MODAL */}
       {selectedSub && (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-700 max-w-lg w-full p-6 shadow-2xl space-y-4 font-mono text-xs animate-in fade-in zoom-in-95 duration-150">
-            <div className="flex items-start justify-between border-b border-zinc-800 pb-3">
-              <div>
-                <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5">
-                  Быстрый просмотр оценки
-                </span>
-                <h3 className="text-base font-bold text-white mt-1.5">
-                  {selectedSub.student_name}
-                </h3>
-                <p className="text-zinc-400 text-xs">
-                  Группа: <strong className="text-zinc-200">{selectedSub.student_group}</strong>
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSelectedSub(null)}
-                className="text-zinc-400 hover:text-white p-1"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="space-y-2 text-xs">
-              <div className="bg-zinc-950 p-2.5 border border-zinc-800 space-y-0.5">
-                <span className="text-zinc-500 text-[10px] uppercase block">Задание:</span>
-                <span className="text-white font-bold">
-                  {selectedSub.task_module?.toUpperCase()} №{selectedSub.task_number}:{' '}
-                  {selectedSub.task_title}
-                </span>
-              </div>
-
-              <div className="bg-zinc-950 p-2.5 border border-zinc-800 space-y-0.5">
-                <span className="text-zinc-500 text-[10px] uppercase block">Статус работы:</span>
-                <span className="font-bold text-white">
-                  {selectedSub.status === 'reviewed' && selectedSub.is_passed && (
-                    <span className="text-emerald-400">✓ Зачтено</span>
-                  )}
-                  {selectedSub.status === 'reviewed' && !selectedSub.is_passed && (
-                    <span className="text-rose-400">✗ Не зачтено</span>
-                  )}
-                  {selectedSub.status === 'pending' && (
-                    <span className="text-amber-400">⏳ Ожидает проверки преподавателя</span>
-                  )}
-                  {selectedSub.status === 'rejected' && (
-                    <span className="text-rose-400">✗ Отправлено на доработку</span>
-                  )}
-                </span>
-              </div>
-
-              <div className="bg-zinc-950 p-2.5 border border-zinc-800 space-y-0.5">
-                <span className="text-zinc-500 text-[10px] uppercase block">Оценка:</span>
-                <span className="font-bold text-emerald-400 text-sm">
-                  {selectedSub.score !== null
-                    ? `${selectedSub.score} из 5 баллов`
-                    : 'Не выставлена'}
-                </span>
-              </div>
-
-              {selectedSub.feedback && (
-                <div className="bg-zinc-950 p-2.5 border border-zinc-800 space-y-0.5">
-                  <span className="text-zinc-500 text-[10px] uppercase block">
-                    Комментарий преподавателя:
-                  </span>
-                  <p className="text-zinc-300 italic">{selectedSub.feedback}</p>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between pt-2 border-t border-zinc-800 gap-2 flex-wrap">
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setBulkScope('student');
-                  setBulkTargetStudentId(selectedSub.user_id);
-                  setIsBulkModalOpen(true);
-                }}
-                className="text-xs border-emerald-500/50 text-emerald-300 hover:bg-emerald-950/60 flex items-center gap-1.5"
-              >
-                <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Закрыть все 32 работы студента на 5</span>
-              </Button>
-
-              <div className="flex items-center gap-2">
-                <Link
-                  href={`/admin/submissions/${selectedSub.id}`}
-                  className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition underline underline-offset-4"
-                >
-                  <span>Проверка отчета</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </Link>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={() => setSelectedSub(null)}
-                  className="text-xs"
-                >
-                  Закрыть
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <SubmissionQuickReviewModal
+          key={selectedSub.id}
+          submission={selectedSub}
+          studentSubmissions={studentSubmissions}
+          onClose={() => setSelectedSub(null)}
+          onNavigateToSub={sub => setSelectedSub(sub)}
+          onOpenBulkModal={studentId => {
+            setBulkScope('student');
+            setBulkTargetStudentId(studentId);
+            setIsBulkModalOpen(true);
+          }}
+          onUpdateSubmission={updatedSub => {
+            setOverrideSubmissions(prev => {
+              const list = prev ? [...prev] : [...submissions];
+              const idx = list.findIndex(s => s.id === updatedSub.id);
+              if (idx !== -1) {
+                list[idx] = { ...list[idx], ...updatedSub };
+              }
+              return list;
+            });
+            setSelectedSub(prev =>
+              prev && prev.id === updatedSub.id ? { ...prev, ...updatedSub } : prev
+            );
+          }}
+        />
       )}
 
       {/* BULK GRADE 5 MODAL */}
@@ -1269,8 +1594,8 @@ export function GradesMatrixClient({
                   <CheckCheck className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-bold text-white">Закрытие всех работ на «5»</h3>
-                  <p className="text-[11px] text-zinc-400">Массовое выставление оценки «Отлично»</p>
+                  <h3 className="text-sm font-bold text-white">Закрытие работ на «5»</h3>
+                  <p className="text-[11px] text-zinc-400">Только работы, ожидающие проверки</p>
                 </div>
               </div>
               <button
@@ -1309,7 +1634,7 @@ export function GradesMatrixClient({
                         <span className="text-emerald-400">{selectedGroup || 'Не выбрана'}</span>
                       </div>
                       <div className="text-[10px] text-zinc-400">
-                        Все 32 задания у каждого студента группы {selectedGroup} получат оценку 5
+                        Все сданные работы на проверке у студентов группы {selectedGroup} получат оценку 5
                       </div>
                     </div>
                   </label>
@@ -1326,7 +1651,7 @@ export function GradesMatrixClient({
                     <div>
                       <div className="font-bold text-zinc-200">Для всех групп и студентов</div>
                       <div className="text-[10px] text-zinc-400">
-                        Закрыть абсолютно все работы всех {currentStudents.length} студентов базы
+                        Закрыть все работы на проверке у всех {currentStudents.length} студентов базы
                       </div>
                     </div>
                   </label>
@@ -1347,8 +1672,7 @@ export function GradesMatrixClient({
                           <span className="text-emerald-400">{highlightedStudent.full_name}</span>
                         </div>
                         <div className="text-[10px] text-zinc-400">
-                          Закрыть все 32 задания на 5 только данному студенту (
-                          {highlightedStudent.group_name})
+                          Закрыть все сданные работы на проверке только данному студенту ({highlightedStudent.group_name})
                         </div>
                       </div>
                     </label>
@@ -1358,8 +1682,7 @@ export function GradesMatrixClient({
                 <div className="p-2.5 bg-amber-950/40 border border-amber-500/40 text-amber-200 text-[11px] rounded flex items-start gap-2">
                   <Award className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                   <span>
-                    Все 32 задания выбранных студентов получат статус «Зачтено», максимальный балл 5
-                    и автоматическую рецензию преподавателя.
+                    Будут оценены <strong>только работы в статусе «Ожидает проверки»</strong>. Несданные задания не затрагиваются, чтобы студенты без сданных отчётов не получили оценку.
                   </span>
                 </div>
 
