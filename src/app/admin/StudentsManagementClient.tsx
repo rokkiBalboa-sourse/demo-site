@@ -399,12 +399,12 @@ export function StudentsManagementClient({
   return (
     <div className="space-y-6">
       {/* Top Action Bar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-zinc-900/60 border border-zinc-800 p-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-zinc-900/60 border border-zinc-800 p-3">
         <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="primary"
             onClick={openAddModal}
-            className="flex items-center gap-1.5 text-xs font-mono"
+            className="h-8 px-3 text-xs font-mono flex items-center gap-1.5"
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span>Добавить студента</span>
@@ -418,7 +418,7 @@ export function StudentsManagementClient({
               setFormError(null);
               setIsBulkModalOpen(true);
             }}
-            className="flex items-center gap-1.5 text-xs font-mono border-zinc-700 hover:border-zinc-500"
+            className="h-8 px-3 text-xs font-mono flex items-center gap-1.5 border-zinc-700 hover:border-zinc-500 text-zinc-200"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
             <span>Массовый импорт</span>
@@ -427,7 +427,7 @@ export function StudentsManagementClient({
           <a
             href={`/api/admin/students/export-csv?group=${encodeURIComponent(selectedGroup)}`}
             download
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 text-xs font-mono font-medium transition-colors"
+            className="h-8 px-3 inline-flex items-center gap-1.5 border border-zinc-700 bg-zinc-800 text-zinc-100 hover:bg-zinc-700 text-xs font-mono font-medium transition-colors select-none"
           >
             <Download className="w-3.5 h-3.5 text-amber-400" />
             <span>
@@ -437,14 +437,14 @@ export function StudentsManagementClient({
         </div>
 
         {/* Search and Group Filter */}
-        <div className="flex items-center gap-2.5 flex-wrap">
+        <div className="flex items-center gap-2 flex-wrap">
           {/* Group Dropdown */}
           <div className="flex items-center gap-1.5 font-mono text-xs">
             <span className="text-zinc-500 text-[11px] uppercase">Группа:</span>
             <select
               value={selectedGroup}
               onChange={e => setSelectedGroup(e.target.value)}
-              className="bg-zinc-950 border border-zinc-800 text-zinc-200 px-2.5 py-1 text-xs focus:outline-none focus:border-zinc-500 font-mono"
+              className="h-8 bg-zinc-950 border border-zinc-800 text-zinc-200 px-2.5 text-xs focus:outline-none focus:border-zinc-500 font-mono cursor-pointer"
             >
               <option value="ALL">Все группы ({students.length})</option>
               {currentGroups.map(g => (
@@ -457,13 +457,13 @@ export function StudentsManagementClient({
 
           {/* Search Box */}
           <div className="relative min-w-[220px]">
-            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+            <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
             <input
               type="text"
               placeholder="Поиск по ФИО или логину..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 pl-8 pr-3 py-1 text-xs focus:outline-none focus:border-zinc-500 font-mono"
+              className="w-full h-8 bg-zinc-950 border border-zinc-800 text-zinc-200 pl-8 pr-7 text-xs focus:outline-none focus:border-zinc-500 font-mono"
             />
             {searchQuery && (
               <button

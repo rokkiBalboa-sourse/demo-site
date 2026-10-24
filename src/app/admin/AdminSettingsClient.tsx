@@ -261,9 +261,9 @@ export function AdminSettingsClient() {
               size="sm"
               onClick={handleExportBackup}
               isLoading={isExporting}
-              className="h-7 text-[11px] px-2.5 border-zinc-700 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 flex items-center gap-1.5"
+              className="h-8 text-xs px-3 border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 flex items-center gap-1.5"
             >
-              <Download className="w-3 h-3 text-emerald-400" />
+              <Download className="w-3.5 h-3.5 text-emerald-400" />
               <span>Экспорт JSON</span>
             </Button>
             <Button
@@ -272,9 +272,9 @@ export function AdminSettingsClient() {
               size="sm"
               onClick={() => fileInputRef.current?.click()}
               isLoading={isImporting}
-              className="h-7 text-[11px] px-2.5 border-zinc-700 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 flex items-center gap-1.5"
+              className="h-8 text-xs px-3 border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 flex items-center gap-1.5"
             >
-              <Upload className="w-3 h-3 text-cyan-400" />
+              <Upload className="w-3.5 h-3.5 text-cyan-400" />
               <span>Импорт JSON</span>
             </Button>
           </div>
@@ -464,7 +464,7 @@ export function AdminSettingsClient() {
               type="submit"
               size="sm"
               isLoading={isLoadingProfile}
-              className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-3"
+              className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-4"
             >
               Сохранить
             </Button>
@@ -475,9 +475,9 @@ export function AdminSettingsClient() {
                 size="sm"
                 onClick={handleResetAdmin2FA}
                 isLoading={isResetting2FA}
-                className="h-7 text-xs border-amber-800/60 text-amber-400 hover:bg-amber-950/40 px-3 flex items-center gap-1.5"
+                className="h-8 text-xs border-amber-800/60 text-amber-400 hover:bg-amber-950/40 px-3 flex items-center gap-1.5"
               >
-                <RefreshCw className="w-3 h-3" />
+                <RefreshCw className="w-3.5 h-3.5" />
                 <span>Сбросить 2FA</span>
               </Button>
             )}

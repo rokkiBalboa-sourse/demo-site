@@ -193,9 +193,9 @@ export function AdminDashboardClient({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 text-[11px] px-2.5 flex items-center gap-1.5 border-zinc-700 bg-zinc-900"
+                    className="h-8 text-xs px-3 flex items-center gap-1.5 border-zinc-700 bg-zinc-900"
                   >
-                    <Download className="w-3 h-3 text-emerald-400" />
+                    <Download className="w-3.5 h-3.5 text-emerald-400" />
                     <span>Ведомость (CSV)</span>
                   </Button>
                 </a>
@@ -203,9 +203,9 @@ export function AdminDashboardClient({
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-7 text-[11px] px-2.5 flex items-center gap-1.5 border-zinc-700 bg-zinc-900"
+                    className="h-8 text-xs px-3 flex items-center gap-1.5 border-zinc-700 bg-zinc-900"
                   >
-                    <FileSpreadsheet className="w-3 h-3 text-cyan-400" />
+                    <FileSpreadsheet className="w-3.5 h-3.5 text-cyan-400" />
                     <span>Журнал (CSV)</span>
                   </Button>
                 </a>
