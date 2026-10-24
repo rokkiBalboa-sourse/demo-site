@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { SubmissionWithDetails, Task, ModuleInfo, StudentWithStats } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
+import { TerminalLog } from '@/components/ui/TerminalLog';
 import {
   Download,
   Search,
@@ -71,7 +72,6 @@ function SubmissionQuickReviewModal({
   );
   const [isSavingReview, setIsSavingReview] = useState<boolean>(false);
   const [reviewSuccessMsg, setReviewSuccessMsg] = useState<string | null>(null);
-  const [logCopied, setLogCopied] = useState<boolean>(false);
 
   const currentSubIndex = studentSubmissions.findIndex(s => s.id === submission.id);
   const prevStudentSub = currentSubIndex > 0 ? studentSubmissions[currentSubIndex - 1] : null;
@@ -199,45 +199,29 @@ function SubmissionQuickReviewModal({
             </div>
           )}
 
-          {/* Student Report Terminal Output */}
+          {/* Student Report Terminal Output with syntax highlighting & line numbers */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-[11px]">
               <span className="text-zinc-400 uppercase font-bold flex items-center gap-1.5">
-                <span>Текст отчёта / Лог выполнения</span>
+                <span>Сырой вывод скрипта проверки (Raw Log)</span>
                 <span className="text-[10px] text-zinc-500 font-normal">
                   (сдан {new Date(submission.submitted_at).toLocaleString('ru-RU')})
                 </span>
               </span>
-              {submission.log_output && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(submission.log_output);
-                    setLogCopied(true);
-                    setTimeout(() => setLogCopied(false), 2000);
-                  }}
-                  className="text-zinc-400 hover:text-zinc-200 flex items-center gap-1 text-[10px] cursor-pointer"
-                >
-                  {logCopied ? (
-                    <>
-                      <Check className="w-3 h-3 text-emerald-400" />
-                      <span className="text-emerald-400">Скопировано</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3 h-3" />
-                      <span>Скопировать</span>
-                    </>
-                  )}
-                </button>
-              )}
             </div>
 
-            <div className="bg-black border border-zinc-800 p-3 text-[11px] font-mono text-zinc-300 rounded max-h-56 overflow-y-auto whitespace-pre-wrap select-text leading-relaxed">
-              {submission.log_output || (
-                <span className="text-zinc-600 italic">Студент не прикрепил лог вывода</span>
-              )}
-            </div>
+            {submission.log_output ? (
+              <TerminalLog
+                content={submission.log_output}
+                maxHeight="max-h-60"
+                title={`${submission.task_slug || 'task'}-output.log`}
+                className="rounded"
+              />
+            ) : (
+              <div className="bg-zinc-950 border border-zinc-800 p-3 text-xs font-mono text-zinc-500 italic rounded">
+                Студент не прикрепил лог вывода
+              </div>
+            )}
           </div>
 
           {/* Answers to questions if present: sorted in natural order, question and answer strictly on one line */}

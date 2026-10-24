@@ -7,12 +7,14 @@ interface TerminalLogProps {
   content: string;
   maxHeight?: string;
   title?: string;
+  className?: string;
 }
 
 export function TerminalLog({
   content,
   maxHeight = 'max-h-96',
   title = 'proxmox-pve-audit.log',
+  className = '',
 }: TerminalLogProps) {
   const [copied, setCopied] = useState(false);
 
@@ -29,7 +31,7 @@ export function TerminalLog({
   const lines = (content || '').split('\n');
 
   return (
-    <div className="w-full border border-zinc-800 bg-zinc-950 text-zinc-200 rounded-none overflow-hidden font-mono">
+    <div className={`w-full border border-zinc-800 bg-zinc-950 text-zinc-200 overflow-hidden font-mono ${className}`}>
       {/* Terminal Title Bar */}
       <div className="flex items-center justify-between px-3 py-2 bg-zinc-900 border-b border-zinc-800 select-none">
         <div className="flex items-center gap-2">
