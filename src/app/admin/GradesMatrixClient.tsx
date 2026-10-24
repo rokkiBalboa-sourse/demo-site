@@ -363,24 +363,21 @@ function SubmissionQuickReviewModal({
             <button
               type="button"
               disabled={isSavingReview}
-              onClick={() => handleSaveReview(false)}
-              className="h-8.5 px-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs font-mono rounded flex items-center gap-1.5 whitespace-nowrap shadow-sm transition cursor-pointer disabled:opacity-50"
+              onClick={() => handleSaveReview(true)}
+              className="h-8.5 px-4 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs font-mono rounded flex items-center gap-1.5 whitespace-nowrap shadow-sm transition cursor-pointer disabled:opacity-50"
             >
-              <Save className="w-3.5 h-3.5" />
-              <span>Сохранить оценку</span>
+              {nextStudentSub ? (
+                <>
+                  <span>Сохранить и след.</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              ) : (
+                <>
+                  <Save className="w-3.5 h-3.5" />
+                  <span>Сохранить</span>
+                </>
+              )}
             </button>
-
-            {nextStudentSub && (
-              <button
-                type="button"
-                disabled={isSavingReview}
-                onClick={() => handleSaveReview(true)}
-                className="h-8.5 px-3.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-cyan-300 hover:text-cyan-200 font-bold text-xs font-mono rounded flex items-center gap-1.5 whitespace-nowrap transition cursor-pointer disabled:opacity-50"
-              >
-                <span>Сохранить и след.</span>
-                <ArrowRight className="w-3.5 h-3.5 text-cyan-400" />
-              </button>
-            )}
           </div>
 
           <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
