@@ -1,14 +1,6 @@
 import fs from 'fs';
 import path from 'path';
 import mysql from 'mysql2/promise';
-import { TASKS_DATA } from '../src/lib/tasks-data';
-import { User, Submission, Task } from '../src/lib/types';
-
-interface JsonStore {
-  users: User[];
-  tasks?: Task[];
-  submissions: Submission[];
-}
 
 async function runMigration() {
   const customStorePath = process.argv[2];
@@ -27,11 +19,11 @@ async function runMigration() {
   }
 
   const rawJson = fs.readFileSync(jsonPath, 'utf-8');
-  const storeData: JsonStore = JSON.parse(rawJson);
+  const storeData = JSON.parse(rawJson);
 
   const users = storeData.users || [];
   const submissions = storeData.submissions || [];
-  const tasks = storeData.tasks && storeData.tasks.length > 0 ? storeData.tasks : TASKS_DATA;
+  const tasks = storeData.tasks || [];
 
   console.log(
     `[*] Загружено из JSON: ${users.length} пользователей, ${tasks.length} заданий, ${submissions.length} сдач.`
@@ -40,20 +32,23 @@ async function runMigration() {
   const connectionConfig = {
     host: process.env.MYSQL_HOST || '127.0.0.1',
     port: parseInt(process.env.MYSQL_PORT || '3306', 10),
-    user: process.env.MYSQL_USER || 'root',
-    password: process.env.MYSQL_PASSWORD || '',
+    user:
+      process.env.MYSQL_USER ||
+      (process.env.MYSQL_PASSWORD === 'secure_password' ? 'sudostudy' : 'root'),
+    password: process.env.MYSQL_PASSWORD !== undefined ? process.env.MYSQL_PASSWORD : '',
     database: process.env.MYSQL_DATABASE || 'demo_practics',
     multipleStatements: true,
     charset: 'utf8mb4',
   };
 
+
   console.log(
     `[*] Подключение к MySQL: ${connectionConfig.user}@${connectionConfig.host}:${connectionConfig.port}/${connectionConfig.database}`
   );
 
-  let connection: mysql.Connection;
+  let connection;
   try {
-    // Connect without DB first to ensure DB exists
+    // 1. Подключаемся и создаем БД если ее нет
     const rootConn = await mysql.createConnection({
       host: connectionConfig.host,
       port: connectionConfig.port,
@@ -64,34 +59,36 @@ async function runMigration() {
     });
 
     await rootConn.query(
-      `CREATE DATABASE IF NOT EXISTS \`${connectionConfig.database}\` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
+      `CREATE DATABASE IF NOT EXISTS \`${connectionConfig.database}\` DEFAULT CHARACTER SET utf8mb4 DEFAULT COLLATE utf8mb4_unicode_ci;`
     );
     await rootConn.end();
 
-    // Now connect to target database
+    // 2. Подключаемся к целевой БД
     connection = await mysql.createConnection(connectionConfig);
+    await connection.query('SET NAMES utf8mb4');
     console.log('[+] Успешное подключение к базе данных MySQL!');
-  } catch (err: unknown) {
-    console.error('[!] Ошибка подключения к MySQL:', err instanceof Error ? err.message : err);
+
+  } catch (err) {
+    console.error('[!] Ошибка подключения к MySQL:', err.message || err);
     console.error('\nУбедитесь, что:');
-    console.error('1. Сервер MySQL запущен.');
+    console.error('1. Сервер MySQL запущен (например: docker compose up -d mysql).');
     console.error(
-      '2. Указаны верные переменные окружения: MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE.'
+      '2. Указаны верные переменные: MYSQL_HOST, MYSQL_PORT, MYSQL_USER, MYSQL_PASSWORD, MYSQL_DATABASE.'
     );
     process.exit(1);
   }
 
   try {
-    // 1. Применяем схему таблиц
+    // 3. Создаем структуру таблиц
     const schemaFile = path.resolve(process.cwd(), 'scripts/schema.mysql.sql');
     if (fs.existsSync(schemaFile)) {
-      console.log('[*] Проверка и создание структуры таблиц (users, tasks, submissions)...');
+      console.log('[*] Применение схемы таблиц (users, tasks, submissions)...');
       const schemaSql = fs.readFileSync(schemaFile, 'utf-8');
       await connection.query(schemaSql);
       console.log('[+] Таблицы успешно созданы/проверены.');
     }
 
-    // 2. Импорт заданий (tasks)
+    // 4. Импорт заданий (tasks)
     console.log(`[*] Импорт заданий (${tasks.length} шт.)...`);
     for (const task of tasks) {
       await connection.query(
@@ -133,8 +130,8 @@ async function runMigration() {
           JSON.stringify(task.steps || []),
           task.script_command || null,
           JSON.stringify(task.questions || []),
-          task.max_score ?? 5,
-          task.order_index ?? 0,
+          task.max_score !== undefined ? task.max_score : 5,
+          task.order_index !== undefined ? task.order_index : 0,
           task.is_active ? 1 : 0,
           task.created_at || new Date().toISOString(),
           task.updated_at || new Date().toISOString(),
@@ -143,7 +140,7 @@ async function runMigration() {
     }
     console.log(`[+] Импортировано заданий: ${tasks.length}`);
 
-    // 3. Импорт пользователей (users)
+    // 5. Импорт пользователей (users)
     console.log(`[*] Импорт пользователей (${users.length} шт.)...`);
     let usersCount = 0;
     for (const u of users) {
@@ -183,7 +180,7 @@ async function runMigration() {
     }
     console.log(`[+] Импортировано пользователей: ${usersCount}`);
 
-    // 4. Импорт сдач (submissions)
+    // 6. Импорт сдач (submissions)
     console.log(`[*] Импорт сдач и оценок (${submissions.length} шт.)...`);
     let subsCount = 0;
     for (const s of submissions) {
@@ -230,7 +227,7 @@ async function runMigration() {
     console.log(` - Пользователей: ${usersCount}`);
     console.log(` - Сдач и оценок: ${subsCount}`);
     console.log('====================================================');
-  } catch (err: unknown) {
+  } catch (err) {
     console.error('[!] Ошибка во время выполнения миграции:', err);
     process.exit(1);
   } finally {

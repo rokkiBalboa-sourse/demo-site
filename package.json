@@ -13,8 +13,9 @@
     "check:format": "prettier --check .",
     "check:audit": "npm audit --omit=dev",
     "check:all": "npm run check:types && npm run check:lint && npm run check:audit && npm run build",
-    "db:migrate:mysql": "node --experimental-strip-types scripts/import-json-to-mysql.ts"
+    "db:migrate:mysql": "node scripts/import-json-to-mysql.mjs"
   },
+
   "dependencies": {
     "lucide-react": "^1.52.0",
     "mysql2": "^3.24.6",
