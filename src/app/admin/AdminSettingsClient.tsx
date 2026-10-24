@@ -213,7 +213,7 @@ export function AdminSettingsClient() {
   };
 
   return (
-    <div className="space-y-4 max-w-4xl font-mono">
+    <div className="w-full max-w-3xl mx-auto space-y-4 font-mono py-6">
       {/* 1. БАЗА ДАННЫХ */}
       <div className="border border-zinc-800 bg-zinc-900/50 p-4 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
