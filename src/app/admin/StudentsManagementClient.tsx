@@ -403,8 +403,9 @@ export function StudentsManagementClient({
         <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="primary"
+            size="sm"
             onClick={openAddModal}
-            className="h-8 px-3 text-xs font-mono flex items-center gap-1.5"
+            className="flex items-center gap-1.5 font-mono"
           >
             <UserPlus className="w-3.5 h-3.5" />
             <span>Добавить студента</span>
@@ -412,13 +413,14 @@ export function StudentsManagementClient({
 
           <Button
             variant="secondary"
+            size="sm"
             onClick={() => {
               setBulkText('');
               setBulkResult(null);
               setFormError(null);
               setIsBulkModalOpen(true);
             }}
-            className="h-8 px-3 text-xs font-mono flex items-center gap-1.5 border-zinc-700 hover:border-zinc-500 text-zinc-200"
+            className="flex items-center gap-1.5 font-mono border-zinc-700 hover:border-zinc-500 text-zinc-200"
           >
             <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-400" />
             <span>Массовый импорт</span>
@@ -427,7 +429,7 @@ export function StudentsManagementClient({
           <a
             href={`/api/admin/students/export-csv?group=${encodeURIComponent(selectedGroup)}`}
             download
-            className="h-8 px-3 inline-flex items-center gap-1.5 border border-zinc-700 bg-zinc-800 text-zinc-100 hover:bg-zinc-700 text-xs font-mono font-medium transition-colors select-none"
+            className="h-8 px-3 inline-flex items-center justify-center gap-1.5 border border-zinc-700 bg-zinc-800 text-zinc-100 hover:bg-zinc-700 text-xs font-mono font-medium transition-colors select-none box-border"
           >
             <Download className="w-3.5 h-3.5 text-amber-400" />
             <span>

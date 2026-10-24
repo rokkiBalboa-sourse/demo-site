@@ -19,11 +19,38 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'inline-flex items-center justify-center font-mono font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer rounded-none';
+    'inline-flex items-center justify-center font-mono font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-zinc-400 disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer rounded-none box-border';
 
-  let sizeStyles = 'h-9 px-4 py-2 text-xs';
-  if (size === 'sm') sizeStyles = 'h-7 px-2.5 text-[11px]';
-  if (size === 'lg') sizeStyles = 'h-10 px-5 text-sm';
+  const hasCustomH = /\bh-\w+/.test(className);
+  const hasCustomPx = /\bpx-\w+/.test(className);
+  const hasCustomPy = /\bpy-\w+/.test(className);
+  const hasCustomText = /\btext-(xs|sm|base|lg|\[.+?\])/.test(className);
+
+  let defaultHeight = 'h-9';
+  let defaultPx = 'px-4';
+  let defaultPy = 'py-2';
+  let defaultText = 'text-xs';
+
+  if (size === 'sm') {
+    defaultHeight = 'h-8';
+    defaultPx = 'px-3';
+    defaultPy = 'py-1.5';
+    defaultText = 'text-xs';
+  } else if (size === 'lg') {
+    defaultHeight = 'h-10';
+    defaultPx = 'px-5';
+    defaultPy = 'py-2.5';
+    defaultText = 'text-sm';
+  }
+
+  const sizeStyles = [
+    hasCustomH ? '' : defaultHeight,
+    hasCustomPx ? '' : defaultPx,
+    hasCustomPy ? '' : defaultPy,
+    hasCustomText ? '' : defaultText,
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   let variantStyles = '';
   switch (variant) {
