@@ -116,12 +116,12 @@ function SubmissionQuickReviewModal({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4">
-      <div className="bg-zinc-900 border border-zinc-700 max-w-3xl w-full p-5 sm:p-6 shadow-2xl space-y-4 font-mono text-xs animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] flex flex-col rounded">
+      <div className="bg-zinc-900 border border-zinc-700 max-w-4xl w-full p-5 sm:p-6 shadow-2xl space-y-4 font-mono text-xs animate-in fade-in zoom-in-95 duration-150 max-h-[92vh] flex flex-col rounded">
         {/* Modal Header */}
         <div className="flex items-start justify-between border-b border-zinc-800 pb-3 shrink-0">
           <div className="space-y-1">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5">
+              <span className="text-[10px] uppercase font-bold text-emerald-400 bg-emerald-950/80 border border-emerald-500/40 px-2 py-0.5 rounded">
                 Проверка отчёта
               </span>
               <span className="text-zinc-500 text-[10px]">
@@ -155,7 +155,7 @@ function SubmissionQuickReviewModal({
           {/* Top Navigation & Close */}
           <div className="flex items-center gap-2 shrink-0">
             {studentSubmissions.length > 1 && (
-              <div className="flex items-center gap-1 bg-zinc-950 border border-zinc-800 px-2 py-1 text-[11px] text-zinc-400 rounded">
+              <div className="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 px-2.5 h-8 text-xs text-zinc-400 rounded">
                 <button
                   type="button"
                   disabled={!prevStudentSub}
@@ -165,7 +165,7 @@ function SubmissionQuickReviewModal({
                 >
                   <ChevronLeft className="w-3.5 h-3.5" />
                 </button>
-                <span>
+                <span className="font-mono">
                   {currentSubIndex !== -1 ? currentSubIndex + 1 : '?'}/{studentSubmissions.length}
                 </span>
                 <button
@@ -182,7 +182,8 @@ function SubmissionQuickReviewModal({
             <button
               type="button"
               onClick={onClose}
-              className="text-zinc-400 hover:text-white p-1 cursor-pointer"
+              className="h-8 w-8 rounded flex items-center justify-center bg-zinc-950 border border-zinc-800 text-zinc-400 hover:text-white hover:border-zinc-700 transition cursor-pointer"
+              title="Закрыть"
             >
               <X className="w-4 h-4" />
             </button>
@@ -239,31 +240,36 @@ function SubmissionQuickReviewModal({
             </div>
           </div>
 
-          {/* Answers to questions if present */}
+          {/* Answers to questions if present: sorted in natural order, question and answer strictly on one line */}
           {submission.answers && Object.keys(submission.answers).length > 0 && (
-            <div className="space-y-1.5 bg-zinc-950 p-3 border border-zinc-800 rounded">
-              <span className="text-zinc-400 uppercase font-bold text-[11px] block">
+            <div className="space-y-2 bg-zinc-950 p-3.5 border border-zinc-800 rounded">
+              <span className="text-zinc-400 uppercase font-bold text-[11px] tracking-wider block">
                 Ответы студента на контрольные вопросы:
               </span>
-              <div className="space-y-2 mt-2">
-                {Object.entries(submission.answers).map(([key, val]) => (
-                  <div key={key} className="text-xs border-l-2 border-emerald-500/50 pl-2">
-                    <span className="text-zinc-400 block text-[10px] uppercase font-bold">
-                      {key}:
-                    </span>
-                    <span className="text-zinc-100">{String(val)}</span>
-                  </div>
-                ))}
+              <div className="flex flex-wrap gap-2">
+                {Object.entries(submission.answers)
+                  .sort(([a], [b]) =>
+                    a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' })
+                  )
+                  .map(([key, val]) => (
+                    <div
+                      key={key}
+                      className="inline-flex items-center gap-2 px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 text-xs font-mono"
+                    >
+                      <span className="text-zinc-400 font-bold uppercase">{key}:</span>
+                      <span className="text-emerald-400 font-bold">{String(val)}</span>
+                    </div>
+                  ))}
               </div>
             </div>
           )}
 
           {/* Grading & Feedback Form */}
           <div className="bg-zinc-950/80 border border-zinc-800 p-4 space-y-3.5 rounded">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               {/* Score Selector */}
               <div>
-                <label className="block text-[11px] text-zinc-400 uppercase font-bold mb-1.5">
+                <label className="block text-[11px] text-zinc-400 uppercase font-bold mb-1.5 tracking-wider">
                   Оценка (балл):
                 </label>
                 <div className="flex items-center gap-1.5">
@@ -276,14 +282,14 @@ function SubmissionQuickReviewModal({
                         if (scoreVal >= 3) setReviewIsPassed(true);
                         if (scoreVal < 3) setReviewIsPassed(false);
                       }}
-                      className={`w-8 h-8 font-bold text-xs rounded transition flex items-center justify-center cursor-pointer ${
+                      className={`h-8.5 w-8.5 font-bold font-mono text-xs rounded transition flex items-center justify-center cursor-pointer ${
                         reviewScore === scoreVal
                           ? scoreVal >= 4
-                            ? 'bg-emerald-600 text-white shadow-[0_0_10px_rgba(16,185,129,0.4)]'
+                            ? 'bg-emerald-600 text-white shadow-[0_0_12px_rgba(16,185,129,0.4)]'
                             : scoreVal === 3
-                              ? 'bg-amber-600 text-white shadow-[0_0_10px_rgba(245,158,11,0.4)]'
-                              : 'bg-rose-600 text-white shadow-[0_0_10px_rgba(225,29,72,0.4)]'
-                          : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:border-zinc-600'
+                              ? 'bg-amber-600 text-white shadow-[0_0_12px_rgba(245,158,11,0.4)]'
+                              : 'bg-rose-600 text-white shadow-[0_0_12px_rgba(225,29,72,0.4)]'
+                          : 'bg-zinc-900 border border-zinc-800 text-zinc-300 hover:border-zinc-600 hover:text-white'
                       }`}
                     >
                       {scoreVal}
@@ -293,18 +299,18 @@ function SubmissionQuickReviewModal({
               </div>
 
               {/* Verdict Toggle */}
-              <div className="space-y-1.5">
-                <label className="block text-[11px] text-zinc-400 uppercase font-bold mb-1.5">
+              <div>
+                <label className="block text-[11px] text-zinc-400 uppercase font-bold mb-1.5 tracking-wider">
                   Вердикт:
                 </label>
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
                     onClick={() => setReviewIsPassed(true)}
-                    className={`h-8 px-3 text-xs font-bold rounded flex items-center gap-1 transition cursor-pointer ${
+                    className={`h-8.5 px-3.5 text-xs font-bold font-mono rounded flex items-center gap-1.5 transition cursor-pointer ${
                       reviewIsPassed
-                        ? 'bg-emerald-950 border border-emerald-500 text-emerald-300'
-                        : 'bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                        ? 'bg-emerald-950 border border-emerald-500 text-emerald-300 shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                        : 'bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
                     }`}
                   >
                     ✓ Зачтено
@@ -312,10 +318,10 @@ function SubmissionQuickReviewModal({
                   <button
                     type="button"
                     onClick={() => setReviewIsPassed(false)}
-                    className={`h-8 px-3 text-xs font-bold rounded flex items-center gap-1 transition cursor-pointer ${
+                    className={`h-8.5 px-3.5 text-xs font-bold font-mono rounded flex items-center gap-1.5 transition cursor-pointer ${
                       !reviewIsPassed
-                        ? 'bg-rose-950 border border-rose-500 text-rose-300'
-                        : 'bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-zinc-300'
+                        ? 'bg-rose-950 border border-rose-500 text-rose-300 shadow-[0_0_10px_rgba(225,29,72,0.2)]'
+                        : 'bg-zinc-900 border border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:border-zinc-700'
                     }`}
                   >
                     ✗ Не зачтено
@@ -325,19 +331,19 @@ function SubmissionQuickReviewModal({
             </div>
 
             {/* Retake checkbox */}
-            <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none">
+            <label className="flex items-center gap-2 text-xs text-zinc-300 cursor-pointer select-none py-0.5">
               <input
                 type="checkbox"
                 checked={reviewAllowRetake}
                 onChange={e => setReviewAllowRetake(e.target.checked)}
-                className="cursor-pointer"
+                className="w-3.5 h-3.5 rounded bg-zinc-900 border-zinc-700 text-emerald-500 focus:ring-0 cursor-pointer accent-emerald-500"
               />
               <span>Разрешить студенту повторную сдачу (пересдачу) задания</span>
             </label>
 
             {/* Feedback Comment */}
             <div>
-              <label className="block text-[11px] text-zinc-400 uppercase font-bold mb-1">
+              <label className="block text-[11px] text-zinc-400 uppercase font-bold mb-1 tracking-wider">
                 Комментарий / Рецензия преподавателя:
               </label>
               <textarea
@@ -345,82 +351,74 @@ function SubmissionQuickReviewModal({
                 value={reviewFeedback}
                 onChange={e => setReviewFeedback(e.target.value)}
                 placeholder="Например: Отличная работа! Все сервисы настроены верно..."
-                className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 p-2 text-xs font-mono focus:outline-none focus:border-emerald-500 rounded resize-none"
+                className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 p-2.5 text-xs font-mono focus:outline-none focus:border-emerald-500 rounded resize-none placeholder:text-zinc-600 transition"
               />
             </div>
           </div>
         </div>
 
-        {/* Modal Footer Actions */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-3 border-t border-zinc-800 gap-2 shrink-0">
+        {/* Modal Footer Actions - All buttons perfectly even with uniform h-8.5 */}
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-between pt-3 border-t border-zinc-800 gap-2 shrink-0">
           <div className="flex items-center gap-2">
-            <Button
+            <button
               type="button"
-              variant="primary"
-              size="sm"
-              isLoading={isSavingReview}
+              disabled={isSavingReview}
               onClick={() => handleSaveReview(false)}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-1.5"
+              className="h-8.5 px-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs font-mono rounded flex items-center gap-1.5 whitespace-nowrap shadow-sm transition cursor-pointer disabled:opacity-50"
             >
               <Save className="w-3.5 h-3.5" />
               <span>Сохранить оценку</span>
-            </Button>
+            </button>
 
             {nextStudentSub && (
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                size="sm"
                 disabled={isSavingReview}
                 onClick={() => handleSaveReview(true)}
-                className="border-zinc-700 bg-zinc-800 hover:bg-zinc-700 text-zinc-100 flex items-center gap-1.5"
+                className="h-8.5 px-3.5 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-cyan-300 hover:text-cyan-200 font-bold text-xs font-mono rounded flex items-center gap-1.5 whitespace-nowrap transition cursor-pointer disabled:opacity-50"
               >
                 <span>Сохранить и след.</span>
                 <ArrowRight className="w-3.5 h-3.5 text-cyan-400" />
-              </Button>
+              </button>
             )}
           </div>
 
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
             {nextStudentSub && (
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                size="sm"
                 onClick={() => onNavigateToSub(nextStudentSub)}
-                className="border-zinc-700 text-zinc-300 hover:text-white flex items-center gap-1"
+                className="h-8.5 px-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-xs font-mono rounded flex items-center gap-1.5 whitespace-nowrap transition cursor-pointer"
               >
-                <span>След. работа студента</span>
+                <span>След. работа</span>
                 <ChevronRight className="w-3.5 h-3.5" />
-              </Button>
+              </button>
             )}
 
-            <Button
+            <button
               type="button"
-              variant="outline"
-              size="sm"
               onClick={() => onOpenBulkModal(submission.user_id)}
-              className="border-emerald-500/40 text-emerald-300 hover:bg-emerald-950/60 flex items-center gap-1"
+              className="h-8.5 px-3 bg-emerald-950/60 hover:bg-emerald-900/80 border border-emerald-500/50 text-emerald-300 text-xs font-mono rounded flex items-center gap-1.5 whitespace-nowrap transition cursor-pointer"
             >
               <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
               <span>Закрыть работы на 5</span>
-            </Button>
+            </button>
 
             <Link
               href={`/admin/submissions/${submission.id}`}
-              className="inline-flex items-center gap-1 text-xs text-zinc-400 hover:text-zinc-200 transition underline underline-offset-4 px-1"
+              className="h-8.5 px-3 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 text-xs font-mono rounded inline-flex items-center gap-1.5 whitespace-nowrap transition"
             >
               <span>Полная страница</span>
               <ExternalLink className="w-3 h-3" />
             </Link>
 
-            <Button
-              variant="secondary"
-              size="sm"
+            <button
+              type="button"
               onClick={onClose}
+              className="h-8.5 px-3.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-white text-xs font-mono rounded flex items-center justify-center whitespace-nowrap transition cursor-pointer"
             >
               Закрыть
-            </Button>
+            </button>
           </div>
         </div>
       </div>
