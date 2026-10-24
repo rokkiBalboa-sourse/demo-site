@@ -16,8 +16,8 @@ import { hashPassword } from './security';
 const INITIAL_USERS: User[] = [
   {
     id: 'usr-admin-1',
-    username: 'admin',
-    password_hash: 'admin123',
+    username: 'adm1',
+    password_hash: 'adm123',
     full_name: 'Кузнецов Валерий Сергеевич',
     group_name: 'STAFF',
     role: 'admin',
