@@ -858,7 +858,11 @@ const localJsonDb = {
     return ensureDataFile();
   },
 
-  async importStore(imported: { users: User[]; submissions: Submission[] }): Promise<void> {
+  async importStore(imported: {
+    users: User[];
+    submissions: Submission[];
+    tasks?: Task[];
+  }): Promise<void> {
     const store = ensureDataFile();
     if (!Array.isArray(imported.users) || !Array.isArray(imported.submissions)) {
       throw new Error(
@@ -999,6 +1003,6 @@ export const db = {
       ? mysqlDb.updateAdminCredentials(data)
       : localJsonDb.updateAdminCredentials(data),
   exportStore: () => (isMySqlConfigured() ? mysqlDb.exportStore() : localJsonDb.exportStore()),
-  importStore: (imported: { users: User[]; submissions: Submission[] }) =>
+  importStore: (imported: { users: User[]; submissions: Submission[]; tasks?: Task[] }) =>
     isMySqlConfigured() ? mysqlDb.importStore(imported) : localJsonDb.importStore(imported),
 };

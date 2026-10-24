@@ -746,7 +746,11 @@ export const mysqlDb = {
     };
   },
 
-  async importStore(imported: { users: User[]; submissions: Submission[] }): Promise<void> {
+  async importStore(imported: {
+    users: User[];
+    submissions: Submission[];
+    tasks?: Task[];
+  }): Promise<void> {
     if (!Array.isArray(imported.users) || !Array.isArray(imported.submissions)) {
       throw new Error('Некорректная структура: отсутствуют массивы users или submissions');
     }
@@ -754,8 +758,64 @@ export const mysqlDb = {
     const pool = getMySqlPool();
     const conn = await pool.getConnection();
     try {
+      // 1. Temporarily disable foreign key checks for safe batch import
+      await conn.query('SET FOREIGN_KEY_CHECKS = 0');
       await conn.beginTransaction();
 
+      // 2. Import tasks if provided, or ensure system tasks are present
+      const tasksToImport =
+        Array.isArray(imported.tasks) && imported.tasks.length > 0 ? imported.tasks : TASKS_DATA;
+
+      for (const t of tasksToImport) {
+        await conn.query(
+          `INSERT INTO tasks (
+            id, slug, module_id, task_number, title, module_code, description,
+            assignment, video_url, nodes, theory, steps, script_command, questions,
+            max_score, order_index, is_active, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE
+            slug = VALUES(slug),
+            module_id = VALUES(module_id),
+            task_number = VALUES(task_number),
+            title = VALUES(title),
+            module_code = VALUES(module_code),
+            description = VALUES(description),
+            assignment = VALUES(assignment),
+            video_url = VALUES(video_url),
+            nodes = VALUES(nodes),
+            theory = VALUES(theory),
+            steps = VALUES(steps),
+            script_command = VALUES(script_command),
+            questions = VALUES(questions),
+            max_score = VALUES(max_score),
+            order_index = VALUES(order_index),
+            is_active = VALUES(is_active),
+            updated_at = VALUES(updated_at)`,
+          [
+            t.id,
+            t.slug,
+            t.module_id,
+            t.task_number || 1,
+            t.title,
+            t.module_code || 'SYS',
+            t.description || '',
+            t.assignment || null,
+            t.video_url || null,
+            JSON.stringify(t.nodes || []),
+            JSON.stringify(t.theory || []),
+            JSON.stringify(t.steps || []),
+            t.script_command || null,
+            JSON.stringify(t.questions || []),
+            t.max_score !== undefined ? t.max_score : 5,
+            t.order_index !== undefined ? t.order_index : 0,
+            t.is_active ? 1 : 0,
+            t.created_at || new Date().toISOString(),
+            t.updated_at || new Date().toISOString(),
+          ]
+        );
+      }
+
+      // 3. Upsert users from backup
       for (const u of imported.users) {
         await conn.query(
           `INSERT INTO users (
@@ -790,6 +850,44 @@ export const mysqlDb = {
         );
       }
 
+      // 4. Auto-heal: Ensure all user_ids referenced in submissions exist in `users`
+      const [existingUsers] = await conn.query<RowDataPacket[]>('SELECT id FROM users');
+      const existingUserIds = new Set(existingUsers.map(r => String(r.id)));
+
+      for (const s of imported.submissions) {
+        if (s.user_id && !existingUserIds.has(s.user_id)) {
+          const safeUsername = `student_${s.user_id.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 16)}_${Date.now().toString().slice(-4)}`;
+          await conn.query(
+            `INSERT INTO users (
+              id, username, password_hash, full_name, group_name, role, is_active,
+              two_factor_enabled, created_at, updated_at
+            ) VALUES (?, ?, '', ?, 'ARCHIVE', 'student', 0, 0, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE updated_at = NOW()`,
+            [s.user_id, safeUsername, `Студент из бэкапа (${s.user_id})`]
+          );
+          existingUserIds.add(s.user_id);
+        }
+      }
+
+      // 5. Auto-heal: Ensure all task_ids referenced in submissions exist in `tasks`
+      const [existingTasks] = await conn.query<RowDataPacket[]>('SELECT id FROM tasks');
+      const existingTaskIds = new Set(existingTasks.map(r => String(r.id)));
+
+      for (const s of imported.submissions) {
+        if (s.task_id && !existingTaskIds.has(s.task_id)) {
+          await conn.query(
+            `INSERT INTO tasks (
+              id, slug, module_id, task_number, title, module_code, description,
+              max_score, order_index, is_active, created_at, updated_at
+            ) VALUES (?, ?, 'mod-1', 1, ?, 'SYS', 'Архивное задание', 5, 999, 0, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE updated_at = NOW()`,
+            [s.task_id, s.task_id, `Архивное задание (${s.task_id})`]
+          );
+          existingTaskIds.add(s.task_id);
+        }
+      }
+
+      // 6. Upsert submissions
       for (const s of imported.submissions) {
         await conn.query(
           `INSERT INTO submissions (
@@ -797,6 +895,8 @@ export const mysqlDb = {
             score, is_passed, feedback, reviewed_by, submitted_at, reviewed_at, allow_retake
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
           ON DUPLICATE KEY UPDATE
+            user_id = VALUES(user_id),
+            task_id = VALUES(task_id),
             log_output = VALUES(log_output),
             answers = VALUES(answers),
             status = VALUES(status),
@@ -825,11 +925,18 @@ export const mysqlDb = {
         );
       }
 
+      // 7. Re-enable foreign key checks and commit
+      await conn.query('SET FOREIGN_KEY_CHECKS = 1');
       await conn.commit();
     } catch (err) {
       await conn.rollback();
       throw err;
     } finally {
+      try {
+        await conn.query('SET FOREIGN_KEY_CHECKS = 1');
+      } catch {
+        // ignore
+      }
       conn.release();
     }
   },

@@ -12,7 +12,10 @@ if (fs.existsSync(envPath)) {
     const eqIdx = trimmed.indexOf('=');
     if (eqIdx > 0) {
       const key = trimmed.slice(0, eqIdx).trim();
-      const val = trimmed.slice(eqIdx + 1).trim().replace(/^['"]|['"]$/g, '');
+      const val = trimmed
+        .slice(eqIdx + 1)
+        .trim()
+        .replace(/^['"]|['"]$/g, '');
       if (process.env[key] === undefined) {
         process.env[key] = val;
       }
@@ -21,7 +24,6 @@ if (fs.existsSync(envPath)) {
 }
 
 async function runMigration() {
-
   const customStorePath = process.argv[2];
   const jsonPath = customStorePath
     ? path.resolve(process.cwd(), customStorePath)
@@ -60,7 +62,6 @@ async function runMigration() {
     charset: 'utf8mb4',
   };
 
-
   console.log(
     `[*] Подключение к MySQL: ${connectionConfig.user}@${connectionConfig.host}:${connectionConfig.port}/${connectionConfig.database}`
   );
@@ -86,7 +87,6 @@ async function runMigration() {
     connection = await mysql.createConnection(connectionConfig);
     await connection.query('SET NAMES utf8mb4');
     console.log('[+] Успешное подключение к базе данных MySQL!');
-
   } catch (err) {
     console.error('[!] Ошибка подключения к MySQL:', err.message || err);
     console.error('\nУбедитесь, что:');
@@ -159,6 +159,9 @@ async function runMigration() {
     }
     console.log(`[+] Импортировано заданий: ${tasks.length}`);
 
+    // 4.1 Временно отключаем проверку внешних ключей для безопасного пакетного импорта
+    await connection.query('SET FOREIGN_KEY_CHECKS = 0');
+
     // 5. Импорт пользователей (users)
     console.log(`[*] Импорт пользователей (${users.length} шт.)...`);
     let usersCount = 0;
@@ -199,6 +202,24 @@ async function runMigration() {
     }
     console.log(`[+] Импортировано пользователей: ${usersCount}`);
 
+    // Авто-исправление orphan user_id в сдачах
+    const [existingUsers] = await connection.query('SELECT id FROM users');
+    const existingUserIds = new Set(existingUsers.map(r => String(r.id)));
+    for (const s of submissions) {
+      if (s.user_id && !existingUserIds.has(s.user_id)) {
+        const safeUsername = `student_${s.user_id.replace(/[^a-zA-Z0-9_]/g, '').slice(0, 16)}_${Date.now().toString().slice(-4)}`;
+        await connection.query(
+          `INSERT INTO users (
+            id, username, password_hash, full_name, group_name, role, is_active,
+            two_factor_enabled, created_at, updated_at
+          ) VALUES (?, ?, '', ?, 'ARCHIVE', 'student', 0, 0, NOW(), NOW())
+          ON DUPLICATE KEY UPDATE updated_at = NOW()`,
+          [s.user_id, safeUsername, `Студент из бэкапа (${s.user_id})`]
+        );
+        existingUserIds.add(s.user_id);
+      }
+    }
+
     // 6. Импорт сдач (submissions)
     console.log(`[*] Импорт сдач и оценок (${submissions.length} шт.)...`);
     let subsCount = 0;
@@ -209,6 +230,8 @@ async function runMigration() {
           score, is_passed, feedback, reviewed_by, submitted_at, reviewed_at, allow_retake
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON DUPLICATE KEY UPDATE
+          user_id = VALUES(user_id),
+          task_id = VALUES(task_id),
           log_output = VALUES(log_output),
           answers = VALUES(answers),
           status = VALUES(status),
@@ -237,7 +260,7 @@ async function runMigration() {
       );
       subsCount++;
     }
-    console.log(`[+] Импортировано сдач: ${subsCount}`);
+    await connection.query('SET FOREIGN_KEY_CHECKS = 1');
 
     console.log('====================================================');
     console.log(' МИГРАЦИЯ УСПЕШНО ЗАВЕРШЕНА!');
