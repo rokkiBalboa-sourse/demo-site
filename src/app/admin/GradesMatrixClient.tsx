@@ -273,7 +273,7 @@ function SubmissionQuickReviewModal({
                   Оценка (балл):
                 </label>
                 <div className="flex items-center gap-1.5">
-                  {[1, 2, 3, 4, 5].map(scoreVal => (
+                  {[5, 4, 3, 2].map(scoreVal => (
                     <button
                       key={scoreVal}
                       type="button"
