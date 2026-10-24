@@ -12,10 +12,12 @@
     "check:types": "tsc --noEmit",
     "check:format": "prettier --check .",
     "check:audit": "npm audit --omit=dev",
-    "check:all": "npm run check:types && npm run check:lint && npm run check:audit && npm run build"
+    "check:all": "npm run check:types && npm run check:lint && npm run check:audit && npm run build",
+    "db:migrate:mysql": "node --experimental-strip-types scripts/import-json-to-mysql.ts"
   },
   "dependencies": {
     "lucide-react": "^1.52.0",
+    "mysql2": "^3.24.6",
     "next": "16.3.8",
     "otpauth": "^9.5.2",
     "pg": "^8.23.1",

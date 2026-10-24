@@ -11,6 +11,8 @@ import {
 } from './types';
 import { MODULES_LIST, TASKS_DATA } from './tasks-data';
 import { hashPassword } from './security';
+import { isMySqlConfigured } from './mysql';
+import { mysqlDb } from './db-mysql';
 
 // Initial Seed Users
 const INITIAL_USERS: User[] = [
@@ -239,7 +241,7 @@ function saveStore(store: LocalStore) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(store, null, 2), 'utf-8');
 }
 
-export const db = {
+const localJsonDb = {
   // Modules
   getAllModules(): ModuleInfo[] {
     return MODULES_LIST;
@@ -873,4 +875,130 @@ export const db = {
     store.tasks = TASKS_DATA;
     saveStore(store);
   },
+};
+
+export const db = {
+  getAllModules: () =>
+    isMySqlConfigured() ? mysqlDb.getAllModules() : localJsonDb.getAllModules(),
+  getModuleById: (id: string) =>
+    isMySqlConfigured() ? mysqlDb.getModuleById(id) : localJsonDb.getModuleById(id),
+  findUserByUsername: (username: string) =>
+    isMySqlConfigured()
+      ? mysqlDb.findUserByUsername(username)
+      : localJsonDb.findUserByUsername(username),
+  findUserById: (id: string) =>
+    isMySqlConfigured() ? mysqlDb.findUserById(id) : localJsonDb.findUserById(id),
+  setUser2FATempSecret: (userId: string, tempSecret: string) =>
+    isMySqlConfigured()
+      ? mysqlDb.setUser2FATempSecret(userId, tempSecret)
+      : localJsonDb.setUser2FATempSecret(userId, tempSecret),
+  confirmUser2FASetup: (userId: string, secret: string) =>
+    isMySqlConfigured()
+      ? mysqlDb.confirmUser2FASetup(userId, secret)
+      : localJsonDb.confirmUser2FASetup(userId, secret),
+  resetUser2FA: (userId: string) =>
+    isMySqlConfigured() ? mysqlDb.resetUser2FA(userId) : localJsonDb.resetUser2FA(userId),
+  getAllStudents: () =>
+    isMySqlConfigured() ? mysqlDb.getAllStudents() : localJsonDb.getAllStudents(),
+  getAllStudentsWithStats: () =>
+    isMySqlConfigured() ? mysqlDb.getAllStudentsWithStats() : localJsonDb.getAllStudentsWithStats(),
+  createUser: (data: {
+    username: string;
+    password_hash: string;
+    full_name: string;
+    group_name: string;
+    role?: UserRole;
+  }) => (isMySqlConfigured() ? mysqlDb.createUser(data) : localJsonDb.createUser(data)),
+  createStudentsBatch: (
+    students: Array<{
+      full_name: string;
+      group_name: string;
+      username?: string;
+      password?: string;
+    }>
+  ) =>
+    isMySqlConfigured()
+      ? mysqlDb.createStudentsBatch(students)
+      : localJsonDb.createStudentsBatch(students),
+  updateUser: (
+    id: string,
+    updates: Partial<
+      Pick<User, 'full_name' | 'group_name' | 'username' | 'password_hash' | 'is_active'>
+    >
+  ) =>
+    isMySqlConfigured() ? mysqlDb.updateUser(id, updates) : localJsonDb.updateUser(id, updates),
+  updateUserPasswordHash: (id: string, hash: string) =>
+    isMySqlConfigured()
+      ? mysqlDb.updateUserPasswordHash(id, hash)
+      : localJsonDb.updateUserPasswordHash(id, hash),
+  deleteUser: (id: string) =>
+    isMySqlConfigured() ? mysqlDb.deleteUser(id) : localJsonDb.deleteUser(id),
+  getAllTasks: () => (isMySqlConfigured() ? mysqlDb.getAllTasks() : localJsonDb.getAllTasks()),
+  getTasksByModule: (moduleId: string) =>
+    isMySqlConfigured()
+      ? mysqlDb.getTasksByModule(moduleId)
+      : localJsonDb.getTasksByModule(moduleId),
+  getTaskBySlug: (slug: string) =>
+    isMySqlConfigured() ? mysqlDb.getTaskBySlug(slug) : localJsonDb.getTaskBySlug(slug),
+  getTaskById: (id: string) =>
+    isMySqlConfigured() ? mysqlDb.getTaskById(id) : localJsonDb.getTaskById(id),
+  getSubmissionByUserAndTask: (userId: string, taskId: string) =>
+    isMySqlConfigured()
+      ? mysqlDb.getSubmissionByUserAndTask(userId, taskId)
+      : localJsonDb.getSubmissionByUserAndTask(userId, taskId),
+  getSubmissionById: (id: string) =>
+    isMySqlConfigured() ? mysqlDb.getSubmissionById(id) : localJsonDb.getSubmissionById(id),
+  getUserSubmissions: (userId: string) =>
+    isMySqlConfigured()
+      ? mysqlDb.getUserSubmissions(userId)
+      : localJsonDb.getUserSubmissions(userId),
+  getAllSubmissionsWithDetails: () =>
+    isMySqlConfigured()
+      ? mysqlDb.getAllSubmissionsWithDetails()
+      : localJsonDb.getAllSubmissionsWithDetails(),
+  createOrUpdateSubmission: (data: {
+    userId: string;
+    taskId: string;
+    logOutput: string;
+    answers: Record<string, string>;
+  }) =>
+    isMySqlConfigured()
+      ? mysqlDb.createOrUpdateSubmission(data)
+      : localJsonDb.createOrUpdateSubmission(data),
+  reviewSubmission: (
+    submissionId: string,
+    reviewerId: string,
+    data: {
+      score: number | null;
+      isPassed: boolean;
+      feedback: string;
+      allowRetake?: boolean;
+    }
+  ) =>
+    isMySqlConfigured()
+      ? mysqlDb.reviewSubmission(submissionId, reviewerId, data)
+      : localJsonDb.reviewSubmission(submissionId, reviewerId, data),
+  setSubmissionRetakePermission: (submissionId: string, allowRetake: boolean) =>
+    isMySqlConfigured()
+      ? mysqlDb.setSubmissionRetakePermission(submissionId, allowRetake)
+      : localJsonDb.setSubmissionRetakePermission(submissionId, allowRetake),
+  bulkCloseAllAsFive: (
+    reviewerId: string,
+    options: {
+      scope: 'group' | 'all' | 'student';
+      groupId?: string;
+      studentId?: string;
+    }
+  ) =>
+    isMySqlConfigured()
+      ? mysqlDb.bulkCloseAllAsFive(reviewerId, options)
+      : localJsonDb.bulkCloseAllAsFive(reviewerId, options),
+
+  updateAdminCredentials: (data: { username?: string; password?: string; fullName?: string }) =>
+    isMySqlConfigured()
+      ? mysqlDb.updateAdminCredentials(data)
+      : localJsonDb.updateAdminCredentials(data),
+  exportStore: () => (isMySqlConfigured() ? mysqlDb.exportStore() : localJsonDb.exportStore()),
+  importStore: (imported: { users: User[]; submissions: Submission[] }) =>
+    isMySqlConfigured() ? mysqlDb.importStore(imported) : localJsonDb.importStore(imported),
 };
