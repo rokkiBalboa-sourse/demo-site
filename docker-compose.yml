@@ -1,19 +1,20 @@
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: sudostudy_db
+  mysql:
+    image: mysql:8.0
+    container_name: sudostudy_mysql
     restart: unless-stopped
     environment:
-      POSTGRES_DB: sudostudy_reports
-      POSTGRES_USER: sudostudy_user
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme_secure_pass}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: demo_practics
+      MYSQL_USER: sudostudy
+      MYSQL_PASSWORD: secure_password
     ports:
-      - '127.0.0.1:5432:5432'
+      - '127.0.0.1:3306:3306'
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./scripts/schema.mysql.sql:/docker-entrypoint-initdb.d/01_schema.sql:ro
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U sudostudy_user -d sudostudy_reports']
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost', '-u', 'root', '-proot']
       interval: 5s
       timeout: 5s
       retries: 5
@@ -31,20 +32,30 @@ services:
       JWT_SECRET: ${JWT_SECRET:-super_secret_jwt_key_min_32_chars}
       APP_URL: ${APP_URL:-https://exam.sudostudy.dev}
       NEXTAUTH_URL: ${APP_URL:-https://exam.sudostudy.dev}
-      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-adm1}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-adm123}
       ADMIN_NAME: ${ADMIN_NAME:-Кузнецов Валерий Сергеевич}
+      USE_MYSQL: 'true'
+      MYSQL_HOST: mysql
+      MYSQL_PORT: '3306'
+      MYSQL_USER: sudostudy
+      MYSQL_PASSWORD: secure_password
+      MYSQL_DATABASE: demo_practics
     volumes:
       - ./.data:/app/.data
     ports:
       - '${APP_PORT:-3339}:3000'
+    depends_on:
+      mysql:
+        condition: service_healthy
     networks:
       - sudostudy_net
 
 volumes:
-  postgres_data:
+  mysql_data:
     driver: local
 
 networks:
   sudostudy_net:
     driver: bridge
+
