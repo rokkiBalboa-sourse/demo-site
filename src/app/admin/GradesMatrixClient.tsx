@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { SubmissionWithDetails, Task, ModuleInfo, StudentWithStats } from '@/lib/types';
 import { Button } from '@/components/ui/Button';
 import {
@@ -22,6 +23,9 @@ import {
   PanelLeftOpen,
   ChevronDown,
   Users,
+  CheckCheck,
+  Loader2,
+  Sparkles,
 } from 'lucide-react';
 
 interface GradesMatrixClientProps {
@@ -39,6 +43,24 @@ export function GradesMatrixClient({
   modules,
   availableGroups,
 }: GradesMatrixClientProps) {
+  const router = useRouter();
+
+  // Overrides for immediate optimistic UI update after bulk actions
+  const [overrideSubmissions, setOverrideSubmissions] = useState<SubmissionWithDetails[] | null>(
+    null
+  );
+  const [overrideStudents, setOverrideStudents] = useState<StudentWithStats[] | null>(null);
+
+  const currentSubmissions = overrideSubmissions ?? submissions;
+  const currentStudents = overrideStudents ?? students;
+
+  // Bulk grade modal state
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState<boolean>(false);
+  const [bulkScope, setBulkScope] = useState<'group' | 'all' | 'student'>('group');
+  const [bulkTargetStudentId, setBulkTargetStudentId] = useState<string>('');
+  const [isBulkLoading, setIsBulkLoading] = useState<boolean>(false);
+  const [bulkSuccessMsg, setBulkSuccessMsg] = useState<string | null>(null);
+
   // Select first available group by default (no "Все группы")
   const [selectedGroup, setSelectedGroup] = useState<string>(
     availableGroups.length > 0 ? availableGroups[0] : ''
@@ -56,25 +78,81 @@ export function GradesMatrixClient({
   // Selected submission modal for instant inspection
   const [selectedSub, setSelectedSub] = useState<SubmissionWithDetails | null>(null);
 
+  const highlightedStudent = useMemo(() => {
+    const targetId = bulkTargetStudentId || highlightedStudentId;
+    if (!targetId) return null;
+    return currentStudents.find(s => s.id === targetId) || null;
+  }, [currentStudents, bulkTargetStudentId, highlightedStudentId]);
+
+  const handleBulkGradeFive = async (
+    overrideScope?: 'group' | 'all' | 'student',
+    overrideStudentId?: string
+  ) => {
+    const activeScope = overrideScope || bulkScope;
+    const activeStudentId =
+      overrideStudentId || bulkTargetStudentId || highlightedStudentId || undefined;
+
+    try {
+      setIsBulkLoading(true);
+      const res = await fetch('/api/admin/submissions/bulk-grade-five', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scope: activeScope,
+          groupId: selectedGroup,
+          studentId: activeStudentId,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.error || 'Ошибка при закрытии работ на 5');
+        return;
+      }
+
+      if (data.submissions) {
+        setOverrideSubmissions(data.submissions);
+      }
+      if (data.students) {
+        setOverrideStudents(data.students);
+      }
+
+      setBulkSuccessMsg(
+        `Успешно закрыто на «5»: ${data.count} заданий у ${data.studentsCount} студ.!`
+      );
+      setTimeout(() => {
+        setBulkSuccessMsg(null);
+        setIsBulkModalOpen(false);
+      }, 1500);
+
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      alert('Ошибка при выполнении операции');
+    } finally {
+      setIsBulkLoading(false);
+    }
+  };
+
   // Quick lookup map: `${userId}:${taskId}` -> Submission
   const subMap = useMemo(() => {
     const map = new Map<string, SubmissionWithDetails>();
-    for (const s of submissions) {
+    for (const s of currentSubmissions) {
       map.set(`${s.user_id}:${s.task_id}`, s);
     }
     return map;
-  }, [submissions]);
+  }, [currentSubmissions]);
 
   // Map of pending submissions count per student
   const studentPendingMap = useMemo(() => {
     const map = new Map<string, number>();
-    for (const sub of submissions) {
+    for (const sub of currentSubmissions) {
       if (sub.status === 'pending') {
         map.set(sub.user_id, (map.get(sub.user_id) || 0) + 1);
       }
     }
     return map;
-  }, [submissions]);
+  }, [currentSubmissions]);
 
   const studentPendingCount = (studentId: string) => studentPendingMap.get(studentId) || 0;
 
@@ -85,7 +163,7 @@ export function GradesMatrixClient({
       { studentCount: number; passedCount: number; pendingCount: number }
     >();
 
-    for (const s of students) {
+    for (const s of currentStudents) {
       const grp = s.group_name || 'Без группы';
       if (!map.has(grp)) {
         map.set(grp, { studentCount: 0, passedCount: 0, pendingCount: 0 });
@@ -95,7 +173,7 @@ export function GradesMatrixClient({
       item.passedCount += s.passed_count;
     }
 
-    for (const sub of submissions) {
+    for (const sub of currentSubmissions) {
       const grp = sub.student_group || 'Без группы';
       if (map.has(grp) && sub.status === 'pending') {
         map.get(grp)!.pendingCount++;
@@ -103,7 +181,7 @@ export function GradesMatrixClient({
     }
 
     return map;
-  }, [students, submissions]);
+  }, [currentStudents, currentSubmissions]);
 
   // Filter tasks based on selected module
   const filteredTasks = useMemo(() => {
@@ -120,7 +198,7 @@ export function GradesMatrixClient({
 
   // Filter students in the sidebar by selectedGroup and groupSearchQuery
   const sidebarStudents = useMemo(() => {
-    return students.filter(s => {
+    return currentStudents.filter(s => {
       if (selectedGroup && s.group_name !== selectedGroup) {
         return false;
       }
@@ -133,11 +211,11 @@ export function GradesMatrixClient({
       }
       return true;
     });
-  }, [students, selectedGroup, groupSearchQuery]);
+  }, [currentStudents, selectedGroup, groupSearchQuery]);
 
   // Filter and sort students for the main table/cards
   const filteredStudents = useMemo(() => {
-    let result = students.filter(s => {
+    let result = currentStudents.filter(s => {
       if (selectedGroup && s.group_name !== selectedGroup) {
         return false;
       }
@@ -165,7 +243,7 @@ export function GradesMatrixClient({
     });
 
     return result;
-  }, [students, selectedGroup, searchQuery, sortBy]);
+  }, [currentStudents, selectedGroup, searchQuery, sortBy]);
 
   // Aggregate statistics for the filtered group
   const stats = useMemo(() => {
@@ -181,7 +259,7 @@ export function GradesMatrixClient({
     const studentIds = new Set(filteredStudents.map(s => s.id));
     const taskIds = new Set(filteredTasks.map(t => t.id));
 
-    for (const sub of submissions) {
+    for (const sub of currentSubmissions) {
       if (studentIds.has(sub.user_id) && taskIds.has(sub.task_id)) {
         if (sub.status === 'pending') pendingCount++;
         if (sub.status === 'reviewed' && sub.is_passed) {
@@ -201,7 +279,7 @@ export function GradesMatrixClient({
       pendingInScope: pendingCount,
       totalPassedSubs: totalPassedSum,
     };
-  }, [filteredStudents, filteredTasks, submissions]);
+  }, [filteredStudents, filteredTasks, currentSubmissions]);
 
   // Export CSV URL
   const exportUrl = useMemo(() => {
@@ -328,6 +406,21 @@ export function GradesMatrixClient({
                 <span>Карточки</span>
               </button>
             </div>
+
+            {/* Bulk Close All on 5 Button */}
+            <button
+              type="button"
+              onClick={() => {
+                setBulkScope('group');
+                setBulkTargetStudentId('');
+                setIsBulkModalOpen(true);
+              }}
+              className="px-2.5 py-1.5 border border-emerald-500/80 bg-emerald-950/80 hover:bg-emerald-900 text-emerald-200 text-xs font-mono font-bold flex items-center gap-1.5 rounded transition cursor-pointer shadow-[0_0_12px_rgba(16,185,129,0.25)] hover:shadow-[0_0_16px_rgba(16,185,129,0.4)]"
+              title="Закрыть все 32 задания на оценку 5"
+            >
+              <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Закрыть все на 5</span>
+            </button>
 
             {/* CSV Export Button */}
             <a href={exportUrl} download>
@@ -526,9 +619,25 @@ export function GradesMatrixClient({
 
                         <div className="flex items-center justify-between text-[10px] text-zinc-400 mt-1">
                           <span>{student.group_name}</span>
-                          <span className="text-zinc-300 font-semibold">
-                            {student.passed_count}/32 сдано
-                          </span>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-zinc-300 font-semibold">
+                              {student.passed_count}/32 сдано
+                            </span>
+                            <button
+                              type="button"
+                              onClick={e => {
+                                e.stopPropagation();
+                                setBulkScope('student');
+                                setBulkTargetStudentId(student.id);
+                                setIsBulkModalOpen(true);
+                              }}
+                              className="px-1 py-0.5 rounded bg-emerald-950/80 hover:bg-emerald-900 border border-emerald-500/50 text-emerald-300 text-[9px] font-bold flex items-center gap-0.5 transition cursor-pointer"
+                              title="Закрыть все 32 задания студента на 5"
+                            >
+                              <CheckCheck className="w-2.5 h-2.5" />
+                              <span>Все на 5</span>
+                            </button>
+                          </div>
                         </div>
 
                         {pendingForStudent > 0 && (
@@ -1112,23 +1221,181 @@ export function GradesMatrixClient({
               )}
             </div>
 
-            <div className="flex items-center justify-between pt-2 border-t border-zinc-800">
-              <Link
-                href={`/admin/submissions/${selectedSub.id}`}
-                className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition underline underline-offset-4"
-              >
-                <span>Открыть полную проверку отчета</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </Link>
+            <div className="flex items-center justify-between pt-2 border-t border-zinc-800 gap-2 flex-wrap">
               <Button
-                variant="secondary"
+                type="button"
+                variant="outline"
                 size="sm"
-                onClick={() => setSelectedSub(null)}
-                className="text-xs"
+                onClick={() => {
+                  setBulkScope('student');
+                  setBulkTargetStudentId(selectedSub.user_id);
+                  setIsBulkModalOpen(true);
+                }}
+                className="text-xs border-emerald-500/50 text-emerald-300 hover:bg-emerald-950/60 flex items-center gap-1.5"
               >
-                Закрыть
+                <CheckCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Закрыть все 32 работы студента на 5</span>
               </Button>
+
+              <div className="flex items-center gap-2">
+                <Link
+                  href={`/admin/submissions/${selectedSub.id}`}
+                  className="inline-flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 transition underline underline-offset-4"
+                >
+                  <span>Проверка отчета</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setSelectedSub(null)}
+                  className="text-xs"
+                >
+                  Закрыть
+                </Button>
+              </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* BULK GRADE 5 MODAL */}
+      {isBulkModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-zinc-900 border border-zinc-700 max-w-md w-full p-6 shadow-2xl space-y-4 font-mono text-xs animate-in fade-in zoom-in-95 duration-150 rounded">
+            <div className="flex items-start justify-between border-b border-zinc-800 pb-3">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded bg-emerald-950 border border-emerald-500/60 flex items-center justify-center text-emerald-400">
+                  <CheckCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-white">Закрытие всех работ на «5»</h3>
+                  <p className="text-[11px] text-zinc-400">Массовое выставление оценки «Отлично»</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => !isBulkLoading && setIsBulkModalOpen(false)}
+                className="text-zinc-400 hover:text-white p-1 cursor-pointer"
+                disabled={isBulkLoading}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {bulkSuccessMsg ? (
+              <div className="p-3 bg-emerald-950/80 border border-emerald-500 text-emerald-200 text-center font-bold rounded">
+                ✓ {bulkSuccessMsg}
+              </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <span className="text-[11px] uppercase text-zinc-400 font-bold block">
+                    Выберите область применения:
+                  </span>
+
+                  <label className="flex items-start gap-2.5 p-2.5 rounded border border-zinc-800 bg-zinc-950/80 hover:border-zinc-700 cursor-pointer transition">
+                    <input
+                      type="radio"
+                      name="bulkScope"
+                      value="group"
+                      checked={bulkScope === 'group'}
+                      onChange={() => setBulkScope('group')}
+                      className="mt-0.5 cursor-pointer"
+                    />
+                    <div>
+                      <div className="font-bold text-zinc-200">
+                        Для текущей группы:{' '}
+                        <span className="text-emerald-400">{selectedGroup || 'Не выбрана'}</span>
+                      </div>
+                      <div className="text-[10px] text-zinc-400">
+                        Все 32 задания у каждого студента группы {selectedGroup} получат оценку 5
+                      </div>
+                    </div>
+                  </label>
+
+                  <label className="flex items-start gap-2.5 p-2.5 rounded border border-zinc-800 bg-zinc-950/80 hover:border-zinc-700 cursor-pointer transition">
+                    <input
+                      type="radio"
+                      name="bulkScope"
+                      value="all"
+                      checked={bulkScope === 'all'}
+                      onChange={() => setBulkScope('all')}
+                      className="mt-0.5 cursor-pointer"
+                    />
+                    <div>
+                      <div className="font-bold text-zinc-200">Для всех групп и студентов</div>
+                      <div className="text-[10px] text-zinc-400">
+                        Закрыть абсолютно все работы всех {currentStudents.length} студентов базы
+                      </div>
+                    </div>
+                  </label>
+
+                  {highlightedStudent && (
+                    <label className="flex items-start gap-2.5 p-2.5 rounded border border-zinc-800 bg-zinc-950/80 hover:border-zinc-700 cursor-pointer transition">
+                      <input
+                        type="radio"
+                        name="bulkScope"
+                        value="student"
+                        checked={bulkScope === 'student'}
+                        onChange={() => setBulkScope('student')}
+                        className="mt-0.5 cursor-pointer"
+                      />
+                      <div>
+                        <div className="font-bold text-zinc-200">
+                          Только для студента:{' '}
+                          <span className="text-emerald-400">{highlightedStudent.full_name}</span>
+                        </div>
+                        <div className="text-[10px] text-zinc-400">
+                          Закрыть все 32 задания на 5 только данному студенту (
+                          {highlightedStudent.group_name})
+                        </div>
+                      </div>
+                    </label>
+                  )}
+                </div>
+
+                <div className="p-2.5 bg-amber-950/40 border border-amber-500/40 text-amber-200 text-[11px] rounded flex items-start gap-2">
+                  <Award className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                  <span>
+                    Все 32 задания выбранных студентов получат статус «Зачтено», максимальный балл 5
+                    и автоматическую рецензию преподавателя.
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2 border-t border-zinc-800">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={isBulkLoading}
+                    onClick={() => setIsBulkModalOpen(false)}
+                  >
+                    Отмена
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    disabled={isBulkLoading}
+                    onClick={() => handleBulkGradeFive()}
+                    className="bg-emerald-600 hover:bg-emerald-500 text-white font-bold flex items-center gap-1.5 shadow-[0_0_12px_rgba(16,185,129,0.3)]"
+                  >
+                    {isBulkLoading ? (
+                      <>
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        <span>Применение...</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCheck className="w-3.5 h-3.5" />
+                        <span>Закрыть работы на 5</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
