@@ -2,7 +2,26 @@ import fs from 'fs';
 import path from 'path';
 import mysql from 'mysql2/promise';
 
+// Auto-load .env file if present
+const envPath = path.resolve(process.cwd(), '.env');
+if (fs.existsSync(envPath)) {
+  const envContent = fs.readFileSync(envPath, 'utf-8');
+  for (const line of envContent.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx > 0) {
+      const key = trimmed.slice(0, eqIdx).trim();
+      const val = trimmed.slice(eqIdx + 1).trim().replace(/^['"]|['"]$/g, '');
+      if (process.env[key] === undefined) {
+        process.env[key] = val;
+      }
+    }
+  }
+}
+
 async function runMigration() {
+
   const customStorePath = process.argv[2];
   const jsonPath = customStorePath
     ? path.resolve(process.cwd(), customStorePath)
