@@ -104,55 +104,61 @@ export function AdminDashboardClient({
   }, [selectedGroup, selectedModule, selectedStatus]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Top Level Section Tabs */}
-      <div className="flex items-center gap-2 border-b border-zinc-800 pb-px font-mono text-xs">
+      <div className="flex items-center gap-1 border-b border-zinc-800 pb-px font-mono text-xs">
         <button
           onClick={() => setActiveTab('submissions')}
-          className={`px-4 py-2.5 font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-colors ${
+          className={`px-3 py-2 font-medium text-xs flex items-center gap-1.5 transition-colors border-b-2 ${
             activeTab === 'submissions'
-              ? 'border-white text-white bg-zinc-900/80'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30'
+              ? 'border-white text-white'
+              : 'border-transparent text-zinc-400 hover:text-zinc-200'
           }`}
         >
           <ClipboardList className="w-3.5 h-3.5" />
-          <span>Журнал отчётов ({submissions.length})</span>
+          <span>Отчёты</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300">
+            {submissions.length}
+          </span>
         </button>
 
         <button
           onClick={() => setActiveTab('grades')}
-          className={`px-4 py-2.5 font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-colors ${
+          className={`px-3 py-2 font-medium text-xs flex items-center gap-1.5 transition-colors border-b-2 ${
             activeTab === 'grades'
-              ? 'border-emerald-500 text-emerald-300 bg-zinc-900/80 shadow-[0_0_12px_rgba(16,185,129,0.2)]'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30'
+              ? 'border-emerald-500 text-emerald-300'
+              : 'border-transparent text-zinc-400 hover:text-zinc-200'
           }`}
         >
           <GraduationCap className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Сводная ведомость оценок</span>
+          <span>Ведомость</span>
         </button>
 
         <button
           onClick={() => setActiveTab('students')}
-          className={`px-4 py-2.5 font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-colors ${
+          className={`px-3 py-2 font-medium text-xs flex items-center gap-1.5 transition-colors border-b-2 ${
             activeTab === 'students'
-              ? 'border-white text-white bg-zinc-900/80'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30'
+              ? 'border-white text-white'
+              : 'border-transparent text-zinc-400 hover:text-zinc-200'
           }`}
         >
           <Users className="w-3.5 h-3.5 text-cyan-400" />
-          <span>База студентов ({students.length})</span>
+          <span>Студенты</span>
+          <span className="text-[10px] px-1.5 py-0.2 rounded bg-zinc-800 text-zinc-300">
+            {students.length}
+          </span>
         </button>
 
         <button
           onClick={() => setActiveTab('settings')}
-          className={`px-4 py-2.5 font-bold uppercase tracking-wider border-b-2 flex items-center gap-2 transition-colors ${
+          className={`px-3 py-2 font-medium text-xs flex items-center gap-1.5 transition-colors border-b-2 ${
             activeTab === 'settings'
-              ? 'border-white text-white bg-zinc-900/80'
-              : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30'
+              ? 'border-white text-white'
+              : 'border-transparent text-zinc-400 hover:text-zinc-200'
           }`}
         >
-          <Database className="w-3.5 h-3.5 text-cyan-400" />
-          <span>БД и Настройки</span>
+          <Settings className="w-3.5 h-3.5" />
+          <span>Настройки</span>
         </button>
       </div>
 
@@ -170,160 +176,106 @@ export function AdminDashboardClient({
         />
       ) : (
         <>
-          {/* Top Header Actions & Stats */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border border-zinc-800 bg-zinc-900 p-5">
-            <div>
-              <h1 className="text-xl font-bold tracking-tight text-white font-mono">
-                Журнал проверки отчётов (3 модуля • 32 задания)
-              </h1>
-              <p className="text-xs text-zinc-400 font-mono mt-0.5">
-                Студенческие отчёты, аудиты виртуальных стендов Proxmox VE и оценивание
-              </p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-2 font-mono text-xs">
-                <div className="border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-center">
-                  <span className="text-zinc-500 text-[10px] block">ОТЧЁТОВ</span>
-                  <span className="font-bold text-zinc-200">{totalCount}</span>
-                </div>
-                <div className="border border-zinc-800 bg-zinc-950 px-2.5 py-1.5 text-center">
-                  <span className="text-zinc-500 text-[10px] block">НА ПРОВЕРКЕ</span>
-                  <span className="font-bold text-white">{pendingCount}</span>
-                </div>
-                <div className="border border-emerald-500/50 bg-emerald-950/40 shadow-[0_0_14px_rgba(16,185,129,0.25)] text-emerald-300 px-2.5 py-1.5 text-center">
-                  <span className="text-emerald-400 text-[10px] block font-bold">ПРОВЕРЕНО</span>
-                  <span className="font-bold text-emerald-200">{reviewedCount}</span>
-                </div>
+          {/* Submissions Top Bar & Filters */}
+          <div className="space-y-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-3">
+                <span className="text-sm font-bold text-white font-mono">Журнал отчётов</span>
+                <span className="text-xs text-zinc-400 font-mono">
+                  {totalCount} всего •{' '}
+                  <span className="text-amber-400">{pendingCount} на проверке</span> •{' '}
+                  <span className="text-emerald-400">{reviewedCount} проверено</span>
+                </span>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="md"
-                  onClick={() => setActiveTab('grades')}
-                  className="flex items-center gap-2 text-xs border-emerald-500/50 hover:bg-emerald-950/40 text-emerald-300"
-                >
-                  <GraduationCap className="w-4 h-4 text-emerald-400" />
-                  <span>Открыть сводную ведомость</span>
-                </Button>
-
+              <div className="flex items-center gap-2">
                 <a href={exportMatrixUrl} download>
-                  <Button variant="primary" size="md" className="flex items-center gap-2">
-                    <Download className="w-4 h-4" />
-                    <span>
-                      Экспорт ведомости{selectedGroup !== 'ALL' ? ` (${selectedGroup})` : ''} (CSV)
-                    </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px] px-2.5 flex items-center gap-1.5 border-zinc-700 bg-zinc-900"
+                  >
+                    <Download className="w-3 h-3 text-emerald-400" />
+                    <span>Ведомость (CSV)</span>
                   </Button>
                 </a>
-
                 <a href={exportJournalUrl} download>
-                  <Button variant="outline" size="md" className="flex items-center gap-2 text-xs">
-                    <FileSpreadsheet className="w-4 h-4 text-emerald-400" />
-                    <span>Выгрузить журнал сданных отчётов (CSV)</span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-[11px] px-2.5 flex items-center gap-1.5 border-zinc-700 bg-zinc-900"
+                  >
+                    <FileSpreadsheet className="w-3 h-3 text-cyan-400" />
+                    <span>Журнал (CSV)</span>
                   </Button>
                 </a>
               </div>
             </div>
-          </div>
 
-          {/* Filter Bar */}
-          <div className="border border-zinc-800 bg-zinc-900 p-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-              {/* Search */}
-              <div>
-                <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">
-                  Поиск по ФИО / Заданию
-                </label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    placeholder="Иванов..."
-                    className="w-full h-8 border border-zinc-800 bg-zinc-950 px-2.5 text-xs text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-zinc-400 font-mono"
-                  />
-                  <Search className="w-3.5 h-3.5 text-zinc-500 absolute right-2.5 top-2.5 pointer-events-none" />
-                </div>
+            {/* Filter Bar: Compact single row */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 border border-zinc-800 bg-zinc-900/50 p-2.5">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="Поиск (ФИО, задание)..."
+                  className="w-full h-7 border border-zinc-800 bg-zinc-950 px-2 text-xs text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:border-zinc-500 font-mono"
+                />
+                <Search className="w-3 h-3 text-zinc-500 absolute right-2 top-2 pointer-events-none" />
               </div>
 
-              {/* Module Filter */}
-              <div>
-                <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">
-                  Модуль (3 модуля)
-                </label>
-                <select
-                  value={selectedModule}
-                  onChange={e => {
-                    setSelectedModule(e.target.value);
-                    setSelectedTask('ALL');
-                  }}
-                  className="w-full h-8 border border-zinc-800 px-2 text-xs font-mono text-zinc-100 bg-zinc-950 focus:outline-none focus:border-zinc-400 cursor-pointer"
-                >
-                  <option value="ALL">Все модули</option>
-                  {modules.map(m => (
-                    <option key={m.id} value={m.id}>
-                      {m.code} ({m.total_tasks} зад.)
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={selectedModule}
+                onChange={e => {
+                  setSelectedModule(e.target.value);
+                  setSelectedTask('ALL');
+                }}
+                className="h-7 border border-zinc-800 px-2 text-xs font-mono text-zinc-200 bg-zinc-950 focus:outline-none cursor-pointer"
+              >
+                <option value="ALL">Все модули</option>
+                {modules.map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.code} ({m.total_tasks} зад.)
+                  </option>
+                ))}
+              </select>
 
-              {/* Task Filter */}
-              <div>
-                <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">
-                  Задание
-                </label>
-                <select
-                  value={selectedTask}
-                  onChange={e => setSelectedTask(e.target.value)}
-                  className="w-full h-8 border border-zinc-800 px-2 text-xs font-mono text-zinc-100 bg-zinc-950 focus:outline-none focus:border-zinc-400 cursor-pointer truncate"
-                >
-                  <option value="ALL">Все задания</option>
-                  {filteredTasksForSelect.map(t => (
-                    <option key={t.id} value={t.id}>
-                      {t.module_code} №{t.task_number}: {t.title.substring(0, 24)}...
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={selectedTask}
+                onChange={e => setSelectedTask(e.target.value)}
+                className="h-7 border border-zinc-800 px-2 text-xs font-mono text-zinc-200 bg-zinc-950 focus:outline-none cursor-pointer truncate"
+              >
+                <option value="ALL">Все задания</option>
+                {filteredTasksForSelect.map(t => (
+                  <option key={t.id} value={t.id}>
+                    {t.module_code} №{t.task_number}: {t.title.substring(0, 24)}...
+                  </option>
+                ))}
+              </select>
 
-              {/* Group Filter */}
-              <div>
-                <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">
-                  Группа
-                </label>
-                <select
-                  value={selectedGroup}
-                  onChange={e => setSelectedGroup(e.target.value)}
-                  className="w-full h-8 border border-zinc-800 px-2 text-xs font-mono text-zinc-100 bg-zinc-950 focus:outline-none focus:border-zinc-400 cursor-pointer"
-                >
-                  <option value="ALL">Все группы</option>
-                  {availableGroups.map(g => (
-                    <option key={g} value={g}>
-                      {g}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <select
+                value={selectedGroup}
+                onChange={e => setSelectedGroup(e.target.value)}
+                className="h-7 border border-zinc-800 px-2 text-xs font-mono text-zinc-200 bg-zinc-950 focus:outline-none cursor-pointer"
+              >
+                <option value="ALL">Все группы</option>
+                {availableGroups.map(g => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
 
-              {/* Status Filter */}
-              <div>
-                <label className="block text-[11px] font-mono uppercase text-zinc-400 mb-1">
-                  Статус
-                </label>
-                <select
-                  value={selectedStatus}
-                  onChange={e => setSelectedStatus(e.target.value)}
-                  className="w-full h-8 border border-zinc-800 px-2 text-xs font-mono text-zinc-100 bg-zinc-950 focus:outline-none focus:border-zinc-400 cursor-pointer"
-                >
-                  <option value="ALL">Все статусы</option>
-                  <option value="pending">На проверке</option>
-                  <option value="reviewed">Проверено</option>
-                  <option value="rejected">На доработку</option>
-                </select>
-              </div>
+              <select
+                value={selectedStatus}
+                onChange={e => setSelectedStatus(e.target.value)}
+                className="h-7 border border-zinc-800 px-2 text-xs font-mono text-zinc-200 bg-zinc-950 focus:outline-none cursor-pointer"
+              >
+                <option value="ALL">Все статусы</option>
+                <option value="pending">На проверке ({pendingCount})</option>
+                <option value="reviewed">Проверено ({reviewedCount})</option>
+              </select>
             </div>
           </div>
 

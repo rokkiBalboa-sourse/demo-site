@@ -1,11 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import {
   ShieldCheck,
-  KeyRound,
   Download,
   Upload,
   Database,
@@ -14,11 +13,9 @@ import {
   RefreshCw,
   Eye,
   EyeOff,
-  Server,
-  FileJson,
-  Terminal,
   Copy,
   Check,
+  ChevronDown,
 } from 'lucide-react';
 
 interface DatabaseInfo {
@@ -36,7 +33,6 @@ interface DatabaseInfo {
 }
 
 export function AdminSettingsClient() {
-  // Admin credentials state
   const [username, setUsername] = useState('');
   const [fullName, setFullName] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -50,16 +46,15 @@ export function AdminSettingsClient() {
   const [isResetting2FA, setIsResetting2FA] = useState(false);
   const [reset2FASuccess, setReset2FASuccess] = useState<string | null>(null);
 
-  // Database info state
   const [dbInfo, setDbInfo] = useState<DatabaseInfo | null>(null);
   const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
 
-  // Backup & restore state
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   const [backupSuccess, setBackupSuccess] = useState<string | null>(null);
   const [backupError, setBackupError] = useState<string | null>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     let isMounted = true;
@@ -91,7 +86,7 @@ export function AdminSettingsClient() {
   const handleCopy = (text: string, label: string) => {
     void navigator.clipboard.writeText(text);
     setCopiedCmd(label);
-    setTimeout(() => setCopiedCmd(null), 2500);
+    setTimeout(() => setCopiedCmd(null), 2000);
   };
 
   const handleResetAdmin2FA = async () => {
@@ -107,10 +102,8 @@ export function AdminSettingsClient() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Ошибка сброса 2FA');
       setAdmin2FAEnabled(false);
-      setReset2FASuccess(
-        '2FA администратора успешно сброшена! При следующем входе по паролю система предложит настроить её заново.'
-      );
-      setTimeout(() => setReset2FASuccess(null), 6000);
+      setReset2FASuccess('2FA сброшена. При следующем входе настройте её заново.');
+      setTimeout(() => setReset2FASuccess(null), 5000);
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : 'Ошибка сброса 2FA');
     } finally {
@@ -140,9 +133,9 @@ export function AdminSettingsClient() {
         throw new Error(data.error || 'Не удалось сохранить настройки');
       }
 
-      setProfileSuccess('Данные учётной записи администратора успешно обновлены!');
+      setProfileSuccess('Данные успешно сохранены!');
       setNewPassword('');
-      setTimeout(() => setProfileSuccess(null), 4000);
+      setTimeout(() => setProfileSuccess(null), 3000);
     } catch (err: unknown) {
       setProfileError(err instanceof Error ? err.message : 'Ошибка сохранения');
     } finally {
@@ -156,48 +149,44 @@ export function AdminSettingsClient() {
     setBackupError(null);
     try {
       const res = await fetch('/api/admin/backup');
-      if (!res.ok) {
-        throw new Error('Не удалось выгрузить базу данных');
-      }
+      if (!res.ok) throw new Error('Не удалось выгрузить данные');
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       const dateStr = new Date().toISOString().split('T')[0];
-      a.download = `sudostudy-db-backup-${dateStr}.json`;
+      a.download = `backup-${dateStr}.json`;
       document.body.appendChild(a);
       a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
-      setBackupSuccess('Резервная копия базы данных успешно скачана!');
-      setTimeout(() => setBackupSuccess(null), 4000);
+      setBackupSuccess('Бэкап JSON скачан');
+      setTimeout(() => setBackupSuccess(null), 3000);
     } catch (err: unknown) {
-      setBackupError(err instanceof Error ? err.message : 'Ошибка при экспорте бэкапа');
+      setBackupError(err instanceof Error ? err.message : 'Ошибка экспорта');
     } finally {
       setIsExporting(false);
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
-
-  const handleImportBackup = async () => {
-    if (!selectedFile) return;
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     const confirmed = window.confirm(
-      'Вы уверены, что хотите восстановить базу данных? Текущие данные будут заменены содержимым из файла.'
+      'Восстановить базу из выбранного файла? Текущие записи будут синхронизированы.'
     );
-    if (!confirmed) return;
+    if (!confirmed) {
+      e.target.value = '';
+      return;
+    }
 
     setIsImporting(true);
     setBackupSuccess(null);
     setBackupError(null);
 
     try {
-      const text = await selectedFile.text();
+      const text = await file.text();
       const parsed = JSON.parse(text);
 
       const res = await fetch('/api/admin/backup', {
@@ -208,430 +197,292 @@ export function AdminSettingsClient() {
 
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'Ошибка при восстановлении базы данных');
+        throw new Error(data.error || 'Ошибка восстановления');
       }
 
-      setBackupSuccess(data.message || 'База данных успешно восстановлена!');
-      setSelectedFile(null);
+      setBackupSuccess('База успешно восстановлена!');
       setTimeout(() => {
         window.location.reload();
-      }, 1500);
+      }, 1000);
     } catch (err: unknown) {
-      setBackupError(err instanceof Error ? err.message : 'Ошибка восстановления бэкапа');
+      setBackupError(err instanceof Error ? err.message : 'Ошибка восстановления');
     } finally {
       setIsImporting(false);
+      e.target.value = '';
     }
   };
 
   return (
-    <div className="space-y-8 font-mono">
-      {/* SECTION 1: DATABASE STATUS & MANAGEMENT */}
-      <div className="border border-zinc-800 bg-zinc-900/60 p-6 space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded bg-cyan-950/80 border border-cyan-500/50 flex items-center justify-center text-cyan-400">
-              <Database className="w-5 h-5" />
+    <div className="space-y-4 max-w-4xl font-mono">
+      {/* 1. БАЗА ДАННЫХ */}
+      <div className="border border-zinc-800 bg-zinc-900/50 p-4 space-y-3">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-white">
+                База данных
+              </span>
+              {dbInfo?.isMySql ? (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded bg-emerald-950/80 text-emerald-400 border border-emerald-500/40">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  MySQL
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] rounded bg-amber-950/80 text-amber-400 border border-amber-500/40">
+                  <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                  JSON
+                </span>
+              )}
             </div>
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-white flex items-center gap-2">
-                <span>База данных системы</span>
-                {dbInfo?.isMySql ? (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-500/50 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                    MySQL 8.0 (Активна)
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950/90 text-amber-300 border border-amber-500/50 flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full bg-amber-400" />
-                    Локальный JSON (store.json)
-                  </span>
-                )}
-              </h2>
-              <p className="text-xs text-zinc-400 mt-0.5">
-                Хранение пользователей, 32 заданий экзамена, сданных отчётов и оценок
-              </p>
-            </div>
-          </div>
-
-          {/* Quick Metrics */}
-          {dbInfo?.stats && (
-            <div className="flex items-center gap-4 bg-zinc-950 p-2.5 border border-zinc-800 text-xs">
-              <div className="text-center px-2">
-                <div className="text-zinc-500 text-[10px] uppercase">Студентов</div>
-                <div className="font-bold text-white text-sm">{dbInfo.stats.usersCount}</div>
-              </div>
-              <div className="h-6 w-px bg-zinc-800" />
-              <div className="text-center px-2">
-                <div className="text-zinc-500 text-[10px] uppercase">Заданий</div>
-                <div className="font-bold text-cyan-400 text-sm">{dbInfo.stats.tasksCount}</div>
-              </div>
-              <div className="h-6 w-px bg-zinc-800" />
-              <div className="text-center px-2">
-                <div className="text-zinc-500 text-[10px] uppercase">Сдач в базе</div>
-                <div className="font-bold text-emerald-400 text-sm">
-                  {dbInfo.stats.submissionsCount}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Database Connection Specs */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
-          <div className="p-3 bg-zinc-950 border border-zinc-800">
-            <span className="text-[10px] text-zinc-500 uppercase block">Движок хранилища</span>
-            <span className="font-bold text-zinc-200">
-              {dbInfo?.isMySql ? 'MySQL 8.0 (InnoDB, utf8mb4)' : 'JSON файл (.data/store.json)'}
-            </span>
-          </div>
-          <div className="p-3 bg-zinc-950 border border-zinc-800">
-            <span className="text-[10px] text-zinc-500 uppercase block">Хост и порт</span>
-            <span className="font-bold text-cyan-400">
-              {dbInfo?.host || '127.0.0.1'}:{dbInfo?.port || '3306'}
-            </span>
-          </div>
-          <div className="p-3 bg-zinc-950 border border-zinc-800">
-            <span className="text-[10px] text-zinc-500 uppercase block">Имя базы данных</span>
-            <span className="font-bold text-emerald-400">
+            <p className="text-[11px] text-zinc-400">
+              {dbInfo?.host || '127.0.0.1'}:{dbInfo?.port || '3306'} /{' '}
               {dbInfo?.database || 'demo_practics'}
-            </span>
-          </div>
-          <div className="p-3 bg-zinc-950 border border-zinc-800">
-            <span className="text-[10px] text-zinc-500 uppercase block">Пользователь БД</span>
-            <span className="font-bold text-zinc-300">{dbInfo?.user || 'sudostudy'}</span>
-          </div>
-        </div>
-
-        {/* Database Command Cheat-Sheet */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-              <Terminal className="w-4 h-4 text-cyan-400" />
-              <span>Шпаргалка команд управления базой данных (Docker / CLI)</span>
-            </h3>
-            <span className="text-[10px] text-zinc-500">Кликните для копирования команды</span>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-            {/* Command 1: Start container */}
-            <div className="p-3 bg-zinc-950 border border-zinc-800 flex flex-col justify-between gap-2">
-              <div>
-                <span className="text-[10px] font-bold text-zinc-400 uppercase block">
-                  1. Запуск MySQL в Docker
+              {dbInfo?.stats && (
+                <span className="text-zinc-500 ml-2">
+                  ({dbInfo.stats.usersCount} студ., {dbInfo.stats.tasksCount} зад.,{' '}
+                  {dbInfo.stats.submissionsCount} сдач)
                 </span>
-                <code className="text-[11px] text-cyan-300 block mt-1 break-all select-all">
-                  docker compose up -d mysql
-                </code>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleCopy('docker compose up -d mysql', 'start')}
-                className="w-full text-[10px] py-1 h-7 border-zinc-700 bg-zinc-900 hover:bg-zinc-800"
-              >
-                {copiedCmd === 'start' ? (
-                  <Check className="w-3 h-3 text-emerald-400 mr-1" />
-                ) : (
-                  <Copy className="w-3 h-3 text-zinc-400 mr-1" />
-                )}
-                {copiedCmd === 'start' ? 'Скопировано!' : 'Скопировать'}
-              </Button>
-            </div>
-
-            {/* Command 2: Run migration */}
-            <div className="p-3 bg-zinc-950 border border-zinc-800 flex flex-col justify-between gap-2">
-              <div>
-                <span className="text-[10px] font-bold text-zinc-400 uppercase block">
-                  2. Импорт из JSON в MySQL
-                </span>
-                <code className="text-[11px] text-emerald-300 block mt-1 break-all select-all">
-                  npm run db:migrate:mysql
-                </code>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => handleCopy('npm run db:migrate:mysql', 'migrate')}
-                className="w-full text-[10px] py-1 h-7 border-zinc-700 bg-zinc-900 hover:bg-zinc-800"
-              >
-                {copiedCmd === 'migrate' ? (
-                  <Check className="w-3 h-3 text-emerald-400 mr-1" />
-                ) : (
-                  <Copy className="w-3 h-3 text-zinc-400 mr-1" />
-                )}
-                {copiedCmd === 'migrate' ? 'Скопировано!' : 'Скопировать'}
-              </Button>
-            </div>
-
-            {/* Command 3: Dump MySQL */}
-            <div className="p-3 bg-zinc-950 border border-zinc-800 flex flex-col justify-between gap-2">
-              <div>
-                <span className="text-[10px] font-bold text-zinc-400 uppercase block">
-                  3. Создание SQL дампа базы
-                </span>
-                <code className="text-[11px] text-amber-300 block mt-1 break-all select-all">
-                  mysqldump -u sudostudy -p demo_practics &gt; backup.sql
-                </code>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  handleCopy(
-                    'docker exec -t sudostudy_mysql mysqldump -u sudostudy -psecure_password demo_practics > backup.sql',
-                    'dump'
-                  )
-                }
-                className="w-full text-[10px] py-1 h-7 border-zinc-700 bg-zinc-900 hover:bg-zinc-800"
-              >
-                {copiedCmd === 'dump' ? (
-                  <Check className="w-3 h-3 text-emerald-400 mr-1" />
-                ) : (
-                  <Copy className="w-3 h-3 text-zinc-400 mr-1" />
-                )}
-                {copiedCmd === 'dump' ? 'Скопировано!' : 'Скопировать для Docker'}
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        {/* BACKUP & RESTORE CARDS (JSON Snapshot) */}
-        <div className="border-t border-zinc-800 pt-5 space-y-4">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-white">
-              Резервное копирование и перенос базы данных (JSON-снимок)
-            </h3>
-            <p className="text-xs text-zinc-400 mt-0.5">
-              Позволяет быстро выгрузить полную копию текущих данных или развернуть её на другом
-              сервере
+              )}
             </p>
           </div>
 
-          {backupSuccess && (
-            <div className="border border-emerald-500/50 bg-emerald-950/40 p-3 flex items-center gap-2.5 text-emerald-300 text-xs">
-              <CheckCircle2 className="w-4 h-4 shrink-0" />
-              <span>{backupSuccess}</span>
-            </div>
-          )}
-
-          {backupError && (
-            <div className="border border-rose-500/50 bg-rose-950/40 p-3 flex items-center gap-2.5 text-rose-300 text-xs">
-              <AlertTriangle className="w-4 h-4 shrink-0" />
-              <span>{backupError}</span>
-            </div>
-          )}
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Export card */}
-            <div className="p-4 bg-zinc-950 border border-zinc-800 space-y-3">
-              <div className="flex items-center gap-2 text-white font-bold text-xs uppercase">
-                <Download className="w-4 h-4 text-emerald-400" />
-                <span>1. Скачать резервную копию</span>
-              </div>
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                Выгружает снимок актуальной базы (учётные записи студентов, пароли, отчёты и
-                рецензии) в JSON-файл на ваш компьютер.
-              </p>
-              <Button
-                type="button"
-                onClick={handleExportBackup}
-                isLoading={isExporting}
-                className="w-full bg-zinc-800 hover:bg-zinc-700 text-white text-xs border border-zinc-700 flex items-center justify-center gap-2"
-              >
-                <FileJson className="w-4 h-4 text-emerald-400" />
-                <span>Скачать резервную копию (JSON)</span>
-              </Button>
-            </div>
-
-            {/* Import card */}
-            <div className="p-4 bg-zinc-950 border border-zinc-800 space-y-3">
-              <div className="flex items-center gap-2 text-white font-bold text-xs uppercase">
-                <Upload className="w-4 h-4 text-cyan-400" />
-                <span>2. Восстановить базу из файла</span>
-              </div>
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                Восстанавливает базу данных из ранее сохранённого JSON-файла. Автоматически
-                синхронизирует пользователей и сдачи в активный движок (MySQL или JSON).
-              </p>
-              <div className="space-y-2">
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={handleFileChange}
-                  className="block w-full text-xs text-zinc-400 file:mr-3 file:py-1.5 file:px-3 file:border-0 file:text-xs file:font-mono file:bg-zinc-800 file:text-zinc-200 hover:file:bg-zinc-700 cursor-pointer"
-                />
-                <Button
-                  type="button"
-                  onClick={handleImportBackup}
-                  isLoading={isImporting}
-                  disabled={!selectedFile}
-                  className="w-full bg-cyan-700 hover:bg-cyan-600 disabled:opacity-50 text-white text-xs flex items-center justify-center gap-2"
-                >
-                  <Upload className="w-4 h-4" />
-                  <span>Восстановить БД из выбранного файла</span>
-                </Button>
-              </div>
-            </div>
+          {/* Быстрые кнопки бэкапа */}
+          <div className="flex items-center gap-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleFileChange}
+              className="hidden"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleExportBackup}
+              isLoading={isExporting}
+              className="h-7 text-[11px] px-2.5 border-zinc-700 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 flex items-center gap-1.5"
+            >
+              <Download className="w-3 h-3 text-emerald-400" />
+              <span>Экспорт JSON</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => fileInputRef.current?.click()}
+              isLoading={isImporting}
+              className="h-7 text-[11px] px-2.5 border-zinc-700 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 flex items-center gap-1.5"
+            >
+              <Upload className="w-3 h-3 text-cyan-400" />
+              <span>Импорт JSON</span>
+            </Button>
           </div>
         </div>
-      </div>
 
-      {/* SECTION 2: ADMIN PROFILE & SECURITY */}
-      <div className="border border-zinc-800 bg-zinc-900/60 p-6 space-y-5">
-        <div className="flex items-center justify-between border-b border-zinc-800 pb-4">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded bg-emerald-950/80 border border-emerald-500/50 flex items-center justify-center text-emerald-400">
-              <ShieldCheck className="w-5 h-5" />
+        {backupSuccess && (
+          <div className="text-[11px] text-emerald-400 bg-emerald-950/30 border border-emerald-500/30 px-3 py-1.5 flex items-center gap-2">
+            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+            <span>{backupSuccess}</span>
+          </div>
+        )}
+        {backupError && (
+          <div className="text-[11px] text-rose-400 bg-rose-950/30 border border-rose-500/30 px-3 py-1.5 flex items-center gap-2">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            <span>{backupError}</span>
+          </div>
+        )}
+
+        {/* Компактный спойлер с командами CLI */}
+        <details className="group pt-1 border-t border-zinc-800/60">
+          <summary className="text-[11px] text-zinc-500 hover:text-zinc-300 cursor-pointer list-none flex items-center gap-1 select-none py-1">
+            <ChevronDown className="w-3 h-3 transition-transform group-open:rotate-180" />
+            <span>Команды терминала (Docker / Дамп)</span>
+          </summary>
+          <div className="mt-2 space-y-1.5 bg-zinc-950/60 p-2.5 border border-zinc-800/80 text-[11px]">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-zinc-500">Запуск MySQL:</span>
+              <div className="flex items-center gap-1.5">
+                <code className="text-zinc-300 bg-zinc-900 px-1.5 py-0.5">
+                  docker compose up -d mysql
+                </code>
+                <button
+                  type="button"
+                  onClick={() => handleCopy('docker compose up -d mysql', 'start')}
+                  className="text-zinc-500 hover:text-zinc-200 p-0.5"
+                  title="Копировать"
+                >
+                  {copiedCmd === 'start' ? (
+                    <Check className="w-3 h-3 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </button>
+              </div>
             </div>
-            <div>
-              <h2 className="text-sm font-bold uppercase tracking-wider text-white">
-                Профиль Администратора и Безопасность
-              </h2>
-              <p className="text-xs text-zinc-400">
-                Учётные данные суперпользователя и управление двухэтапной аутентификацией (2FA)
-              </p>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-zinc-500">Миграция JSON → MySQL:</span>
+              <div className="flex items-center gap-1.5">
+                <code className="text-zinc-300 bg-zinc-900 px-1.5 py-0.5">
+                  npm run db:migrate:mysql
+                </code>
+                <button
+                  type="button"
+                  onClick={() => handleCopy('npm run db:migrate:mysql', 'mig')}
+                  className="text-zinc-500 hover:text-zinc-200 p-0.5"
+                  title="Копировать"
+                >
+                  {copiedCmd === 'mig' ? (
+                    <Check className="w-3 h-3 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </button>
+              </div>
+            </div>
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-zinc-500">Создать SQL дамп:</span>
+              <div className="flex items-center gap-1.5">
+                <code className="text-zinc-300 bg-zinc-900 px-1.5 py-0.5">
+                  mysqldump -u sudostudy -p demo_practics &gt; backup.sql
+                </code>
+                <button
+                  type="button"
+                  onClick={() =>
+                    handleCopy(
+                      'docker exec -t sudostudy_mysql mysqldump -u sudostudy -psecure_password demo_practics > backup.sql',
+                      'dump'
+                    )
+                  }
+                  className="text-zinc-500 hover:text-zinc-200 p-0.5"
+                  title="Копировать"
+                >
+                  {copiedCmd === 'dump' ? (
+                    <Check className="w-3 h-3 text-emerald-400" />
+                  ) : (
+                    <Copy className="w-3 h-3" />
+                  )}
+                </button>
+              </div>
             </div>
           </div>
+        </details>
+      </div>
 
-          {/* 2FA Status Badge */}
+      {/* 2. УЧЁТНАЯ ЗАПИСЬ АДМИНИСТРАТОРА */}
+      <div className="border border-zinc-800 bg-zinc-900/50 p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-bold uppercase tracking-wider text-white">
+            Учётная запись
+          </span>
           {admin2FAEnabled ? (
-            <span className="text-xs font-bold px-2.5 py-1 rounded bg-emerald-950/90 text-emerald-300 border border-emerald-500/50 flex items-center gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              2FA АКТИВНА
+            <span className="text-[10px] text-emerald-400 bg-emerald-950/60 border border-emerald-500/30 px-2 py-0.5 rounded flex items-center gap-1">
+              <ShieldCheck className="w-3 h-3" />
+              2FA активна
             </span>
           ) : (
-            <span className="text-xs font-bold px-2.5 py-1 rounded bg-amber-950/90 text-amber-300 border border-amber-500/50 flex items-center gap-1.5">
-              <AlertTriangle className="w-3.5 h-3.5 text-amber-400" />
-              2FA НЕ ПРИВЯЗАНА
+            <span className="text-[10px] text-zinc-500 border border-zinc-800 px-2 py-0.5 rounded">
+              2FA выключена
             </span>
           )}
         </div>
 
         {profileSuccess && (
-          <div className="border border-emerald-500/50 bg-emerald-950/40 p-3.5 flex items-center gap-2.5 text-emerald-300 text-xs">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
+          <div className="text-[11px] text-emerald-400 bg-emerald-950/30 border border-emerald-500/30 px-3 py-1.5 flex items-center gap-2">
+            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
             <span>{profileSuccess}</span>
           </div>
         )}
-
         {profileError && (
-          <div className="border border-rose-500/50 bg-rose-950/40 p-3.5 flex items-center gap-2.5 text-rose-300 text-xs">
-            <AlertTriangle className="w-4 h-4 shrink-0" />
+          <div className="text-[11px] text-rose-400 bg-rose-950/30 border border-rose-500/30 px-3 py-1.5 flex items-center gap-2">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
             <span>{profileError}</span>
           </div>
         )}
-
         {reset2FASuccess && (
-          <div className="border border-amber-500/50 bg-amber-950/40 p-3.5 flex items-center gap-2.5 text-amber-300 text-xs">
-            <RefreshCw className="w-4 h-4 shrink-0 animate-spin" />
+          <div className="text-[11px] text-amber-400 bg-amber-950/30 border border-amber-500/30 px-3 py-1.5 flex items-center gap-2">
+            <RefreshCw className="w-3.5 h-3.5 shrink-0" />
             <span>{reset2FASuccess}</span>
           </div>
         )}
 
-        <form onSubmit={handleSaveProfile} className="space-y-4 max-w-xl">
-          <div>
-            <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-              Логин учётной записи (администратора)
-            </label>
-            <Input
-              type="text"
-              value={username}
-              onChange={e => setUsername(e.target.value)}
-              placeholder="adm1"
-              required
-              className="font-mono text-xs"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5">
-              ФИО преподавателя / администратора
-            </label>
-            <Input
-              type="text"
-              value={fullName}
-              onChange={e => setFullName(e.target.value)}
-              placeholder="Кузнецов Валерий Сергеевич"
-              required
-              className="font-mono text-xs"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs font-semibold text-zinc-300 uppercase tracking-wider mb-1.5 flex items-center justify-between">
-              <span>Новый пароль</span>
-              <span className="text-[10px] text-zinc-500 normal-case">
-                Оставьте пустым, если не хотите менять
-              </span>
-            </label>
-            <div className="relative">
+        <form onSubmit={handleSaveProfile} className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-[10px] font-semibold text-zinc-400 uppercase mb-1">
+                Логин
+              </label>
               <Input
-                type={showPassword ? 'text' : 'password'}
-                value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
-                placeholder="adm123"
-                className="font-mono text-xs pr-10"
+                type="text"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
+                required
+                className="h-8 font-mono text-xs bg-zinc-950 border-zinc-800"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
-              >
-                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-              </button>
             </div>
-            <p className="text-[11px] text-zinc-500 mt-1">
-              Пароль автоматически хешируется по алгоритму scrypt с уникальной солью.
-            </p>
+            <div>
+              <label className="block text-[10px] font-semibold text-zinc-400 uppercase mb-1">
+                ФИО
+              </label>
+              <Input
+                type="text"
+                value={fullName}
+                onChange={e => setFullName(e.target.value)}
+                required
+                className="h-8 font-mono text-xs bg-zinc-950 border-zinc-800"
+              />
+            </div>
+            <div>
+              <label className="block text-[10px] font-semibold text-zinc-400 uppercase mb-1">
+                Новый пароль
+              </label>
+              <div className="relative">
+                <Input
+                  type={showPassword ? 'text' : 'password'}
+                  value={newPassword}
+                  onChange={e => setNewPassword(e.target.value)}
+                  placeholder="Без изменений"
+                  className="h-8 font-mono text-xs bg-zinc-950 border-zinc-800 pr-8"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-200"
+                >
+                  {showPassword ? (
+                    <EyeOff className="w-3.5 h-3.5" />
+                  ) : (
+                    <Eye className="w-3.5 h-3.5" />
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
 
-          <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <div className="flex items-center gap-2 pt-1">
             <Button
               type="submit"
+              size="sm"
               isLoading={isLoadingProfile}
-              className="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-6 py-2"
+              className="h-7 text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-3"
             >
-              Сохранить изменения
+              Сохранить
             </Button>
-
             {admin2FAEnabled && (
               <Button
                 type="button"
                 variant="outline"
+                size="sm"
                 onClick={handleResetAdmin2FA}
                 isLoading={isResetting2FA}
-                className="border-amber-700/60 text-amber-300 hover:bg-amber-950/40 text-xs flex items-center justify-center gap-2"
+                className="h-7 text-xs border-amber-800/60 text-amber-400 hover:bg-amber-950/40 px-3 flex items-center gap-1.5"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
-                <span>Сбросить 2FA администратора</span>
+                <RefreshCw className="w-3 h-3" />
+                <span>Сбросить 2FA</span>
               </Button>
             )}
           </div>
         </form>
-
-        {/* .env instructions */}
-        <div className="mt-4 p-3.5 bg-zinc-950 border border-zinc-800 text-xs text-zinc-400 space-y-1.5">
-          <div className="flex items-center gap-2 text-zinc-200 font-semibold">
-            <Server className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Настройка учётных данных через .env:</span>
-          </div>
-          <p className="leading-relaxed">
-            Учётные данные администратора также можно переопределить через файл{' '}
-            <code className="text-cyan-300 bg-zinc-900 px-1 py-0.5">.env</code>:
-          </p>
-          <pre className="p-2 bg-zinc-900 border border-zinc-800 text-cyan-300 text-[11px] overflow-x-auto">
-            {`ADMIN_USERNAME=adm1
-ADMIN_PASSWORD=adm123
-ADMIN_NAME="Кузнецов Валерий Сергеевич"`}
-          </pre>
-          <p className="text-[11px] text-zinc-500">
-            При первом старте система автоматически инициализирует учётную запись с этими
-            параметрами.
-          </p>
-        </div>
       </div>
     </div>
   );
