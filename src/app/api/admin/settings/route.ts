@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { isMySqlConfigured } from '@/lib/mysql';
 
 export async function GET() {
   const session = await getSession();
@@ -13,6 +14,11 @@ export async function GET() {
     return NextResponse.json({ error: 'Администратор не найден' }, { status: 404 });
   }
 
+  const isMySql = isMySqlConfigured();
+  const allStudents = await db.getAllStudents();
+  const allTasks = await db.getAllTasks();
+  const allSubs = await db.getAllSubmissionsWithDetails();
+
   return NextResponse.json({
     user: {
       id: admin.id,
@@ -21,6 +27,19 @@ export async function GET() {
       group_name: admin.group_name,
       role: admin.role,
       two_factor_enabled: Boolean(admin.two_factor_enabled),
+    },
+    database: {
+      isMySql,
+      type: isMySql ? 'MySQL 8.0' : 'JSON (store.json)',
+      host: process.env.MYSQL_HOST || '127.0.0.1',
+      port: process.env.MYSQL_PORT || '3306',
+      database: process.env.MYSQL_DATABASE || 'demo_practics',
+      user: process.env.MYSQL_USER || 'sudostudy',
+      stats: {
+        usersCount: allStudents.length + 1,
+        tasksCount: allTasks.length,
+        submissionsCount: allSubs.length,
+      },
     },
   });
 }

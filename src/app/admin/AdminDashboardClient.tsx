@@ -18,7 +18,9 @@ import {
   ClipboardList,
   Settings,
   GraduationCap,
+  Database,
 } from 'lucide-react';
+
 import { StudentsManagementClient } from './StudentsManagementClient';
 import { AdminSettingsClient } from './AdminSettingsClient';
 import { GradesMatrixClient } from './GradesMatrixClient';
@@ -149,8 +151,8 @@ export function AdminDashboardClient({
               : 'border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/30'
           }`}
         >
-          <Settings className="w-3.5 h-3.5 text-amber-400" />
-          <span>Настройки и Бэкап</span>
+          <Database className="w-3.5 h-3.5 text-cyan-400" />
+          <span>БД и Настройки</span>
         </button>
       </div>
 
