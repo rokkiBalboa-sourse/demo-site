@@ -30,6 +30,59 @@ export function TerminalLog({
 
   const lines = (content || '').split('\n');
 
+  const renderLineContent = (line: string) => {
+    if (!line.trim()) return <span>&nbsp;</span>;
+
+    if (line.includes('===') || line.includes('---')) {
+      return <span className="text-cyan-400 font-bold tracking-wide">{line}</span>;
+    }
+
+    if (/\[\s*OK\s*\]/i.test(line) || /\[\s*FAIL\s*\]/i.test(line)) {
+      const parts = line.split(/(\[\s*OK\s*\]|\[\s*FAIL\s*\])/gi);
+      return (
+        <span>
+          {parts.map((part, i) => {
+            if (/\[\s*OK\s*\]/i.test(part)) {
+              return (
+                <span
+                  key={i}
+                  className="text-emerald-300 font-bold bg-emerald-950/80 border border-emerald-500/40 px-1.5 py-0.5 rounded text-[11px] shadow-[0_0_8px_rgba(16,185,129,0.25)]"
+                >
+                  {part}
+                </span>
+              );
+            }
+            if (/\[\s*FAIL\s*\]/i.test(part)) {
+              return (
+                <span
+                  key={i}
+                  className="text-rose-300 font-bold bg-rose-950/80 border border-rose-500/40 px-1.5 py-0.5 rounded text-[11px] shadow-[0_0_8px_rgba(244,63,94,0.25)]"
+                >
+                  {part}
+                </span>
+              );
+            }
+            return (
+              <span key={i} className="text-zinc-200">
+                {part}
+              </span>
+            );
+          })}
+        </span>
+      );
+    }
+
+    if (line.includes('[!]')) {
+      return <span className="text-amber-300">{line}</span>;
+    }
+
+    if (/^\s*\d+\.\s+/.test(line)) {
+      return <span className="text-zinc-100 font-bold">{line}</span>;
+    }
+
+    return <span className="text-zinc-300">{line}</span>;
+  };
+
   return (
     <div className={`w-full border border-zinc-800 bg-zinc-950 text-zinc-200 overflow-hidden font-mono ${className}`}>
       {/* Terminal Title Bar */}
@@ -57,29 +110,20 @@ export function TerminalLog({
         </button>
       </div>
 
-      {/* Terminal Content with Line Numbers and colored lines */}
+      {/* Terminal Content with Line Numbers and colored tokens */}
       <div className={`p-3 overflow-auto text-xs leading-relaxed ${maxHeight}`}>
         <div className="table w-full">
           {lines.map((rawLine, idx) => {
             const line = rawLine.replace(/\x1b\[[0-9;]*m/g, '').replace(/\\033\[[0-9;]*m/g, '');
 
-            let lineClass = 'text-zinc-300';
-            if (/\[\s*FAIL\s*\]|\bFAIL\b/i.test(line)) {
-              lineClass = 'text-rose-400 font-medium';
-            } else if (/\[\s*OK\s*\]|\bOK\b/i.test(line)) {
-              lineClass = 'text-emerald-400 font-medium';
-            } else if (line.includes('===') || line.includes('---')) {
-              lineClass = 'text-zinc-500 font-bold';
-            } else if (line.includes('[!]')) {
-              lineClass = 'text-amber-400';
-            }
-
             return (
               <div key={idx} className="table-row hover:bg-zinc-900/60">
-                <span className="table-cell pr-4 text-right text-zinc-600 select-none w-8">
+                <span className="table-cell pr-4 text-right text-zinc-600 select-none w-8 font-mono text-[11px]">
                   {idx + 1}
                 </span>
-                <span className={`table-cell whitespace-pre ${lineClass}`}>{line || ' '}</span>
+                <span className="table-cell whitespace-pre font-mono">
+                  {renderLineContent(line)}
+                </span>
               </div>
             );
           })}

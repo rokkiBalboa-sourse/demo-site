@@ -1,4 +1,5 @@
 import { ModuleInfo, Task } from './types';
+import { TASKS_2027_DATA } from './tasks-2027-data';
 
 export const MODULES_LIST: ModuleInfo[] = [
   {
@@ -9,6 +10,7 @@ export const MODULES_LIST: ModuleInfo[] = [
       'Базовая сетевая адресация, подсистема etcnet в ALT Linux, коммутация и VLAN, туннелирование GRE, динамическая маршрутизация OSPF (FRR), DHCP и DNS BIND.',
     total_tasks: 11,
     slug: 'module-1',
+    year: 2026,
   },
   {
     id: 'module-2',
@@ -18,6 +20,7 @@ export const MODULES_LIST: ModuleInfo[] = [
       'Контроллер домена Samba Active Directory DC, ввод Linux-клиентов, программный RAID 0, сетевая ФС NFS, синхронизация Chrony, автоматизация Ansible, веб-стеки Docker и Apache+MariaDB, обратный прокси Nginx.',
     total_tasks: 11,
     slug: 'module-2',
+    year: 2026,
   },
   {
     id: 'module-3',
@@ -27,10 +30,42 @@ export const MODULES_LIST: ModuleInfo[] = [
       'Импорт учетных записей в домен, TLS/HTTPS с российскими криптографическими алгоритмами ГОСТ, межсетевой экран nftables, принт-сервер CUPS, централизованный сбор логов rsyslog, мониторинг и Fail2ban.',
     total_tasks: 10,
     slug: 'module-3',
+    year: 2026,
+  },
+  // 2027 Modules
+  {
+    id: 'module-1-2027',
+    code: 'Модуль 1 (2027)',
+    title: 'Сетевая инфраструктура и виртуализация',
+    description:
+      'Архитектура SDN, программные мосты Linux Bridge, VLAN тегирование, динамическая маршрутизация OSPFv3/BGP (FRRouting), агрегирование LACP и защищенные VPN-туннели WireGuard.',
+    total_tasks: 11,
+    slug: 'module-1-2027',
+    year: 2027,
+  },
+  {
+    id: 'module-2-2027',
+    code: 'Модуль 2 (2027)',
+    title: 'Сетевые сервисы и доменные службы',
+    description:
+      'Каталоги FreeIPA и Samba 4 AD DC, централизованная аутентификация Kerberos/LDAP, кластеризация СУБД PostgreSQL, балансировка нагрузки NGINX, контейнеризация Podman и Ansible.',
+    total_tasks: 11,
+    slug: 'module-2-2027',
+    year: 2027,
+  },
+  {
+    id: 'module-3-2027',
+    code: 'Модуль 3 (2027)',
+    title: 'Информационная безопасность и мониторинг',
+    description:
+      'Шифрование ГОСТ Р 34.12, аудит соответствия OpenSCAP, система обнаружения вторжений Suricata IDS, межсетевой экран nftables, стек мониторинга Prometheus + Grafana и резервное копирование.',
+    total_tasks: 10,
+    slug: 'module-3-2027',
+    year: 2027,
   },
 ];
 
-export const TASKS_DATA: Task[] = [
+const TASKS_2026_RAW: Task[] = [
   // =========================================================================
   // MODULE 1 (11 TASKS)
   // =========================================================================
@@ -4390,4 +4425,9 @@ su -l net_admin -c "sudo id"`,
     created_at: '2026-10-10T01:47:45.303Z',
     updated_at: '2026-10-10T01:47:45.303Z',
   },
+];
+
+export const TASKS_DATA: Task[] = [
+  ...TASKS_2026_RAW.map(t => ({ ...t, year: 2026 })),
+  ...TASKS_2027_DATA,
 ];

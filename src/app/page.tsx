@@ -5,6 +5,7 @@ import { db } from '@/lib/db';
 import { Header } from '@/components/Header';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { StudentModulesSection } from './StudentModulesSection';
 import {
   ArrowRight,
   CheckCircle2,
@@ -36,11 +37,12 @@ export default async function StudentHomePage() {
   const modules = db.getAllModules();
   const allTasks = await db.getAllTasks();
   const submissions = await db.getUserSubmissions(session.id);
+  const examSettings = await db.getExamSettings();
 
   const subMap = new Map(submissions.map(s => [s.task_id, s]));
 
   // Global Statistics
-  const totalTasksCount = allTasks.length; // 32
+  const totalTasksCount = allTasks.length;
   const passedCount = submissions.filter(s => s.status === 'reviewed' && s.is_passed).length;
   const pendingCount = submissions.filter(s => s.status === 'pending').length;
 
@@ -164,131 +166,14 @@ export default async function StudentHomePage() {
           </div>
         </div>
 
-        {/* 3 Modules Section */}
-        <div id="modules" className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-              <Layers className="w-4 h-4 text-zinc-400" />
-              <span>Экзаменационные модули (3 модуля • 32 задания)</span>
-            </h2>
-            <span className="text-xs font-mono text-zinc-500">
-              Выполняйте модули и задания последовательно
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {modules.map(mod => {
-              const isLocked = false;
-              const moduleTasks = allTasks.filter(t => t.module_id === mod.id);
-              const moduleTaskIds = new Set(moduleTasks.map(t => t.id));
-
-              const moduleSubmissions = submissions.filter(s => moduleTaskIds.has(s.task_id));
-              const modPassed = moduleSubmissions.filter(
-                s => s.status === 'reviewed' && s.is_passed
-              ).length;
-              const modPending = moduleSubmissions.filter(s => s.status === 'pending').length;
-              const progressPercent = Math.round((modPassed / mod.total_tasks) * 100);
-
-              return (
-                <div
-                  key={mod.id}
-                  className={`border relative flex flex-col justify-between transition-colors overflow-hidden ${
-                    isLocked
-                      ? 'border-zinc-800 bg-zinc-950/90 p-6'
-                      : 'border-zinc-800 bg-zinc-900/60 p-6 hover:border-zinc-500 group'
-                  }`}
-                >
-                  {/* Overlay for locked modules */}
-                  {isLocked && (
-                    <div className="absolute inset-0 z-20 bg-zinc-950/85 backdrop-blur-[2px] flex flex-col items-center justify-center p-6 text-center">
-                      <div className="bg-zinc-900 border border-zinc-700/80 px-3.5 py-1.5 flex items-center gap-2 mb-2 shadow-2xl">
-                        <Lock className="w-3.5 h-3.5 text-zinc-400" />
-                        <span className="font-mono text-xs font-bold text-zinc-200 uppercase tracking-widest">
-                          В разработке
-                        </span>
-                      </div>
-                      <p className="font-mono text-[11px] text-zinc-400 max-w-[200px] leading-relaxed">
-                        Экзаменационный модуль временно заблокирован
-                      </p>
-                    </div>
-                  )}
-
-                  <div
-                    className={`space-y-4 ${isLocked ? 'filter grayscale opacity-25 select-none pointer-events-none' : ''}`}
-                  >
-                    {/* Module Code & Tasks Badge */}
-                    <div className="flex items-center justify-between">
-                      <span className="font-mono text-xs font-bold bg-white text-zinc-950 px-2 py-0.5">
-                        {mod.code}
-                      </span>
-                      <span className="font-mono text-xs text-zinc-400 border border-zinc-800 bg-zinc-900 px-2 py-0.5">
-                        {mod.total_tasks} заданий
-                      </span>
-                    </div>
-
-                    {/* Title */}
-                    <div>
-                      <h3 className="text-base font-bold text-white font-mono group-hover:text-zinc-100">
-                        {mod.title}
-                      </h3>
-                      <p className="text-xs text-zinc-400 font-mono mt-2 line-clamp-3 leading-relaxed">
-                        {mod.description}
-                      </p>
-                    </div>
-
-                    {/* Progress Bar */}
-                    <div className="space-y-1.5 pt-2 border-t border-zinc-800">
-                      <div className="flex justify-between text-xs font-mono text-zinc-400">
-                        <span>Прогресс сдачи:</span>
-                        <span className="font-bold text-zinc-200">
-                          {modPassed} / {mod.total_tasks} ({progressPercent}%)
-                        </span>
-                      </div>
-                      <div className="w-full h-1.5 bg-zinc-800 overflow-hidden">
-                        <div
-                          className="h-full bg-white transition-all duration-300"
-                          style={{ width: `${progressPercent}%` }}
-                        />
-                      </div>
-                      {modPending > 0 && (
-                        <div className="text-[11px] font-mono text-zinc-400 flex items-center gap-1 mt-1">
-                          <Clock className="w-3 h-3 text-zinc-400" />
-                          <span>Ожидают проверки: {modPending}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Action Link */}
-                  <div
-                    className={`pt-6 mt-4 border-t border-zinc-800 ${isLocked ? 'filter grayscale opacity-25 pointer-events-none' : ''}`}
-                  >
-                    {isLocked ? (
-                      <Button
-                        variant="secondary"
-                        disabled
-                        className="w-full flex items-center justify-center gap-2 cursor-not-allowed"
-                      >
-                        <Lock className="w-3.5 h-3.5" />
-                        <span>В разработке</span>
-                      </Button>
-                    ) : (
-                      <Link href={`/modules/${mod.id}`}>
-                        <Button
-                          variant="primary"
-                          className="w-full flex items-center justify-center gap-2"
-                        >
-                          <span>Открыть список заданий</span>
-                          <ArrowRight className="w-3.5 h-3.5" />
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        {/* Modules Section with Year Tabs & Group Restrictions */}
+        <StudentModulesSection
+          modules={modules}
+          allTasks={allTasks}
+          submissions={submissions}
+          examSettings={examSettings}
+          userGroup={session.group_name}
+        />
 
         {/* Base Knowledge Link Footer */}
         <div className="border border-zinc-800 bg-zinc-900/40 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">

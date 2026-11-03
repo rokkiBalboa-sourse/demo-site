@@ -163,7 +163,7 @@ export function AdminDashboardClient({
       </div>
 
       {activeTab === 'settings' ? (
-        <AdminSettingsClient />
+        <AdminSettingsClient availableGroups={availableGroups} />
       ) : activeTab === 'students' ? (
         <StudentsManagementClient initialStudents={students} availableGroups={availableGroups} />
       ) : activeTab === 'grades' ? (

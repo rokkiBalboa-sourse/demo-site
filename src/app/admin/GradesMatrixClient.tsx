@@ -441,7 +441,7 @@ export function GradesMatrixClient({
   const [groupSearchQuery, setGroupSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'name' | 'score' | 'passed'>('name');
   const [viewMode, setViewMode] = useState<'matrix' | 'cards'>('matrix');
-  const [academicYear, setAcademicYear] = useState<string>('2026/2027');
+  const [academicYear, setAcademicYear] = useState<string>('2026');
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [highlightedStudentId, setHighlightedStudentId] = useState<string | null>(null);
@@ -567,11 +567,24 @@ export function GradesMatrixClient({
     return map;
   }, [currentStudents, currentSubmissions]);
 
-  // Filter tasks based on selected module
+  // Filter modules available for the active academic year
+  const availableModulesForYear = useMemo(() => {
+    if (academicYear === '2026') return modules.filter(m => (m.year || 2026) === 2026);
+    if (academicYear === '2027') return modules.filter(m => m.year === 2027);
+    return modules;
+  }, [modules, academicYear]);
+
+  // Filter tasks based on selected module & academic year
   const filteredTasks = useMemo(() => {
-    if (selectedModule === 'ALL') return tasks;
-    return tasks.filter(t => t.module_id === selectedModule);
-  }, [tasks, selectedModule]);
+    let list = tasks;
+    if (academicYear === '2026') {
+      list = list.filter(t => (t.year || 2026) === 2026);
+    } else if (academicYear === '2027') {
+      list = list.filter(t => t.year === 2027);
+    }
+    if (selectedModule === 'ALL') return list;
+    return list.filter(t => t.module_id === selectedModule);
+  }, [tasks, selectedModule, academicYear]);
 
   // Filter groups in the sidebar by groupSearchQuery
   const filteredSidebarGroups = useMemo(() => {
@@ -832,8 +845,10 @@ export function GradesMatrixClient({
               onChange={e => setSelectedModule(e.target.value)}
               className="w-full bg-zinc-950 border border-zinc-800 text-zinc-200 px-3 py-1.5 text-xs focus:outline-none focus:border-zinc-500 font-mono cursor-pointer"
             >
-              <option value="ALL">Все модули (32 задания)</option>
-              {modules.map(m => (
+              <option value="ALL">
+                Все модули ({academicYear === 'ALL' ? '6 модулей • 64 задания' : '3 модуля • 32 задания'})
+              </option>
+              {availableModulesForYear.map(m => (
                 <option key={m.id} value={m.id}>
                   {m.code}: {m.title}
                 </option>
@@ -889,12 +904,15 @@ export function GradesMatrixClient({
               <div className="relative">
                 <select
                   value={academicYear}
-                  onChange={e => setAcademicYear(e.target.value)}
+                  onChange={e => {
+                    setAcademicYear(e.target.value);
+                    setSelectedModule('ALL');
+                  }}
                   className="bg-zinc-900 border border-zinc-700/80 text-zinc-200 text-[11px] font-bold px-2 py-1 pr-6 rounded focus:outline-none focus:border-zinc-500 appearance-none cursor-pointer"
                 >
-                  <option value="2026/2027">2026/2027</option>
-                  <option value="2025/2026">2025/2026</option>
-                  <option value="КОД 2026">КОД 2026</option>
+                  <option value="2026">2026 год</option>
+                  <option value="2027">2027 год</option>
+                  <option value="ALL">Все года</option>
                 </select>
                 <ChevronDown className="w-3 h-3 text-zinc-400 absolute right-1.5 top-2 pointer-events-none" />
               </div>
@@ -1157,30 +1175,28 @@ export function GradesMatrixClient({
                       >
                         Сводка
                       </th>
-                      {selectedModule === 'ALL' || selectedModule === 'module-1' ? (
-                        <th
-                          className="p-2 border-r border-zinc-800 text-center bg-sky-950/50 text-sky-300 font-bold"
-                          colSpan={tasks.filter(t => t.module_id === 'module-1').length}
-                        >
-                          Модуль 1: Сетевая инфраструктура (11 заданий)
-                        </th>
-                      ) : null}
-                      {selectedModule === 'ALL' || selectedModule === 'module-2' ? (
-                        <th
-                          className="p-2 border-r border-zinc-800 text-center bg-amber-950/50 text-amber-300 font-bold"
-                          colSpan={tasks.filter(t => t.module_id === 'module-2').length}
-                        >
-                          Модуль 2: Системное администрирование (11 заданий)
-                        </th>
-                      ) : null}
-                      {selectedModule === 'ALL' || selectedModule === 'module-3' ? (
-                        <th
-                          className="p-2 border-r border-zinc-800 text-center bg-emerald-950/50 text-emerald-300 font-bold"
-                          colSpan={tasks.filter(t => t.module_id === 'module-3').length}
-                        >
-                          Модуль 3: Информационная безопасность (10 заданий)
-                        </th>
-                      ) : null}
+                      {/* Dynamic module header spans based on filteredTasks */}
+                      {Array.from(new Set(filteredTasks.map(t => t.module_id))).map(modId => {
+                        const mod = modules.find(m => m.id === modId);
+                        const count = filteredTasks.filter(t => t.module_id === modId).length;
+                        if (!mod || count === 0) return null;
+                        const isMod1 = mod.code.includes('1') || mod.id.includes('m1');
+                        const isMod2 = mod.code.includes('2') || mod.id.includes('m2');
+                        const headerColor = isMod1
+                          ? 'bg-sky-950/50 text-sky-300'
+                          : isMod2
+                            ? 'bg-amber-950/50 text-amber-300'
+                            : 'bg-emerald-950/50 text-emerald-300';
+                        return (
+                          <th
+                            key={modId}
+                            className={`p-2 border-r border-zinc-800 text-center font-bold ${headerColor}`}
+                            colSpan={count}
+                          >
+                            {mod.code}: {mod.title} ({count} зад.)
+                          </th>
+                        );
+                      })}
                     </tr>
 
                     {/* Task Numbers Sub-header */}

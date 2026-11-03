@@ -8,6 +8,7 @@ import {
   SubmissionWithDetails,
   ModuleInfo,
   StudentWithStats,
+  ExamYearSettings,
 } from './types';
 import { MODULES_LIST, TASKS_DATA } from './tasks-data';
 import { hashPassword } from './security';
@@ -24,6 +25,32 @@ const INITIAL_USERS: User[] = [
     group_name: 'STAFF',
     role: 'admin',
     is_active: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'usr-test-admin',
+    username: 'test_admin',
+    password_hash: 'admin123',
+    full_name: 'Тестовый Администратор (локалка)',
+    group_name: 'STAFF',
+    role: 'admin',
+    is_active: true,
+    two_factor_enabled: false,
+    bypass_2fa: true,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  },
+  {
+    id: 'usr-test-student',
+    username: 'test_student',
+    password_hash: 'student123',
+    full_name: 'Тестовый Студент (локалка)',
+    group_name: '9СА-421',
+    role: 'student',
+    is_active: true,
+    two_factor_enabled: false,
+    bypass_2fa: true,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),
   },
@@ -168,7 +195,14 @@ interface LocalStore {
   users: User[];
   tasks: Task[];
   submissions: Submission[];
+  examSettings?: ExamYearSettings;
 }
+
+const DEFAULT_EXAM_SETTINGS: ExamYearSettings = {
+  mode: 'tabs',
+  defaultYear: 2026,
+  groupAssignments: {},
+};
 
 const DATA_DIR = path.join(process.cwd(), '.data');
 const DATA_FILE = path.join(DATA_DIR, 'store.json');
@@ -196,14 +230,58 @@ function ensureDataFile(): LocalStore {
     }
   };
 
-  // Always sync tasks with TASKS_DATA definition to ensure all 32 tasks and detailed explanations are present
+  const ensureTestAccounts = (users: User[]) => {
+    const testAdmin = users.find(u => u.username.toLowerCase() === 'test_admin');
+    if (!testAdmin) {
+      users.push({
+        id: 'usr-test-admin',
+        username: 'test_admin',
+        password_hash: 'admin123',
+        full_name: 'Тестовый Администратор (локалка)',
+        group_name: 'STAFF',
+        role: 'admin',
+        is_active: true,
+        two_factor_enabled: false,
+        bypass_2fa: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    } else {
+      testAdmin.bypass_2fa = true;
+      testAdmin.two_factor_enabled = false;
+    }
+
+    const testStudent = users.find(u => u.username.toLowerCase() === 'test_student');
+    if (!testStudent) {
+      users.push({
+        id: 'usr-test-student',
+        username: 'test_student',
+        password_hash: 'student123',
+        full_name: 'Тестовый Студент (локалка)',
+        group_name: '9СА-421',
+        role: 'student',
+        is_active: true,
+        two_factor_enabled: false,
+        bypass_2fa: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    } else {
+      testStudent.bypass_2fa = true;
+      testStudent.two_factor_enabled = false;
+    }
+  };
+
+  // Always sync tasks with TASKS_DATA definition to ensure all 64 tasks and detailed explanations are present
   if (!fs.existsSync(DATA_FILE)) {
     const initialUsers = JSON.parse(JSON.stringify(INITIAL_USERS)) as User[];
     applyAdminEnv(initialUsers);
+    ensureTestAccounts(initialUsers);
     const initial: LocalStore = {
       users: initialUsers,
       tasks: TASKS_DATA,
       submissions: INITIAL_SUBMISSIONS,
+      examSettings: DEFAULT_EXAM_SETTINGS,
     };
     fs.writeFileSync(DATA_FILE, JSON.stringify(initial, null, 2), 'utf-8');
     return initial;
@@ -213,21 +291,31 @@ function ensureDataFile(): LocalStore {
     const raw = fs.readFileSync(DATA_FILE, 'utf-8');
     const parsed = JSON.parse(raw) as LocalStore;
 
-    // Always sync tasks with latest code definition
+    // Always sync tasks with latest code definition (2026 + 2027)
     parsed.tasks = TASKS_DATA;
 
     // Sync admin credentials from env if set
     applyAdminEnv(parsed.users);
+
+    // Sync test accounts
+    ensureTestAccounts(parsed.users);
+
+    // Sync exam settings
+    if (!parsed.examSettings) {
+      parsed.examSettings = DEFAULT_EXAM_SETTINGS;
+    }
 
     saveStore(parsed);
     return parsed;
   } catch {
     const initialUsers = JSON.parse(JSON.stringify(INITIAL_USERS)) as User[];
     applyAdminEnv(initialUsers);
+    ensureTestAccounts(initialUsers);
     const fallback: LocalStore = {
       users: initialUsers,
       tasks: TASKS_DATA,
       submissions: INITIAL_SUBMISSIONS,
+      examSettings: DEFAULT_EXAM_SETTINGS,
     };
     fs.writeFileSync(DATA_FILE, JSON.stringify(fallback, null, 2), 'utf-8');
     return fallback;
@@ -247,8 +335,25 @@ const localJsonDb = {
     return MODULES_LIST;
   },
 
+  getModulesByYear(year?: number): ModuleInfo[] {
+    if (!year) return MODULES_LIST;
+    return MODULES_LIST.filter(m => (m.year || 2026) === year);
+  },
+
   getModuleById(id: string): ModuleInfo | null {
     return MODULES_LIST.find(m => m.id === id) || null;
+  },
+
+  async getExamSettings(): Promise<ExamYearSettings> {
+    const store = ensureDataFile();
+    return store.examSettings || DEFAULT_EXAM_SETTINGS;
+  },
+
+  async saveExamSettings(settings: ExamYearSettings): Promise<ExamYearSettings> {
+    const store = ensureDataFile();
+    store.examSettings = settings;
+    saveStore(store);
+    return store.examSettings;
   },
 
   // Users
@@ -858,38 +963,89 @@ const localJsonDb = {
   },
 };
 
+async function runWithFallback<T>(mysqlFn: () => Promise<T>, jsonFn: () => Promise<T> | T): Promise<T> {
+  if (!isMySqlConfigured()) {
+    return jsonFn();
+  }
+  try {
+    return await mysqlFn();
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code;
+    const msg = (err as { message?: string })?.message || '';
+    if (
+      code === 'ECONNREFUSED' ||
+      code === 'ETIMEDOUT' ||
+      code === 'ENOTFOUND' ||
+      code === 'PROTOCOL_CONNECTION_LOST' ||
+      msg.includes('ECONNREFUSED') ||
+      msg.includes('ETIMEDOUT')
+    ) {
+      return jsonFn();
+    }
+    throw err;
+  }
+}
+
 export const db = {
-  getAllModules: () =>
-    isMySqlConfigured() ? mysqlDb.getAllModules() : localJsonDb.getAllModules(),
-  getModuleById: (id: string) =>
-    isMySqlConfigured() ? mysqlDb.getModuleById(id) : localJsonDb.getModuleById(id),
+  getAllModules: () => localJsonDb.getAllModules(),
+  getModulesByYear: (year?: number) => localJsonDb.getModulesByYear(year),
+  getModuleById: (id: string) => localJsonDb.getModuleById(id),
+  getExamSettings: () =>
+    runWithFallback(
+      () => mysqlDb.getExamSettings(),
+      () => localJsonDb.getExamSettings()
+    ),
+  saveExamSettings: (settings: ExamYearSettings) =>
+    runWithFallback(
+      () => mysqlDb.saveExamSettings(settings),
+      () => localJsonDb.saveExamSettings(settings)
+    ),
   findUserByUsername: (username: string) =>
-    isMySqlConfigured()
-      ? mysqlDb.findUserByUsername(username)
-      : localJsonDb.findUserByUsername(username),
+    runWithFallback(
+      () => mysqlDb.findUserByUsername(username),
+      () => localJsonDb.findUserByUsername(username)
+    ),
   findUserById: (id: string) =>
-    isMySqlConfigured() ? mysqlDb.findUserById(id) : localJsonDb.findUserById(id),
+    runWithFallback(
+      () => mysqlDb.findUserById(id),
+      () => localJsonDb.findUserById(id)
+    ),
   setUser2FATempSecret: (userId: string, tempSecret: string) =>
-    isMySqlConfigured()
-      ? mysqlDb.setUser2FATempSecret(userId, tempSecret)
-      : localJsonDb.setUser2FATempSecret(userId, tempSecret),
+    runWithFallback(
+      () => mysqlDb.setUser2FATempSecret(userId, tempSecret),
+      () => localJsonDb.setUser2FATempSecret(userId, tempSecret)
+    ),
   confirmUser2FASetup: (userId: string, secret: string) =>
-    isMySqlConfigured()
-      ? mysqlDb.confirmUser2FASetup(userId, secret)
-      : localJsonDb.confirmUser2FASetup(userId, secret),
+    runWithFallback(
+      () => mysqlDb.confirmUser2FASetup(userId, secret),
+      () => localJsonDb.confirmUser2FASetup(userId, secret)
+    ),
   resetUser2FA: (userId: string) =>
-    isMySqlConfigured() ? mysqlDb.resetUser2FA(userId) : localJsonDb.resetUser2FA(userId),
+    runWithFallback(
+      () => mysqlDb.resetUser2FA(userId),
+      () => localJsonDb.resetUser2FA(userId)
+    ),
   getAllStudents: () =>
-    isMySqlConfigured() ? mysqlDb.getAllStudents() : localJsonDb.getAllStudents(),
+    runWithFallback(
+      () => mysqlDb.getAllStudents(),
+      () => localJsonDb.getAllStudents()
+    ),
   getAllStudentsWithStats: () =>
-    isMySqlConfigured() ? mysqlDb.getAllStudentsWithStats() : localJsonDb.getAllStudentsWithStats(),
+    runWithFallback(
+      () => mysqlDb.getAllStudentsWithStats(),
+      () => localJsonDb.getAllStudentsWithStats()
+    ),
   createUser: (data: {
     username: string;
     password_hash: string;
     full_name: string;
     group_name: string;
     role?: UserRole;
-  }) => (isMySqlConfigured() ? mysqlDb.createUser(data) : localJsonDb.createUser(data)),
+  }) =>
+    runWithFallback(
+      () => mysqlDb.createUser(data),
+      () => localJsonDb.createUser(data)
+    ),
   createStudentsBatch: (
     students: Array<{
       full_name: string;
@@ -898,54 +1054,80 @@ export const db = {
       password?: string;
     }>
   ) =>
-    isMySqlConfigured()
-      ? mysqlDb.createStudentsBatch(students)
-      : localJsonDb.createStudentsBatch(students),
+    runWithFallback(
+      () => mysqlDb.createStudentsBatch(students),
+      () => localJsonDb.createStudentsBatch(students)
+    ),
   updateUser: (
     id: string,
     updates: Partial<
       Pick<User, 'full_name' | 'group_name' | 'username' | 'password_hash' | 'is_active'>
     >
   ) =>
-    isMySqlConfigured() ? mysqlDb.updateUser(id, updates) : localJsonDb.updateUser(id, updates),
+    runWithFallback(
+      () => mysqlDb.updateUser(id, updates),
+      () => localJsonDb.updateUser(id, updates)
+    ),
   updateUserPasswordHash: (id: string, hash: string) =>
-    isMySqlConfigured()
-      ? mysqlDb.updateUserPasswordHash(id, hash)
-      : localJsonDb.updateUserPasswordHash(id, hash),
+    runWithFallback(
+      () => mysqlDb.updateUserPasswordHash(id, hash),
+      () => localJsonDb.updateUserPasswordHash(id, hash)
+    ),
   deleteUser: (id: string) =>
-    isMySqlConfigured() ? mysqlDb.deleteUser(id) : localJsonDb.deleteUser(id),
-  getAllTasks: () => (isMySqlConfigured() ? mysqlDb.getAllTasks() : localJsonDb.getAllTasks()),
+    runWithFallback(
+      () => mysqlDb.deleteUser(id),
+      () => localJsonDb.deleteUser(id)
+    ),
+  getAllTasks: () =>
+    runWithFallback(
+      () => mysqlDb.getAllTasks(),
+      () => localJsonDb.getAllTasks()
+    ),
   getTasksByModule: (moduleId: string) =>
-    isMySqlConfigured()
-      ? mysqlDb.getTasksByModule(moduleId)
-      : localJsonDb.getTasksByModule(moduleId),
+    runWithFallback(
+      () => mysqlDb.getTasksByModule(moduleId),
+      () => localJsonDb.getTasksByModule(moduleId)
+    ),
   getTaskBySlug: (slug: string) =>
-    isMySqlConfigured() ? mysqlDb.getTaskBySlug(slug) : localJsonDb.getTaskBySlug(slug),
+    runWithFallback(
+      () => mysqlDb.getTaskBySlug(slug),
+      () => localJsonDb.getTaskBySlug(slug)
+    ),
   getTaskById: (id: string) =>
-    isMySqlConfigured() ? mysqlDb.getTaskById(id) : localJsonDb.getTaskById(id),
+    runWithFallback(
+      () => mysqlDb.getTaskById(id),
+      () => localJsonDb.getTaskById(id)
+    ),
   getSubmissionByUserAndTask: (userId: string, taskId: string) =>
-    isMySqlConfigured()
-      ? mysqlDb.getSubmissionByUserAndTask(userId, taskId)
-      : localJsonDb.getSubmissionByUserAndTask(userId, taskId),
+    runWithFallback(
+      () => mysqlDb.getSubmissionByUserAndTask(userId, taskId),
+      () => localJsonDb.getSubmissionByUserAndTask(userId, taskId)
+    ),
   getSubmissionById: (id: string) =>
-    isMySqlConfigured() ? mysqlDb.getSubmissionById(id) : localJsonDb.getSubmissionById(id),
+    runWithFallback(
+      () => mysqlDb.getSubmissionById(id),
+      () => localJsonDb.getSubmissionById(id)
+    ),
   getUserSubmissions: (userId: string) =>
-    isMySqlConfigured()
-      ? mysqlDb.getUserSubmissions(userId)
-      : localJsonDb.getUserSubmissions(userId),
+    runWithFallback(
+      () => mysqlDb.getUserSubmissions(userId),
+      () => localJsonDb.getUserSubmissions(userId)
+    ),
   getAllSubmissionsWithDetails: () =>
-    isMySqlConfigured()
-      ? mysqlDb.getAllSubmissionsWithDetails()
-      : localJsonDb.getAllSubmissionsWithDetails(),
+    runWithFallback(
+      () => mysqlDb.getAllSubmissionsWithDetails(),
+      () => localJsonDb.getAllSubmissionsWithDetails()
+    ),
   createOrUpdateSubmission: (data: {
     userId: string;
     taskId: string;
     logOutput: string;
     answers: Record<string, string>;
   }) =>
-    isMySqlConfigured()
-      ? mysqlDb.createOrUpdateSubmission(data)
-      : localJsonDb.createOrUpdateSubmission(data),
+    runWithFallback(
+      () => mysqlDb.createOrUpdateSubmission(data),
+      () => localJsonDb.createOrUpdateSubmission(data)
+    ),
   reviewSubmission: (
     submissionId: string,
     reviewerId: string,
@@ -956,13 +1138,15 @@ export const db = {
       allowRetake?: boolean;
     }
   ) =>
-    isMySqlConfigured()
-      ? mysqlDb.reviewSubmission(submissionId, reviewerId, data)
-      : localJsonDb.reviewSubmission(submissionId, reviewerId, data),
+    runWithFallback(
+      () => mysqlDb.reviewSubmission(submissionId, reviewerId, data),
+      () => localJsonDb.reviewSubmission(submissionId, reviewerId, data)
+    ),
   setSubmissionRetakePermission: (submissionId: string, allowRetake: boolean) =>
-    isMySqlConfigured()
-      ? mysqlDb.setSubmissionRetakePermission(submissionId, allowRetake)
-      : localJsonDb.setSubmissionRetakePermission(submissionId, allowRetake),
+    runWithFallback(
+      () => mysqlDb.setSubmissionRetakePermission(submissionId, allowRetake),
+      () => localJsonDb.setSubmissionRetakePermission(submissionId, allowRetake)
+    ),
   bulkCloseAllAsFive: (
     reviewerId: string,
     options: {
@@ -971,15 +1155,24 @@ export const db = {
       studentId?: string;
     }
   ) =>
-    isMySqlConfigured()
-      ? mysqlDb.bulkCloseAllAsFive(reviewerId, options)
-      : localJsonDb.bulkCloseAllAsFive(reviewerId, options),
+    runWithFallback(
+      () => mysqlDb.bulkCloseAllAsFive(reviewerId, options),
+      () => localJsonDb.bulkCloseAllAsFive(reviewerId, options)
+    ),
 
   updateAdminCredentials: (data: { username?: string; password?: string; fullName?: string }) =>
-    isMySqlConfigured()
-      ? mysqlDb.updateAdminCredentials(data)
-      : localJsonDb.updateAdminCredentials(data),
-  exportStore: () => (isMySqlConfigured() ? mysqlDb.exportStore() : localJsonDb.exportStore()),
+    runWithFallback(
+      () => mysqlDb.updateAdminCredentials(data),
+      () => localJsonDb.updateAdminCredentials(data)
+    ),
+  exportStore: () =>
+    runWithFallback(
+      () => mysqlDb.exportStore(),
+      () => localJsonDb.exportStore()
+    ),
   importStore: (imported: { users: User[]; submissions: Submission[]; tasks?: Task[] }) =>
-    isMySqlConfigured() ? mysqlDb.importStore(imported) : localJsonDb.importStore(imported),
+    runWithFallback(
+      () => mysqlDb.importStore(imported),
+      () => localJsonDb.importStore(imported)
+    ),
 };

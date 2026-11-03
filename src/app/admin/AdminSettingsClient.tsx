@@ -16,7 +16,11 @@ import {
   Copy,
   Check,
   ChevronDown,
+  Layers,
+  Calendar,
+  Save,
 } from 'lucide-react';
+import { ExamYearSettings, GroupExamAssignment } from '@/lib/types';
 
 interface DatabaseInfo {
   isMySql: boolean;
@@ -32,7 +36,11 @@ interface DatabaseInfo {
   };
 }
 
-export function AdminSettingsClient() {
+interface AdminSettingsClientProps {
+  availableGroups?: string[];
+}
+
+export function AdminSettingsClient({ availableGroups = [] }: AdminSettingsClientProps) {
   const [username, setUsername] = useState('');
   const [fullName, setFullName] = useState('');
   const [newPassword, setNewPassword] = useState('');
@@ -54,7 +62,63 @@ export function AdminSettingsClient() {
   const [backupSuccess, setBackupSuccess] = useState<string | null>(null);
   const [backupError, setBackupError] = useState<string | null>(null);
 
+  // Exam Years & Modules Settings
+  const [examMode, setExamMode] = useState<'tabs' | 'restricted'>('tabs');
+  const [defaultYear, setDefaultYear] = useState<number>(2026);
+  const [groupAssignments, setGroupAssignments] = useState<Record<string, GroupExamAssignment>>({});
+  const [isLoadingExamSettings, setIsLoadingExamSettings] = useState(false);
+  const [isSavingExamSettings, setIsSavingExamSettings] = useState(false);
+  const [examSettingsSuccess, setExamSettingsSuccess] = useState<string | null>(null);
+  const [examSettingsError, setExamSettingsError] = useState<string | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleSaveExamSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingExamSettings(true);
+    setExamSettingsSuccess(null);
+    setExamSettingsError(null);
+
+    try {
+      const res = await fetch('/api/admin/settings/exam-years', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          settings: {
+            mode: examMode,
+            defaultYear,
+            groupAssignments,
+          },
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'Ошибка при сохранении настроек годов');
+      }
+
+      setExamSettingsSuccess('Настройки экзаменационных годов успешно сохранены!');
+      setTimeout(() => setExamSettingsSuccess(null), 3500);
+    } catch (err: unknown) {
+      setExamSettingsError(err instanceof Error ? err.message : 'Ошибка при сохранении');
+    } finally {
+      setIsSavingExamSettings(false);
+    }
+  };
+
+  const handleGroupAssignmentChange = (group: string, yearValue: string) => {
+    setGroupAssignments(prev => {
+      const copy = { ...prev };
+      if (yearValue === 'all') {
+        copy[group] = { year: 'all' };
+      } else {
+        copy[group] = { year: Number(yearValue) };
+      }
+      return copy;
+    });
+  };
+
+  const effectiveGroups = availableGroups.length > 0 ? availableGroups : ['9СА-421', '9СА-422', '9СА-423'];
 
   useEffect(() => {
     let isMounted = true;
@@ -77,7 +141,28 @@ export function AdminSettingsClient() {
         // ignore
       }
     };
+
+    const loadExamSettings = async () => {
+      try {
+        setIsLoadingExamSettings(true);
+        const res = await fetch('/api/admin/settings/exam-years');
+        if (res.ok && isMounted) {
+          const data = await res.json();
+          if (data.settings) {
+            setExamMode(data.settings.mode || 'tabs');
+            setDefaultYear(data.settings.defaultYear || 2026);
+            setGroupAssignments(data.settings.groupAssignments || {});
+          }
+        }
+      } catch {
+        // ignore
+      } finally {
+        if (isMounted) setIsLoadingExamSettings(false);
+      }
+    };
+
     void loadProfile();
+    void loadExamSettings();
     return () => {
       isMounted = false;
     };
@@ -214,6 +299,158 @@ export function AdminSettingsClient() {
 
   return (
     <div className="w-full max-w-3xl mx-auto space-y-4 font-mono py-6">
+      {/* 0. РАСПРЕДЕЛЕНИЕ ГОДОВ И МОДУЛЕЙ (2026 / 2027) */}
+      <div className="border border-zinc-800 bg-zinc-900/50 p-4 space-y-4">
+        <div className="flex items-center justify-between border-b border-zinc-800 pb-2.5">
+          <div className="flex items-center gap-2">
+            <Layers className="w-4 h-4 text-emerald-400" />
+            <span className="text-xs font-bold uppercase tracking-wider text-white">
+              Экзаменационные годы и группы (2026 / 2027)
+            </span>
+          </div>
+          <span className="text-[10px] text-zinc-400 bg-zinc-800 px-2 py-0.5 rounded">
+            2 года • 6 модулей
+          </span>
+        </div>
+
+        {examSettingsSuccess && (
+          <div className="text-[11px] text-emerald-400 bg-emerald-950/30 border border-emerald-500/30 px-3 py-1.5 flex items-center gap-2 rounded">
+            <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+            <span>{examSettingsSuccess}</span>
+          </div>
+        )}
+
+        {examSettingsError && (
+          <div className="text-[11px] text-rose-400 bg-rose-950/30 border border-rose-500/30 px-3 py-1.5 flex items-center gap-2 rounded">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            <span>{examSettingsError}</span>
+          </div>
+        )}
+
+        <form onSubmit={handleSaveExamSettings} className="space-y-4">
+          {/* Mode Selector */}
+          <div>
+            <label className="block text-[10px] font-semibold text-zinc-400 uppercase mb-1.5">
+              Режим доступа студентов к экзаменационным модулям:
+            </label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+              <label
+                className={`p-2.5 border rounded cursor-pointer transition flex items-start gap-2.5 ${
+                  examMode === 'tabs'
+                    ? 'border-emerald-500/60 bg-emerald-950/20 text-white'
+                    : 'border-zinc-800 bg-zinc-950/40 text-zinc-400 hover:border-zinc-700'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="examMode"
+                  value="tabs"
+                  checked={examMode === 'tabs'}
+                  onChange={() => setExamMode('tabs')}
+                  className="mt-0.5 accent-emerald-500"
+                />
+                <div>
+                  <div className="font-bold text-zinc-200">Общий доступ со вкладками</div>
+                  <div className="text-[10px] text-zinc-400 mt-0.5">
+                    Студенты видят вкладки выбора года (2026 и 2027) и могут переключаться между ними
+                  </div>
+                </div>
+              </label>
+
+              <label
+                className={`p-2.5 border rounded cursor-pointer transition flex items-start gap-2.5 ${
+                  examMode === 'restricted'
+                    ? 'border-cyan-500/60 bg-cyan-950/20 text-white'
+                    : 'border-zinc-800 bg-zinc-950/40 text-zinc-400 hover:border-zinc-700'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="examMode"
+                  value="restricted"
+                  checked={examMode === 'restricted'}
+                  onChange={() => setExamMode('restricted')}
+                  className="mt-0.5 accent-cyan-500"
+                />
+                <div>
+                  <div className="font-bold text-zinc-200">Разграничение по учебным группам</div>
+                  <div className="text-[10px] text-zinc-400 mt-0.5">
+                    Каждой учебной группе строго назначается конкретный экзаменационный год или модули
+                  </div>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          {/* Default Year Selector */}
+          <div className="flex items-center gap-3">
+            <label className="text-[10px] font-semibold text-zinc-400 uppercase">
+              Год по умолчанию:
+            </label>
+            <select
+              value={defaultYear}
+              onChange={e => setDefaultYear(Number(e.target.value))}
+              className="h-8 bg-zinc-950 border border-zinc-800 text-zinc-200 text-xs px-2.5 rounded focus:outline-none focus:border-zinc-600 font-mono cursor-pointer"
+            >
+              <option value={2026}>2026 год (3 модуля • 32 задания)</option>
+              <option value={2027}>2027 год (3 модуля • 32 задания)</option>
+            </select>
+          </div>
+
+          {/* Group Assignments Table */}
+          <div className="space-y-2 pt-2 border-t border-zinc-800/80">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold text-zinc-400 uppercase">
+                Назначение годов для групп:
+              </span>
+              <span className="text-[10px] text-zinc-500">
+                {examMode === 'restricted' ? 'Активно строгое назначение' : 'Применяется при ограничении'}
+              </span>
+            </div>
+
+            <div className="border border-zinc-800 rounded overflow-hidden divide-y divide-zinc-800/60">
+              {effectiveGroups.map(group => {
+                const currentAssigned = groupAssignments[group]?.year ?? 'all';
+                return (
+                  <div
+                    key={group}
+                    className="p-2.5 bg-zinc-950/60 flex items-center justify-between gap-3 text-xs"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-zinc-200 bg-zinc-900 border border-zinc-800 px-2 py-0.5 rounded">
+                        {group}
+                      </span>
+                    </div>
+
+                    <select
+                      value={String(currentAssigned)}
+                      onChange={e => handleGroupAssignmentChange(group, e.target.value)}
+                      className="h-7.5 bg-zinc-900 border border-zinc-700/80 text-zinc-200 text-xs px-2 rounded focus:outline-none focus:border-zinc-500 font-mono cursor-pointer"
+                    >
+                      <option value="all">Все года (с переключением вкладок)</option>
+                      <option value="2026">Только 2026 год (3 модуля)</option>
+                      <option value="2027">Только 2027 год (3 модуля)</option>
+                    </select>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="pt-2 flex items-center justify-end">
+            <Button
+              type="submit"
+              size="sm"
+              isLoading={isSavingExamSettings}
+              className="h-8 text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-4 flex items-center gap-1.5"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>Сохранить настройки годов</span>
+            </Button>
+          </div>
+        </form>
+      </div>
+
       {/* 1. БАЗА ДАННЫХ */}
       <div className="border border-zinc-800 bg-zinc-900/50 p-4 space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">

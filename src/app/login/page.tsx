@@ -327,6 +327,42 @@ export default function LoginPage() {
                   </div>
                 )}
               </form>
+
+              {/* Test accounts quick-fill buttons for local testing */}
+              <div className="pt-3 border-t border-zinc-800 space-y-2">
+                <div className="text-[10px] uppercase font-mono text-zinc-500 font-bold tracking-wider flex items-center justify-between">
+                  <span>Тест в локалке (без 2FA):</span>
+                  <span className="text-[9px] text-zinc-600 font-normal">клик для подстановки</span>
+                </div>
+                <div className="grid grid-cols-2 gap-2 text-xs font-mono">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUsername('test_admin');
+                      setPassword('admin123');
+                      setHas2FA(false);
+                      setError(null);
+                    }}
+                    className="p-2 text-left bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-amber-500/50 text-zinc-300 rounded transition cursor-pointer group"
+                  >
+                    <div className="text-[11px] font-bold text-amber-300 group-hover:text-amber-200">Администратор</div>
+                    <div className="text-[10px] text-zinc-500">test_admin / admin123</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUsername('test_student');
+                      setPassword('student123');
+                      setHas2FA(false);
+                      setError(null);
+                    }}
+                    className="p-2 text-left bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-emerald-500/50 text-zinc-300 rounded transition cursor-pointer group"
+                  >
+                    <div className="text-[11px] font-bold text-emerald-300 group-hover:text-emerald-200">Студент 9СА-421</div>
+                    <div className="text-[10px] text-zinc-500">test_student / student123</div>
+                  </button>
+                </div>
+              </div>
             </div>
           ) : (
             /* VIEW 2: MANDATORY 2FA SETUP (First login) */

@@ -136,6 +136,26 @@ export async function POST(req: NextRequest) {
       await db.updateUserPasswordHash(user.id, hashPassword(password));
     }
 
+    // Тестовые аккаунты без Google Authenticator (для локального тестирования)
+    if (user.bypass_2fa || user.username === 'test_admin' || user.username === 'test_student') {
+      const token = createSessionToken(user.id);
+      await setSession(user.id);
+
+      const response = NextResponse.json({
+        success: true,
+        user: {
+          id: user.id,
+          username: user.username,
+          full_name: user.full_name,
+          group_name: user.group_name,
+          role: user.role,
+        },
+      });
+
+      response.cookies.set(SESSION_COOKIE_NAME, token, getSessionCookieOptions());
+      return response;
+    }
+
     // Если 2FA уже привязана, сообщаем клиенту, что нужен 6-значный код
     if (user.two_factor_enabled && user.two_factor_secret) {
       return NextResponse.json({

@@ -13,6 +13,7 @@ export interface User {
   two_factor_enabled?: boolean;
   two_factor_secret?: string | null;
   two_factor_temp_secret?: string | null;
+  bypass_2fa?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -68,6 +69,7 @@ export interface Task {
   max_score: number;
   order_index: number;
   is_active: boolean;
+  year?: number;
   created_at: string;
   updated_at: string;
 }
@@ -79,6 +81,7 @@ export interface ModuleInfo {
   description: string;
   total_tasks: number;
   slug: string;
+  year?: number;
 }
 
 export interface Submission {
@@ -115,4 +118,15 @@ export interface SessionUser {
   full_name: string;
   group_name: string;
   role: UserRole;
+}
+
+export interface GroupExamAssignment {
+  year: number | 'all'; // 2026, 2027, or 'all'
+  allowedModules?: string[]; // optional specific modules
+}
+
+export interface ExamYearSettings {
+  mode: 'tabs' | 'restricted'; // 'tabs' = student can switch tabs 2026/2027; 'restricted' = strict group assignment
+  defaultYear: number; // 2026 or 2027
+  groupAssignments: Record<string, GroupExamAssignment>;
 }
