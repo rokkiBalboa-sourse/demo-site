@@ -229,3 +229,4 @@ fi
 log_report ""
 log_report "Отчет сохранен в: $REPORT_FILE" "$YELLOW"
 echo ""
+
