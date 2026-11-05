@@ -1265,38 +1265,252 @@ ping 10.10.10.1 -c 3
     slug: 'm1-2027-task-7',
     module_id: 'module-1-2027',
     task_number: 7,
-    title: 'Служба DHCP с пулами адресов и резервацией',
+    title: 'Динамическая маршрутизация Link-State (OSPF в FRR)',
     module_code: 'Модуль 1 (2027)',
     description:
-      'Развертывание Kea DHCP / ISC DHCP сервера на HQ-SRV, выдача адресов рабочим станциям с привязкой шлюза и DNS-серверов.',
-    nodes: ['HQ-SRV', 'HQ-CLI'],
-    assignment: `Настроить DHCP-пул 192.168.10.100 - 192.168.10.200 и зарезервировать статический IP для MAC-адреса HQ-CLI.`,
+      'Настройка протокола динамической маршрутизации OSPF в программном комплексе FRRouting: анонсирование сетей в Area 0, пассивные интерфейсы и MD5-аутентификация туннеля gre1.',
+    nodes: ['HQ-RTR', 'BR-RTR', 'BR-FW'],
+    assignment: `### Задание 1.7: Динамическая маршрутизация Link-State (OSPF в FRR)
+
+В данном задании настраивается автоматический обмен маршрутами между офисами **HQ** и **BR** с использованием протокола **OSPF** (Open Shortest Path First) на базе программного комплекса **FRRouting (FRR)**.
+
+---
+
+### 1. Теоретическая справка: архитектура FRR и требования задания
+
+#### 1. Что такое FRR и файл daemons?
+FRR (Free Range Routing) — это современный программный комплекс маршрутизации в Linux, использующий синтаксис команд, аналогичный Cisco IOS. FRR модульный: по умолчанию запущен только менеджер ядра \`zebra\`. Для работы OSPF необходимо явно включить демон \`ospfd\` в конфигурационном файле \`/etc/frr/daemons\` (\`ospfd=yes\`).
+
+#### 2. Как выполнить требование: «Разрешите протокол только на интерфейсах туннеля»?
+В OSPF используется концепция пассивных интерфейсов:
+• Директива \`passive-interface default\` в секции \`router ospf\` переводит абсолютно все интерфейсы в пассивный режим: через них не отправляются и не принимаются служебные пакеты OSPF Hello (защита от несанкционированного внедрения в клиентских VLAN).
+• Команда \`no ip ospf passive\` на интерфейсе \`gre1\` (на HQ-RTR и BR-RTR) и на линке \`BR-RTR ↔ BR-FW\` (\`ens19\` и \`ens18\`) явно делает исключение: маршрутизаторы будут искать соседей и устанавливать отношения смежности (Adjacency) исключительно через выделенные защищённые каналы.
+
+#### 3. Зачем прописывать \`network ... area 0\`?
+Чтобы маршрутизатор сообщил удалённому офису о доступности своих локальных сетей (VLAN 100, VLAN 200, VLAN 999 в HQ, и подсеть \`172.16.20.0/28\` в филиале), эти сети включаются в магистральную зону \`area 0\`.
+
+#### 4. Парольная защита MD5:
+Директива \`ip ospf authentication message-digest\` включает проверку подлинности, а \`ip ospf message-digest-key 1 md5 P@ssw0rd\` задаёт общий секретный ключ на туннеле \`gre1\`.
+
+---
+
+### 2. Сводные требования по узлам стенда
+
+| Маршрутизатор | Активные интерфейсы OSPF | Анонсируемые сети (Area 0) | MD5 ключ |
+| :--- | :--- | :--- | :--- |
+| **HQ-RTR** | \`gre1\` | \`10.10.10.0/30\`, \`192.168.99.0/29\`, \`192.168.100.0/27\`, \`192.168.200.0/28\` | \`1 md5 P@ssw0rd\` |
+| **BR-RTR** | \`gre1\`, \`ens19\` | \`10.10.10.0/30\`, \`172.16.10.0/30\` | \`1 md5 P@ssw0rd\` (на gre1) |
+| **BR-FW** | \`ens18\` | \`172.16.10.0/30\`, \`172.16.20.0/28\` | — |`,
     theory: [
       {
-        title: 'Протокол DHCP',
+        title: 'Модульная архитектура FRRouting и демон ospfd',
         explanation:
-          'Процесс выдачи параметров DORA (Discover, Offer, Request, Acknowledge) на портах UDP 67/68.',
+          'FRR запускает отдельные демоны под каждый протокол маршрутизации (zebra, ospfd, bgpd). Включение демона осуществляется в /etc/frr/daemons с последующим перезапуском службы frr.',
+        details: [
+          'Файл /etc/frr/daemons содержит флаги запуска (ospfd=yes).',
+          'Файл /etc/frr/frr.conf описывает параметры маршрутизации.',
+          'Интерактивная оболочка управления: vtysh.',
+        ],
+      },
+      {
+        title: 'Пассивные интерфейсы OSPF и безопасность',
+        explanation:
+          'Директива passive-interface default исключает отправку мультикаст Hello-пакетов в пользовательские сегменты, предотвращая атаки типа Rogue Router.',
+        details: [
+          'Команда no ip ospf passive открывает отправку Hello только на доверенных линках.',
+          'Отношения соседства (Adjacency) устанавливаются только на интерфейсах без флага passive.',
+        ],
+      },
+      {
+        title: 'Криптографическая аутентификация MD5',
+        explanation:
+          'Аутентификация OSPF пакетов через HMAC-MD5 гарантирует, что маршрутная информация принимается только от доверенного соседа, знающего общий пароль.',
+        details: [
+          'ip ospf authentication message-digest — активация режима проверки хэша.',
+          'ip ospf message-digest-key 1 md5 P@ssw0rd — идентификатор ключа и пароль.',
+        ],
       },
     ],
     steps: [
       {
         step_number: 1,
-        node: 'HQ-SRV',
-        title: 'Запуск DHCP',
-        explanation: 'Активируем демон dhcpd.',
-        commands: 'systemctl enable --now dhcpd',
+        node: 'HQ-RTR',
+        title: 'Шаг 1. Настройка FRR на маршрутизаторе HQ-RTR',
+        explanation:
+          'Установите пакет FRR, активируйте демон ospfd, запишите конфигурацию frr.conf и запустите службу.',
+        commands: `# 1. Устанавливаем FRR:
+apt-get update && apt-get install frr -y
+
+# 2. Включаем демон ospfd:
+sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+
+# 3. Записываем конфигурацию frr.conf:
+cat << 'EOF' > /etc/frr/frr.conf
+frr version 10.2.2
+frr defaults traditional
+hostname hq-rtr.au-team.irpo
+log file /var/log/frr/frr.log
+no ipv6 forwarding
+!
+interface gre1
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 P@ssw0rd
+ no ip ospf passive
+exit
+!
+router ospf
+ passive-interface default
+ network 10.10.10.0/30 area 0
+ network 192.168.99.0/29 area 0
+ network 192.168.100.0/27 area 0
+ network 192.168.200.0/28 area 0
+exit
+!
+EOF
+
+# 4. Включаем службу и перезапускаем сеть:
+systemctl enable --now frr
+systemctl restart network`,
+      },
+      {
+        step_number: 2,
+        node: 'BR-RTR',
+        title: 'Шаг 2. Настройка FRR на маршрутизаторе филиала BR-RTR',
+        explanation:
+          'Установите FRR, активируйте ospfd, запишите конфигурацию с активными интерфейсами gre1 и ens19, затем запустите службу.',
+        commands: `# 1. Устанавливаем FRR:
+apt-get update && apt-get install frr -y
+
+# 2. Включаем демон ospfd:
+sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+
+# 3. Записываем конфигурацию frr.conf:
+cat << 'EOF' > /etc/frr/frr.conf
+frr version 10.2.2
+frr defaults traditional
+hostname br-rtr.au-team.irpo
+log file /var/log/frr/frr.log
+no ipv6 forwarding
+!
+interface ens19
+ no ip ospf passive
+exit
+!
+interface gre1
+ ip ospf authentication message-digest
+ ip ospf message-digest-key 1 md5 P@ssw0rd
+ no ip ospf passive
+exit
+!
+router ospf
+ passive-interface default
+ network 10.10.10.0/30 area 0
+ network 172.16.10.0/30 area 0
+exit
+!
+EOF
+
+# 4. Включаем службу и перезапускаем сеть:
+systemctl enable --now frr
+systemctl restart network`,
+      },
+      {
+        step_number: 3,
+        node: 'BR-FW',
+        title: 'Шаг 3. Настройка FRR на межсетевом экране BR-FW',
+        explanation:
+          'Установите FRR, активируйте ospfd на входном интерфейсе ens18 и анонсируйте серверную подсеть филиала 172.16.20.0/28.',
+        commands: `# 1. Устанавливаем FRR:
+apt-get update && apt-get install frr -y
+
+# 2. Включаем демон ospfd:
+sed -i 's/ospfd=no/ospfd=yes/' /etc/frr/daemons
+
+# 3. Записываем конфигурацию frr.conf:
+cat << 'EOF' > /etc/frr/frr.conf
+frr version 10.2.2
+frr defaults traditional
+hostname br-fw.au-team.irpo
+log file /var/log/frr/frr.log
+no ipv6 forwarding
+!
+interface ens18
+ no ip ospf passive
+exit
+!
+router ospf
+ passive-interface default
+ network 172.16.10.0/30 area 0
+ network 172.16.20.0/28 area 0
+exit
+!
+EOF
+
+# 4. Включаем службу и перезапускаем сеть:
+systemctl enable --now frr
+systemctl restart network`,
+      },
+      {
+        step_number: 4,
+        node: 'HQ-RTR, HQ-SRV, BR-SRV',
+        title: 'Шаг 4. Проверка работоспособности (Верификация)',
+        explanation:
+          'Проверьте установление соседства OSPF (Full) и выполните сквозную трассировку между серверами HQ-SRV и BR-SRV.',
+        commands: `# 1. Проверяем соседей OSPF на маршрутизаторах:
+vtysh -c "show ip ospf neighbor"
+# Ожидаемый статус соседа: Full/DR или Full/Backup
+
+# 2. Проверяем изученные маршруты:
+vtysh -c "show ip route ospf"
+
+# 3. Трассировка с HQ-SRV до BR-SRV:
+traceroute 172.16.20.2
+
+# 4. Трассировка с BR-SRV до HQ-SRV:
+traceroute 192.168.100.2`,
       },
     ],
-    script_command: '/root/scripts/check-m1-2027-task7.sh',
+    script_command: 'curl -sSL https://exam.sudostudy.dev/scripts/2027/m1_t7.sh | bash',
     questions: [
       {
         id: 'q1',
-        text: 'На каких UDP-портах функционируют DHCP-клиент и DHCP-сервер?',
+        text: 'В каком конфигурационном файле программного комплекса FRRouting включается демон ospfd?',
         options: [
-          { id: 'A', text: 'Клиент 68, Сервер 67' },
-          { id: 'B', text: 'Клиент 53, Сервер 53' },
-          { id: 'C', text: 'Клиент 123, Сервер 123' },
-          { id: 'D', text: 'Клиент 80, Сервер 8080' },
+          { id: 'A', text: '/etc/frr/daemons' },
+          { id: 'B', text: '/etc/frr/frr.conf' },
+          { id: 'C', text: '/etc/frr/ospfd.conf' },
+          { id: 'D', text: '/etc/frr/modules.conf' },
+        ],
+        correct_answer: 'A',
+      },
+      {
+        id: 'q2',
+        text: 'Для чего в секции router ospf применяется директива passive-interface default?',
+        options: [
+          {
+            id: 'A',
+            text: 'Переводит все интерфейсы в пассивный режим, запрещая отправку и прием hello-пакетов OSPF на неавторизованных портах',
+          },
+          {
+            id: 'B',
+            text: 'Отключает передачу любого сетевого трафика через маршрутизатор',
+          },
+          {
+            id: 'C',
+            text: 'Устанавливает приоритет маршрутизатора равным нулю (DR Priority 0)',
+          },
+          { id: 'D', text: 'Активирует динамическое распределение нагрузки ECMP' },
+        ],
+        correct_answer: 'A',
+      },
+      {
+        id: 'q3',
+        text: 'Какое состояние смежности OSPF (Neighbor Adjacency) свидетельствует о полном и корректном установлении отношений между маршрутизаторами?',
+        options: [
+          { id: 'A', text: 'Full/DR или Full/Backup' },
+          { id: 'B', text: 'Init' },
+          { id: 'C', text: '2-Way' },
+          { id: 'D', text: 'ExStart' },
         ],
         correct_answer: 'A',
       },
@@ -1313,38 +1527,146 @@ ping 10.10.10.1 -c 3
     slug: 'm1-2027-task-8',
     module_id: 'module-1-2027',
     task_number: 8,
-    title: 'DNS BIND 9 с прямой/обратной зоной и DNSSEC',
+    title: 'Динамическая трансляция адресов (NAT) на филиалах',
     module_code: 'Модуль 1 (2027)',
     description:
-      'Конфигурирование BIND 9 на HQ-SRV: обслуживание авторитетной зоны au-team.irpo, обратной зоны in-addr.arpa и настройка пересылки forwarders.',
-    nodes: ['HQ-SRV', 'HQ-CLI'],
-    assignment: `Настроить named.conf, создать файлы зон, проверить работу через dig и nslookup.`,
+      'Настройка Source NAT (Masquerade) в подсистеме nftables на внешних интерфейсах ens18 пограничных маршрутизаторов для обеспечения доступа локальных сетей в Интернет.',
+    nodes: ['HQ-RTR', 'BR-RTR'],
+    assignment: `### Задание 1.8: Динамическая трансляция адресов (NAT) на филиалах
+
+В данном задании настраивается механизм динамической трансляции сетевых адресов (**Source NAT / Masquerade**) на пограничных маршрутизаторах **HQ-RTR** и **BR-RTR**.
+
+Благодаря этому все внутренние устройства главного офиса (серверы VLAN 100, клиенты VLAN 200) и филиала (\`172.16.20.0/28\`) получают полноценный доступ к глобальной сети Интернет через провайдера ISP.
+
+---
+
+### 1. Архитектура и принцип работы правила nftables
+
+Конфигурационный файл \`/etc/nftables/nftables.nft\`:
+\`\`\`text
+#!/usr/sbin/nft -f
+flush ruleset
+
+table ip nat {
+    chain postrouting {
+        type nat hook postrouting priority srcnat;
+        oifname "ens18" masquerade
+    }
+}
+\`\`\`
+
+#### Что делает это правило?
+• **oifname "ens18"** — отслеживает пакеты, покидающие маршрутизатор исключительно через внешний сетевой адаптер \`ens18\` в сторону провайдера ISP.
+• **masquerade** — динамически подменяет приватный IP-адрес клиента/сервера на реальный IP-адрес порта \`ens18\`.
+• **Важно:** трафик в сторону филиала через интерфейс туннеля \`gre1\` под это правило не подпадает, поэтому межофисная связь остаётся прямой и прозрачной!`,
     theory: [
       {
-        title: 'Служба DNS BIND',
+        title: 'Механизм Source NAT / Masquerade',
         explanation:
-          'BIND 9 обеспечивает трансляцию доменных имен в IP-адреса, кэширование и защиту подлинности через DNSSEC.',
+          'Masquerade подменяет исходный IP-адрес пакета из локальной сети на IP-адрес исходящего интерфейса маршрутизатора, позволяя устройствам из «серых» сетей обращаться к ресурсам глобального Интернета.',
+        details: [
+          'Таблица table ip nat обрабатывает трансляцию адресов.',
+          'Цепочка chain postrouting срабатывает непосредственно перед отправкой пакета в провод.',
+          'Приоритет priority srcnat (100) запускает хук после принятия решения о маршрутизации.',
+        ],
+      },
+      {
+        title: 'Разделение интернет-трафика и туннеля GRE',
+        explanation:
+          'Ограничение правила условием oifname "ens18" гарантирует, что пакеты, направляемые в gre1 (к филиалу), сохраняют свои реальные внутренние IP-адреса.',
+        details: [
+          'ens18 — интерфейс в сторону провайдера ISP (нуждается в NAT).',
+          'gre1 — защищенный туннель между офисами (трансляция не требуется).',
+        ],
       },
     ],
     steps: [
       {
         step_number: 1,
-        node: 'HQ-SRV',
-        title: 'Проверка синтаксиса зон',
-        explanation: 'Используем утилиту named-checkzone.',
-        commands: 'named-checkconf && named-checkzone au-team.irpo /var/lib/bind/zone/au-team.irpo',
+        node: 'HQ-RTR, BR-RTR',
+        title: 'Шаг 1. Конфигурирование nftables на маршрутизаторах',
+        explanation:
+          'Установите пакет nftables, создайте файл /etc/nftables/nftables.nft и примените правила. Выполняется одинаково на HQ-RTR и BR-RTR.',
+        commands: `# 1. Устанавливаем nftables:
+apt-get update && apt-get install nftables nano -y
+
+# 2. Записываем конфигурацию NAT Masquerade:
+cat << 'EOF' > /etc/nftables/nftables.nft
+#!/usr/sbin/nft -f
+flush ruleset
+
+table ip nat {
+    chain postrouting {
+        type nat hook postrouting priority srcnat;
+        oifname "ens18" masquerade
+    }
+}
+EOF
+
+# 3. Активируем и запускаем службу:
+systemctl enable --now nftables
+nft flush ruleset
+nft -f /etc/nftables/nftables.nft
+
+# 4. Проверяем загруженные правила:
+nft list ruleset`,
+      },
+      {
+        step_number: 2,
+        node: 'HQ-SRV, BR-SRV',
+        title: 'Шаг 2. Проверка выхода в Интернет с серверов (Верификация)',
+        explanation:
+          'Отправьте ICMP-запросы в глобальную сеть с серверов HQ-SRV и BR-SRV для подтверждения работы двухуровневого NAT.',
+        commands: `# На сервере HQ-SRV:
+ping -c4 77.88.8.8
+# Ожидаемый результат: 4 packets transmitted, 4 received, 0% packet loss
+
+# На сервере BR-SRV:
+ping -c4 77.88.8.8
+# Ожидаемый результат: 4 packets transmitted, 4 received, 0% packet loss`,
       },
     ],
-    script_command: '/root/scripts/check-m1-2027-task8.sh',
+    script_command: 'curl -sSL https://exam.sudostudy.dev/scripts/2027/m1_t8.sh | bash',
     questions: [
       {
         id: 'q1',
-        text: 'Какая ресурсная запись DNS связывает доменное имя с IPv4-адресом?',
+        text: 'В какой таблице и цепочке правил nftables настраивается динамическая трансляция сетевых адресов Masquerade?',
         options: [
-          { id: 'A', text: 'A' },
-          { id: 'B', text: 'AAAA' },
-          { id: 'C', text: 'PTR' },
-          { id: 'D', text: 'CNAME' },
+          { id: 'A', text: 'table ip nat, chain postrouting' },
+          { id: 'B', text: 'table ip filter, chain forward' },
+          { id: 'C', text: 'table ip nat, chain prerouting' },
+          { id: 'D', text: 'table ip mangle, chain output' },
+        ],
+        correct_answer: 'A',
+      },
+      {
+        id: 'q2',
+        text: 'Почему в правиле трансляции адресов указывается явный исходящий интерфейс oifname "ens18"?',
+        options: [
+          {
+            id: 'A',
+            text: 'Чтобы маскарадинг применялся только к трафику в Интернет и не затрагивал пакеты в межофисный туннель gre1',
+          },
+          {
+            id: 'B',
+            text: 'Это требование синтаксиса nftables, без интерфейса правило вызовет ошибку',
+          },
+          {
+            id: 'C',
+            text: 'Для снижения нагрузки на центральный процессор маршрутизатора',
+          },
+          { id: 'D', text: 'Чтобы заблокировать входящие SSH-соединения на порту 2027' },
+        ],
+        correct_answer: 'A',
+      },
+      {
+        id: 'q3',
+        text: 'Какой приоритет хука (priority) стандартно используется для цепочки Source NAT в nftables?',
+        options: [
+          { id: 'A', text: 'srcnat (или 100)' },
+          { id: 'B', text: 'dstnat (или -100)' },
+          { id: 'C', text: 'filter (или 0)' },
+          { id: 'D', text: 'raw (или -300)' },
         ],
         correct_answer: 'A',
       },
@@ -1361,38 +1683,137 @@ ping 10.10.10.1 -c 3
     slug: 'm1-2027-task-9',
     module_id: 'module-1-2027',
     task_number: 9,
-    title: 'Трансляция сетевых адресов SNAT / DNAT (nftables)',
+    title: 'Настройка DHCP-сервера для клиентов (HQ-CLI)',
     module_code: 'Модуль 1 (2027)',
     description:
-      'Настройка правил маскарадинга (masquerade) для выхода локальных сетей в интернет и проброса портов (Port Forwarding) к внутреннему веб-серверу.',
-    nodes: ['HQ-RTR'],
-    assignment: `Написать правила nftables в таблице nat: masquerade на интерфейсе WAN и dnat для порта 443 на внутренний сервер HQ-SRV.`,
+      'Развёртывание службы dhcp-server на маршрутизаторе HQ-RTR для автоматической выдачи IP-адресов, шлюза и DNS клиентам в сегменте VLAN 200.',
+    nodes: ['HQ-RTR', 'HQ-CLI'],
+    assignment: `### Задание 1.9: Настройка DHCP-сервера для клиентов (HQ-CLI)
+
+В данном задании настраивается автоматическая выдача сетевых настроек для клиентских рабочих станций главного офиса (**HQ-CLI** в сегменте VLAN 200) с помощью сервиса \`dhcp-server\`, развёрнутого на маршрутизаторе **HQ-RTR**.
+
+---
+
+### 1. Конфигурация пула адресов VLAN 200
+
+Файл \`/etc/dhcp/dhcpd.conf\`:
+\`\`\`text
+subnet 192.168.200.0 netmask 255.255.255.240 {
+  range 192.168.200.2 192.168.200.14;
+  option domain-name-servers 192.168.100.2;
+  option domain-name "au-team.irpo";
+  option routers 192.168.200.1;
+  default-lease-time 600;
+  max-lease-time 7200;
+}
+\`\`\`
+
+#### Разбор директив:
+• **subnet ... netmask ...** — объявляет подсеть и маску (\`/28\`), в которой работает данный пул адресов.
+• **range 192.168.200.2 192.168.200.14** — диапазон динамической выдачи IP-клиентам. Адрес самого маршрутизатора (\`192.168.200.1\`) исключён из диапазона.
+• **option domain-name-servers 192.168.100.2** — адрес корпоративного DNS-сервера (\`HQ-SRV\`), передаваемый клиентам.
+• **option domain-name "au-team.irpo"** — суффикс доменного поиска.
+• **option routers 192.168.200.1** — шлюз по умолчанию (виртуальный интерфейс \`vlan200\` на \`HQ-RTR\`).
+• **default-lease-time, max-lease-time** — стандартное (600 с) и максимальное (7200 с) время аренды IP-адреса.`,
     theory: [
       {
-        title: 'Фреймворк nftables',
+        title: 'Фазы работы протокола DHCP (DORA)',
         explanation:
-          'nftables заменил устаревший iptables, объединяя таблицы ip, ip6, arp и bridge с оптимизированной виртуальной машиной классификации пакетов.',
+          'Клиент и сервер взаимодействуют через 4 этапа: Discover (широковещательный поиск), Offer (предложение настроек сервером), Request (запрос подтверждения клиентом) и Acknowledge (подтверждение аренды сервером).',
+        details: [
+          'Клиент отправляет запросы с UDP 68 на сервер UDP 67.',
+          'Шлюз по умолчанию передается через опцию 3 (option routers).',
+          'DNS-серверы передаются через опцию 6 (option domain-name-servers).',
+        ],
+      },
+      {
+        title: 'Изоляция пула адресов и исключение шлюза',
+        explanation:
+          'Директива range задает только свободные клиентские адреса, гарантируя отсутствие конфликтов с назначенным статическим IP шлюза vlan200.',
+        details: [
+          '192.168.200.1 — адрес маршрутизатора (исключен из пула).',
+          '192.168.200.2..14 — диапазон для рабочих станций.',
+          '192.168.200.15 — широковещательный адрес подсети /28.',
+        ],
       },
     ],
     steps: [
       {
         step_number: 1,
         node: 'HQ-RTR',
-        title: 'Применение правил NAT',
-        explanation: 'Сохраняем правила в /etc/nftables/nat.nft.',
-        commands: 'nft add rule ip nat postrouting oifname "eth0" masquerade',
+        title: 'Шаг 1. Установка и запуск службы dhcp-server на HQ-RTR',
+        explanation:
+          'Установите пакет dhcp-server, запишите файл /etc/dhcp/dhcpd.conf и активируйте службу.',
+        commands: `# 1. Устанавливаем DHCP-сервер:
+apt-get update && apt-get install dhcp-server -y
+
+# 2. Записываем конфигурацию пула VLAN 200:
+cat << 'EOF' > /etc/dhcp/dhcpd.conf
+subnet 192.168.200.0 netmask 255.255.255.240 {
+  range 192.168.200.2 192.168.200.14;
+  option domain-name-servers 192.168.100.2;
+  option domain-name "au-team.irpo";
+  option routers 192.168.200.1;
+  default-lease-time 600;
+  max-lease-time 7200;
+}
+EOF
+
+# 3. Активируем и запускаем службу:
+systemctl enable --now dhcpd
+systemctl restart dhcpd`,
+      },
+      {
+        step_number: 2,
+        node: 'HQ-CLI',
+        title: 'Шаг 2. Получение настроек и проверка доступа на клиенте HQ-CLI',
+        explanation:
+          'Перезапустите сетевую службу на рабочей станции HQ-CLI, проверьте получение IP-адреса и доступ в Интернет.',
+        commands: `# 1. Перезапускаем сеть:
+systemctl restart network
+
+# 2. Проверяем полученный IP-адрес:
+ip -c --br a
+
+# 3. Проверяем доступность сети Интернет:
+ping -c4 77.88.8.8`,
       },
     ],
-    script_command: '/root/scripts/check-m1-2027-task9.sh',
+    script_command: 'curl -sSL https://exam.sudostudy.dev/scripts/2027/m1_t9.sh | bash',
     questions: [
       {
         id: 'q1',
-        text: 'В какой цепочке (chain) nftables выполняется исходящая трансляция SNAT / Masquerade?',
+        text: 'Какая директива в конфигурационном файле dhcpd.conf задает адрес шлюза по умолчанию, передаваемый клиентам?',
         options: [
-          { id: 'A', text: 'postrouting' },
-          { id: 'B', text: 'prerouting' },
-          { id: 'C', text: 'input' },
-          { id: 'D', text: 'forward' },
+          { id: 'A', text: 'option routers 192.168.200.1;' },
+          { id: 'B', text: 'option default-gateway 192.168.200.1;' },
+          { id: 'C', text: 'gateway 192.168.200.1;' },
+          { id: 'D', text: 'option route 192.168.200.1;' },
+        ],
+        correct_answer: 'A',
+      },
+      {
+        id: 'q2',
+        text: 'Почему диапазон выдачи адресов задан как 192.168.200.2 - 192.168.200.14 для подсети 192.168.200.0/28?',
+        options: [
+          {
+            id: 'A',
+            text: 'Адрес 192.168.200.1 назначен шлюзу маршрутизатора, а .15 является широковещательным адресом',
+          },
+          { id: 'B', text: 'Протокол DHCP в ALT Linux поддерживает максимум 13 адресов в пуле' },
+          { id: 'C', text: 'Остальные адреса зарезервированы под протокол мультикаста VRRP' },
+          { id: 'D', text: 'Для изоляции трафика DNS-сервера' },
+        ],
+        correct_answer: 'A',
+      },
+      {
+        id: 'q3',
+        text: 'Какая служба в ALT Linux отвечает за функционирование классического DHCP-сервера ISC?',
+        options: [
+          { id: 'A', text: 'dhcpd' },
+          { id: 'B', text: 'isc-dhcp-server' },
+          { id: 'C', text: 'kea-dhcp4' },
+          { id: 'D', text: 'dnsmasq' },
         ],
         correct_answer: 'A',
       },
@@ -1409,38 +1830,238 @@ ping 10.10.10.1 -c 3
     slug: 'm1-2027-task-10',
     module_id: 'module-1-2027',
     task_number: 10,
-    title: 'Диагностика и сквозная связность стенда',
+    title: 'Инфраструктура службы доменных имён (BIND)',
     module_code: 'Модуль 1 (2027)',
     description:
-      'Комплексное тестирование доступности всех узлов по ICMP и TCP, проверка MTU, задержек и отсутствия петель маршрутизации.',
-    nodes: ['HQ-CLI', 'BR-SRV', 'ISP'],
-    assignment: `Выполнить сквозной traceroute между клиентом филиала и главным сервером, убедившись в корректности прохождения туннелей.`,
+      'Развертывание службы BIND 9 на HQ-SRV: обслуживание авторитетной зоны au-team.irpo, обратных зон PTR и пересылка внешних запросов на forwarders.',
+    nodes: ['HQ-SRV', 'BR-SRV', 'HQ-CLI'],
+    assignment: `### Задание 1.10: Инфраструктура службы доменных имён (BIND)
+
+В данном задании на сервере главного офиса (**HQ-SRV**) развёртывается корпоративный DNS-сервер BIND 9 (\`bind\`).
+
+Сервер обеспечивает сопоставление доменных имён в IP-адреса (прямая зона) и IP-адресов в доменные имена (обратная зона PTR) для домена \`.au-team.irpo\`, а также перенаправляет внешние запросы в Интернет через серверы пересылки (Forwarders).
+
+---
+
+### 1. Архитектура зон и параметры BIND
+
+#### 1. Файл options.conf (\`/etc/bind/options.conf\`):
+• **listen-on port 53 { 127.0.0.1; 192.168.100.2; };** — интерфейсы прослушивания.
+• **forwarders { 77.88.8.8; };** — пересылка внешних DNS-запросов (Яндекс DNS).
+• **allow-query** — доверенные клиентские подсети компании.
+• **zone "au-team.irpo"** — авторитетная прямая зона.
+• **zone "100.168.192.in-addr.arpa"** и **zone "20.16.172.in-addr.arpa"** — обратные зоны.
+
+#### 2. Записи прямой зоны (\`/etc/bind/zone/au-team.irpo\`):
+• A-записи для узлов стенда: \`hq-rtr\`, \`br-rtr\`, \`hq-srv\`, \`hq-cli\`, \`br-fw\`, \`br-srv\`, \`docker\`, \`web\`.
+
+#### 3. Записи обратных зон PTR:
+• \`/etc/bind/zone/au-team_rev1.db\`: PTR для \`hq-srv.au-team.irpo.\` (IP .2).
+• \`/etc/bind/zone/au-team_rev2.db\`: PTR для \`br-srv.au-team.irpo.\` (IP .2).
+
+> **⚠️ Важное правило синтаксиса:**
+> В файлах зон BIND точка в конце имени (например, \`au-team.irpo.\`) означает абсолютное доменное имя (FQDN). Если не поставить точку, BIND автоматически добавит к записи имя текущей зоны, что приведёт к ошибке конфигурации.`,
     theory: [
       {
-        title: 'Диагностика L3/L4 связности',
+        title: 'Принцип работы службы BIND 9',
         explanation:
-          'Использование утилит ping, traceroute, mtr и tcpdump для выявления узких мест и блокировок в межсетевых экранах.',
+          'BIND (Berkeley Internet Name Domain) является эталонной реализацией DNS. Служба хранит описание зон в текстовых файлах, валидирует синтаксис через named-checkconf/named-checkzone и управляется утилитой rndc.',
+        details: [
+          'Пакеты: bind и bind-utils (содержит dig, host, nslookup).',
+          'Ключ управления: /etc/bind/rndc.key (генерируется через rndc-confgen).',
+          'Права доступа: файлы зон должны принадлежать группе named.',
+        ],
+      },
+      {
+        title: 'Прямые (A) и обратные (PTR) зоны DNS',
+        explanation:
+          'Прямая зона сопоставляет имя хоста с IP-адресом. Обратная зона использует домен in-addr.arpa с инвертированным порядком октетов IP-адреса для разрешения адреса в имя.',
+        details: [
+          '192.168.100.0/24 инвертируется в 100.168.192.in-addr.arpa.',
+          '172.16.20.0/24 инвертируется в 20.16.172.in-addr.arpa.',
+          'Обязательное завершение FQDN имен точкой.',
+        ],
       },
     ],
     steps: [
       {
         step_number: 1,
-        node: 'HQ-CLI',
-        title: 'Тест доступности',
-        explanation: 'Пинг до узлов стенда.',
-        commands: 'ping -c 3 192.168.20.10',
+        node: 'HQ-SRV',
+        title: 'Шаг 1. Установка BIND и генерация ключа RNDC',
+        explanation:
+          'Установите пакеты bind и bind-utils, сгенерируйте файл rndc.key.',
+        commands: `# 1. Устанавливаем пакеты:
+apt-get update && apt-get install bind bind-utils -y
+
+# 2. Генерируем ключ управления сервером RNDC:
+rndc-confgen -a -c /etc/bind/rndc.key`,
+      },
+      {
+        step_number: 2,
+        node: 'HQ-SRV',
+        title: 'Шаг 2. Конфигурирование /etc/bind/options.conf',
+        explanation:
+          'Настройте интерфейсы, серверы пересылки forwarders и объявите зоны.',
+        commands: `cat << 'EOF' > /etc/bind/options.conf
+options {
+    listen-on port 53 { 127.0.0.1; 192.168.100.2; };
+    listen-on-v6 port 53 { none; };
+    forwarders { 77.88.8.8; };
+    recursion yes;
+    allow-recursion { any; };
+    allow-query { 192.168.100.0/27; 192.168.200.0/28; 172.16.20.0/28; };
+    dnssec-validation no;
+    directory "/etc/bind/zone";
+    dump-file "/var/run/named/named_dump.db";
+    statistics-file "/var/run/named/named.stats";
+    pid-file "/var/run/named/named.pid";
+};
+
+logging {
+    category default { default_syslog; };
+};
+
+zone "au-team.irpo" {
+    type master;
+    file "au-team.irpo";
+};
+
+zone "100.168.192.in-addr.arpa" {
+    type master;
+    file "au-team_rev1.db";
+};
+
+zone "20.16.172.in-addr.arpa" {
+    type master;
+    file "au-team_rev2.db";
+};
+EOF`,
+      },
+      {
+        step_number: 3,
+        node: 'HQ-SRV',
+        title: 'Шаг 3. Создание файлов прямой и обратных зон',
+        explanation:
+          'Создайте файл au-team.irpo с ресурсными A-записями хостов и файлы обратных зон PTR.',
+        commands: `# 1. Прямая зона:
+cat << 'EOF' > /etc/bind/zone/au-team.irpo
+$TTL 1D
+@       IN      SOA     au-team.irpo.  root.au-team.irpo. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+
+        IN      NS      au-team.irpo.
+        IN      A       192.168.100.2
+hq-rtr  IN      A       192.168.100.1
+hq-rtr  IN      A       192.168.200.1
+hq-rtr  IN      A       192.168.99.1
+br-rtr  IN      A       172.16.10.1
+hq-srv  IN      A       192.168.100.2
+hq-cli  IN      A       192.168.200.2
+br-fw   IN      A       172.16.10.2
+br-srv  IN      A       172.16.20.2
+docker  IN      A       172.16.1.1
+web     IN      A       172.16.2.1
+EOF
+
+# 2. Обратная зона HQ (VLAN 100):
+cat << 'EOF' > /etc/bind/zone/au-team_rev1.db
+$TTL 1D
+@       IN      SOA     au-team.irpo. root.au-team.irpo. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+        IN      NS      au-team.irpo.
+2       IN      PTR     hq-srv.au-team.irpo.
+EOF
+
+# 3. Обратная зона филиала:
+cat << 'EOF' > /etc/bind/zone/au-team_rev2.db
+$TTL 1D
+@       IN      SOA     au-team.irpo. root.au-team.irpo. (
+                                        0       ; serial
+                                        1D      ; refresh
+                                        1H      ; retry
+                                        1W      ; expire
+                                        3H )    ; minimum
+        IN      NS      au-team.irpo.
+2       IN      PTR     br-srv.au-team.irpo.
+EOF`,
+      },
+      {
+        step_number: 4,
+        node: 'HQ-SRV, BR-SRV',
+        title: 'Шаг 4. Права, запуск BIND и переключение клиентов',
+        explanation:
+          'Назначьте группу named, запустите BIND и укажите nameserver 192.168.100.2 на серверах HQ-SRV и BR-SRV.',
+        commands: `# На HQ-SRV:
+chown :named /etc/bind/zone/au-team.irpo /etc/bind/zone/au-team_rev1.db /etc/bind/zone/au-team_rev2.db
+systemctl enable --now bind
+echo 'nameserver 192.168.100.2' > /etc/net/ifaces/ens18/resolv.conf
+systemctl restart network
+systemctl restart bind
+
+# На BR-SRV:
+cat << 'EOF' > /etc/net/ifaces/ens18/resolv.conf
+search au-team.irpo
+nameserver 192.168.100.2
+EOF
+systemctl restart network`,
+      },
+      {
+        step_number: 5,
+        node: 'HQ-CLI, BR-SRV',
+        title: 'Шаг 5. Проверка работоспособности (Верификация DNS)',
+        explanation:
+          'Выполните запросы утилитой host с HQ-CLI и проверьте пинг по доменному имени с BR-SRV.',
+        commands: `# С рабочей станции HQ-CLI:
+host br-rtr
+host 192.168.100.2
+
+# С сервера филиала BR-SRV:
+ping -c 4 au-team.irpo`,
       },
     ],
-    script_command: '/root/scripts/check-m1-2027-task10.sh',
+    script_command: 'curl -sSL https://exam.sudostudy.dev/scripts/2027/m1_t10.sh | bash',
     questions: [
       {
         id: 'q1',
-        text: 'Какое поле в заголовке IPv4 декрементируется каждым маршрутизатором для предотвращения зацикливания пакетов?',
+        text: 'Что означает завершающая точка в доменном имени (например, au-team.irpo.) в конфигурационных файлах зон BIND?',
         options: [
-          { id: 'A', text: 'TTL (Time to Live)' },
-          { id: 'B', text: 'TOS (Type of Service)' },
-          { id: 'C', text: 'Checksum' },
-          { id: 'D', text: 'Identification' },
+          {
+            id: 'A',
+            text: 'Обозначает абсолютное доменное имя (FQDN) и запрещает BIND автоматически дописывать суффикс текущей зоны',
+          },
+          { id: 'B', text: 'Указывает на использование протокола DNSSEC' },
+          { id: 'C', text: 'Активирует кэширование на стороне клиента' },
+          { id: 'D', text: 'Является разделителем записей в базе данных' },
+        ],
+        correct_answer: 'A',
+      },
+      {
+        id: 'q2',
+        text: 'Какая специальная доменная зона используется в DNS для организации обратного разрешения IPv4-адресов в доменные имена (PTR)?',
+        options: [
+          { id: 'A', text: 'in-addr.arpa' },
+          { id: 'B', text: 'ip6.arpa' },
+          { id: 'C', text: 'reverse.dns' },
+          { id: 'D', text: 'ptr.local' },
+        ],
+        correct_answer: 'A',
+      },
+      {
+        id: 'q3',
+        text: 'Какая директива в секции options файла options.conf задает вышестоящие DNS-серверы для пересылки внешних запросов?',
+        options: [
+          { id: 'A', text: 'forwarders { 77.88.8.8; };' },
+          { id: 'B', text: 'upstream { 77.88.8.8; };' },
+          { id: 'C', text: 'nameservers { 77.88.8.8; };' },
+          { id: 'D', text: 'redirect { 77.88.8.8; };' },
         ],
         correct_answer: 'A',
       },
@@ -1457,38 +2078,128 @@ ping 10.10.10.1 -c 3
     slug: 'm1-2027-task-11',
     module_id: 'module-1-2027',
     task_number: 11,
-    title: 'Контрольный аудит модуля 1 (Сетевая инфраструктура)',
+    title: 'Настройка системного времени и часового пояса',
     module_code: 'Модуль 1 (2027)',
     description:
-      'Автоматизированный аудит выполнения всех требований первого модуля: проверка интерфейсов, OSPF, LACP, VRRP, WireGuard, DNS и DHCP.',
-    nodes: ['HQ-RTR', 'HQ-SRV', 'BR-RTR', 'BR-SRV'],
-    assignment: `Запустить итоговый верификационный скрипт аудита Модуля 1 на всех узлах и сдать консольный отчет.`,
+      'Установка единого часового пояса Asia/Novosibirsk (UTC+7) на всех виртуальных машинах инфраструктуры с помощью утилиты timedatectl и пакета tzdata.',
+    nodes: ['ISP', 'HQ-RTR', 'HQ-SRV', 'HQ-CLI', 'BR-RTR', 'BR-FW', 'BR-SRV'],
+    assignment: `### Задание 1.11: Настройка системного времени и часового пояса
+
+В данном задании на всех виртуальных машинах инфраструктуры настраивается корректный часовой пояс (Timezone) и проверяется синхронизация системного времени.
+
+Точное время и единый часовой пояс критически важны для:
+• Корректного анализа и сопоставления системных журналов (\`syslog\`, \`journalctl\`) при расследовании инцидентов;
+• Сроков действия цифровых сертификатов (TLS/SSL);
+• Аутентификации и протоколов с временными метками (Kerberos, NTP, токены сессий);
+• Сетевых баз данных и расписаний планировщика \`cron\` / \`systemd-timers\`.
+
+---
+
+### 1. Теоретическая справка: как устроено время в Linux
+
+В Linux сосуществуют два вида часов:
+• **Аппаратные часы (RTC / Hardware Clock)** — микросхема реального времени на материнской плате, хранящая время в шкале UTC.
+• **Системные часы (System Clock)** — внутреннее программное время ядра Linux.
+
+#### База данных tzdata и утилита timedatectl:
+Все файлы часовых поясов находятся в каталоге \`/usr/share/zoneinfo/\`. Текущий часовой пояс системы определяется символической ссылкой:
+\`\`\`text
+/etc/localtime -> /usr/share/zoneinfo/Asia/Novosibirsk
+\`\`\`
+Управление часовыми поясами осуществляется через системную утилиту:
+\`\`\`bash
+timedatectl set-timezone Asia/Novosibirsk
+\`\`\``,
     theory: [
       {
-        title: 'Критерии оценивания Модуля 1 (2027)',
+        title: 'Системное время (System Clock) и аппаратные часы (RTC)',
         explanation:
-          'Оценивается корректность применения параметров, устойчивость к сбоям интерфейсов и непрерывность передачи данных.',
+          'Аппаратные часы RTC питаются от автономного источника и сохраняют ход времени при выключении питания. При загрузке ОС ядро считывает RTC и инициализирует системные часы.',
+        details: [
+          'Стандартом для серверов Linux является хранение аппаратного времени в шкале UTC (RTC in local TZ: no).',
+          'Смещение относительно UTC определяется выбранной временной зоной.',
+        ],
+      },
+      {
+        title: 'База данных часовых поясов tzdata и ссылка /etc/localtime',
+        explanation:
+          'Пакет tzdata содержит полную историю правил перехода времени IANA. Выбор пояса изменяет символическую ссылку /etc/localtime на соответствующий файл из /usr/share/zoneinfo/.',
+        details: [
+          'Asia/Novosibirsk — UTC+7 (Новосибирское время).',
+          'Поиск поясов: timedatectl list-timezones.',
+        ],
+      },
+      {
+        title: 'Утилита timedatectl',
+        explanation:
+          'Входящая в состав systemd утилита timedatectl предоставляет интерфейс для просмотра и изменения параметров локального времени, синхронизации NTP и временных зон.',
+        details: [
+          'timedatectl set-timezone Asia/Novosibirsk — смена часового пояса.',
+          'timedatectl — подробный отчет о статусе синхронизации.',
+        ],
       },
     ],
     steps: [
       {
         step_number: 1,
-        node: 'HQ-RTR',
-        title: 'Запуск скрипта аудита',
-        explanation: 'Запуск проверочного скрипта.',
-        commands: 'bash /root/scripts/check-m1-2027-task11.sh',
+        node: 'ISP, HQ-RTR, HQ-SRV, HQ-CLI, BR-RTR, BR-FW, BR-SRV',
+        title: 'Шаг 1. Установка часового пояса на всех узлах инфраструктуры',
+        explanation:
+          'Выполните установку пакета tzdata, задайте часовой пояс Asia/Novosibirsk и проверьте статус на всех 7 узлах стенда.',
+        commands: `# На каждом из узлов стенда:
+apt-get update && apt-get install tzdata -y
+timedatectl set-timezone Asia/Novosibirsk
+timedatectl`,
+      },
+      {
+        step_number: 2,
+        node: 'Все узлы',
+        title: 'Шаг 2. Проверка работоспособности (Верификация параметров)',
+        explanation:
+          'Убедитесь, что параметр Time zone отображает Asia/Novosibirsk (+07, +0700).',
+        commands: `# Проверка текущего пояса:
+timedatectl | grep "Time zone"
+# Ожидаемый вывод: Time zone: Asia/Novosibirsk (+07, +0700)
+
+readlink -f /etc/localtime
+# Ожидаемый вывод: /usr/share/zoneinfo/Asia/Novosibirsk`,
       },
     ],
-    script_command: '/root/scripts/check-m1-2027-task11.sh',
+    script_command: 'curl -sSL https://exam.sudostudy.dev/scripts/2027/m1_t11.sh | bash',
     questions: [
       {
         id: 'q1',
-        text: 'Что является подтверждением успешного завершения аудита модуля?',
+        text: 'Какая системная утилита в современных дистрибутивах Linux с systemd используется для управления часовым поясом и системным временем?',
         options: [
-          { id: 'A', text: 'Статус [ OK ] по всем пунктам проверки в консольном логе' },
-          { id: 'B', text: 'Отсутствие сетевых ошибок в dmesg' },
-          { id: 'C', text: 'Перезагрузка виртуальной машины' },
-          { id: 'D', text: 'Наличие свободного места на диске' },
+          { id: 'A', text: 'timedatectl' },
+          { id: 'B', text: 'tzselect' },
+          { id: 'C', text: 'timeconfig' },
+          { id: 'D', text: 'clockctl' },
+        ],
+        correct_answer: 'A',
+      },
+      {
+        id: 'q2',
+        text: 'Куда указывает системная символическая ссылка /etc/localtime при установке часового пояса Asia/Novosibirsk?',
+        options: [
+          { id: 'A', text: '/usr/share/zoneinfo/Asia/Novosibirsk' },
+          { id: 'B', text: '/etc/timezone/Asia/Novosibirsk' },
+          { id: 'C', text: '/var/lib/tzdata/Novosibirsk' },
+          { id: 'D', text: '/opt/timezones/Asia/Novosibirsk' },
+        ],
+        correct_answer: 'A',
+      },
+      {
+        id: 'q3',
+        text: 'Почему для безопасной работы сетевых сервисов и анализа журналов критически важен единый часовой пояс на всех узлах инфраструктуры?',
+        options: [
+          {
+            id: 'A',
+            text: 'Обеспечивает точную хронологическую корреляцию событий в syslog/journalctl и валидацию сроков действия TLS-сертификатов и токенов',
+          },
+          { id: 'B', text: 'Без единого времени невозможно установить соединение по протоколу IPv4' },
+          { id: 'C', text: 'Служба BIND требует точного времени для генерации A-записей' },
+          { id: 'D', text: 'Для корректной работы маскарадинга в nftables' },
         ],
         correct_answer: 'A',
       },

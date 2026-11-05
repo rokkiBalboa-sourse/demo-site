@@ -154,3 +154,4 @@ echo ""
 log_report "=== ПРОВЕРКА ЗАВЕРШЕНА ===" "$YELLOW"
 log_report "Отчет сохранен в: $REPORT_FILE" "$YELLOW"
 echo ""
+
