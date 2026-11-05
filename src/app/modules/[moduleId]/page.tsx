@@ -38,8 +38,9 @@ export default async function ModuleDetailPage({ params }: ModulePageProps) {
     notFound();
   }
 
-  const tasks = await db.getTasksByModule(moduleId);
-  const submissions = await db.getUserSubmissions(session.id);
+  const isLocked = Boolean(moduleInfo.is_locked);
+  const tasks = isLocked ? [] : await db.getTasksByModule(moduleId);
+  const submissions = isLocked ? [] : await db.getUserSubmissions(session.id);
   const subMap = new Map(submissions.map(s => [s.task_id, s]));
 
   const passedCount = tasks.filter(t => {
@@ -68,24 +69,37 @@ export default async function ModuleDetailPage({ params }: ModulePageProps) {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-zinc-800 pb-4 mb-4">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
-                <span className="font-mono text-xs font-bold bg-white text-zinc-950 px-2 py-0.5">
+                <span
+                  className={`font-mono text-xs font-bold px-2 py-0.5 ${
+                    isLocked ? 'bg-zinc-800 text-zinc-400 border border-zinc-700' : 'bg-white text-zinc-950'
+                  }`}
+                >
                   {moduleInfo.code}
                 </span>
-                <span className="font-mono text-xs text-zinc-400">
-                  {moduleInfo.total_tasks} практических заданий
-                </span>
+                {isLocked ? (
+                  <span className="font-mono text-xs font-bold text-amber-400 border border-amber-500/40 bg-amber-950/50 px-2 py-0.5 flex items-center gap-1">
+                    <Lock className="w-3 h-3 text-amber-400" />
+                    <span>В разработке</span>
+                  </span>
+                ) : (
+                  <span className="font-mono text-xs text-zinc-400">
+                    {moduleInfo.total_tasks} практических заданий
+                  </span>
+                )}
               </div>
               <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white font-mono">
                 {moduleInfo.title}
               </h1>
             </div>
 
-            <div className="border border-zinc-800 bg-zinc-900 px-4 py-2 text-right font-mono text-xs shrink-0">
-              <span className="text-zinc-500 text-[10px] uppercase block">Прогресс модуля</span>
-              <span className="text-sm font-bold text-white">
-                {passedCount} из {moduleInfo.total_tasks} проверено
-              </span>
-            </div>
+            {!isLocked && (
+              <div className="border border-zinc-800 bg-zinc-900 px-4 py-2 text-right font-mono text-xs shrink-0">
+                <span className="text-zinc-500 text-[10px] uppercase block">Прогресс модуля</span>
+                <span className="text-sm font-bold text-white">
+                  {passedCount} из {moduleInfo.total_tasks} проверено
+                </span>
+              </div>
+            )}
           </div>
 
           <p className="text-xs sm:text-sm text-zinc-400 font-mono leading-relaxed max-w-3xl">
@@ -93,7 +107,31 @@ export default async function ModuleDetailPage({ params }: ModulePageProps) {
           </p>
         </div>
 
-        {/* Tasks List */}
+        {/* If Module is in development */}
+        {isLocked ? (
+          <div className="border border-zinc-800 bg-zinc-900/40 p-8 text-center space-y-4 font-mono">
+            <div className="w-12 h-12 bg-zinc-900 border border-zinc-800 rounded-full flex items-center justify-center mx-auto text-amber-400 shadow-inner">
+              <Lock className="w-6 h-6" />
+            </div>
+            <div className="space-y-1.5">
+              <h2 className="text-base font-bold text-white">
+                Материалы данного модуля находятся в разработке
+              </h2>
+              <p className="text-xs text-zinc-400 max-w-md mx-auto leading-relaxed">
+                Практические задания, лабораторные стенды и скрипты автоматической проверки для {moduleInfo.title} ({moduleInfo.code}) станут доступны в ближайших обновлениях.
+              </p>
+            </div>
+            <div className="pt-2">
+              <Link href="/">
+                <Button variant="secondary" className="inline-flex items-center gap-2 text-xs">
+                  <ChevronLeft className="w-3.5 h-3.5" />
+                  <span>Вернуться к списку доступных модулей</span>
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : (
+          /* Tasks List */
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-300">
@@ -218,6 +256,7 @@ export default async function ModuleDetailPage({ params }: ModulePageProps) {
             })}
           </div>
         </div>
+      )}
       </main>
     </div>
   );

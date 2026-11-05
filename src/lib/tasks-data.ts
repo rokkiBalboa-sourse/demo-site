@@ -52,6 +52,7 @@ export const MODULES_LIST: ModuleInfo[] = [
     total_tasks: 11,
     slug: 'module-2-2027',
     year: 2027,
+    is_locked: true,
   },
   {
     id: 'module-3-2027',
@@ -62,6 +63,7 @@ export const MODULES_LIST: ModuleInfo[] = [
     total_tasks: 10,
     slug: 'module-3-2027',
     year: 2027,
+    is_locked: true,
   },
 ];
 

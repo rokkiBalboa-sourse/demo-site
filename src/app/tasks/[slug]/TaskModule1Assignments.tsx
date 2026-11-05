@@ -986,33 +986,296 @@ export function Task11Assignment({ task }: TaskProps) {
 }
 
 // ==========================================
-// GENERIC FALLBACK ASSIGNMENT
+// GENERIC FALLBACK ASSIGNMENT WITH RICH MARKDOWN
 // ==========================================
+
+export function formatInline(text: string): React.ReactNode {
+  // 1. Split code spans `...`
+  const codeParts = text.split(/(`[^`]+`)/g);
+  return codeParts.map((part, idx) => {
+    if (part.startsWith('`') && part.endsWith('`')) {
+      const code = part.slice(1, -1);
+      return (
+        <code
+          key={idx}
+          className="text-emerald-400 bg-zinc-900 border border-zinc-800 px-1.5 py-0.5 rounded font-mono text-[11px] font-semibold"
+        >
+          {code}
+        </code>
+      );
+    }
+
+    // 2. Bold **...**
+    const boldParts = part.split(/(\*\*[^*]+\*\*)/g);
+    return (
+      <React.Fragment key={idx}>
+        {boldParts.map((bPart, bIdx) => {
+          if (bPart.startsWith('**') && bPart.endsWith('**')) {
+            return (
+              <strong key={bIdx} className="text-white font-bold">
+                {bPart.slice(2, -2)}
+              </strong>
+            );
+          }
+
+          // 3. Links [label](url)
+          const linkParts = bPart.split(/(\[[^\]]+\]\([^)]+\))/g);
+          return linkParts.map((lPart, lIdx) => {
+            const linkMatch = lPart.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+            if (linkMatch) {
+              return (
+                <a
+                  key={lIdx}
+                  href={linkMatch[2]}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sky-400 underline hover:text-sky-300 inline-flex items-center gap-0.5 font-bold"
+                >
+                  <span>{linkMatch[1]}</span>
+                  <ExternalLink className="w-3 h-3 inline" />
+                </a>
+              );
+            }
+            return lPart;
+          });
+        })}
+      </React.Fragment>
+    );
+  });
+}
+
+export function MarkdownAssignmentContent({ content }: { content: string }) {
+  const lines = content.split('\n');
+  const elements: React.ReactNode[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const rawLine = lines[i];
+    const line = rawLine.trim();
+
+    // Skip empty lines
+    if (!line) {
+      i++;
+      continue;
+    }
+
+    // 0. Horizontal divider
+    if (line === '---' || line === '***') {
+      elements.push(<hr key={`hr-${i}`} className="border-zinc-800 my-4" />);
+      i++;
+      continue;
+    }
+
+    // 1. Code blocks: ```
+    if (line.startsWith('```')) {
+      const lang = line.replace(/^```/, '').trim();
+      const codeLines: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].trim().startsWith('```')) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      i++; // skip closing ```
+      const code = codeLines.join('\n');
+      elements.push(
+        <div key={`code-${i}`} className="my-3 border border-zinc-800 bg-zinc-950 rounded overflow-hidden">
+          {lang && (
+            <div className="bg-zinc-900/90 px-3 py-1 text-[10px] font-mono uppercase text-zinc-400 border-b border-zinc-800">
+              {lang}
+            </div>
+          )}
+          <pre className="p-3 text-xs font-mono text-emerald-400 overflow-x-auto leading-relaxed">
+            <code>{code}</code>
+          </pre>
+        </div>
+      );
+      continue;
+    }
+
+    // 2. Headings: #, ##, ###, ####
+    if (line.startsWith('#')) {
+      const match = line.match(/^(#{1,4})\s+(.+)$/);
+      if (match) {
+        const level = match[1].length;
+        const text = match[2];
+
+        elements.push(
+          <div key={`h-${i}`} className="pt-3 pb-1 border-b border-zinc-800/80 flex items-center gap-2 mt-2">
+            <span className={`rounded-sm shrink-0 ${level <= 2 ? 'w-2 h-2 bg-sky-400' : 'w-1.5 h-1.5 bg-emerald-400'}`} />
+            <h3 className={`font-mono font-bold text-white uppercase tracking-wider ${level <= 2 ? 'text-sm' : 'text-xs'}`}>
+              {formatInline(text)}
+            </h3>
+          </div>
+        );
+        i++;
+        continue;
+      }
+    }
+
+    // 3. Blockquotes: >
+    if (line.startsWith('>')) {
+      const quoteLines: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith('>')) {
+        quoteLines.push(lines[i].trim().replace(/^>\s*/, ''));
+        i++;
+      }
+      const quoteText = quoteLines.join(' ');
+      const isWarn = quoteText.includes('⚠️') || quoteText.toLowerCase().includes('важно');
+      elements.push(
+        <div
+          key={`quote-${i}`}
+          className={`p-3 my-2.5 border text-xs font-mono leading-relaxed rounded ${
+            isWarn
+              ? 'bg-amber-950/30 border-amber-500/40 text-amber-200'
+              : 'bg-zinc-900/60 border-zinc-800 text-zinc-300'
+          }`}
+        >
+          {formatInline(quoteText)}
+        </div>
+      );
+      continue;
+    }
+
+    // 4. Tables: lines starting with |
+    if (line.startsWith('|')) {
+      const tableLines: string[] = [];
+      while (i < lines.length && lines[i].trim().startsWith('|')) {
+        tableLines.push(lines[i].trim());
+        i++;
+      }
+      if (tableLines.length >= 2) {
+        const headerRow = tableLines[0]
+          .split('|')
+          .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1)
+          .map(c => c.trim());
+
+        // Skip separator row (tableLines[1], like |:---|:---|)
+        const dataRows = tableLines.slice(2).map(rowStr =>
+          rowStr
+            .split('|')
+            .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1)
+            .map(c => c.trim())
+        );
+
+        elements.push(
+          <div
+            key={`table-${i}`}
+            className="overflow-x-auto my-3 border border-zinc-800 bg-zinc-950/80 rounded"
+          >
+            <table className="w-full text-left text-xs font-mono border-collapse">
+              <thead>
+                <tr className="border-b border-zinc-800 bg-zinc-900/90 text-zinc-200">
+                  {headerRow.map((h, hIdx) => (
+                    <th
+                      key={hIdx}
+                      className="p-2.5 font-bold border-r border-zinc-800 last:border-r-0 whitespace-nowrap text-zinc-300"
+                    >
+                      {formatInline(h)}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800/80">
+                {dataRows.map((r, rIdx) => (
+                  <tr key={rIdx} className="hover:bg-zinc-900/40 transition-colors">
+                    {r.map((c, cIdx) => (
+                      <td
+                        key={cIdx}
+                        className="p-2.5 border-r border-zinc-800/80 last:border-r-0 text-zinc-300"
+                      >
+                        {formatInline(c)}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+      }
+      continue;
+    }
+
+    // 5. Bullet lists: • or -
+    if (line.startsWith('•') || line.startsWith('-')) {
+      const listItems: string[] = [];
+      while (i < lines.length && (lines[i].trim().startsWith('•') || lines[i].trim().startsWith('-'))) {
+        listItems.push(lines[i].trim().replace(/^[•-]\s*/, ''));
+        i++;
+      }
+
+      // Check if all items look like FQDNs
+      const allFqdn = listItems.every(item => item.includes('.au-team.irpo') || item.includes('.irpo'));
+      if (allFqdn) {
+        elements.push(
+          <div key={`fqdn-${i}`} className="grid grid-cols-2 sm:grid-cols-3 gap-2 my-2.5">
+            {listItems.map((fqdn, fIdx) => (
+              <div
+                key={fIdx}
+                className="bg-zinc-900 border border-zinc-800 px-2.5 py-1.5 text-zinc-200 font-mono text-[11px] flex items-center gap-2 rounded"
+              >
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full shrink-0" />
+                <span className="font-bold">{fqdn.replace(/`/g, '')}</span>
+              </div>
+            ))}
+          </div>
+        );
+      } else {
+        elements.push(
+          <ul key={`list-${i}`} className="space-y-1.5 my-2 pl-1">
+            {listItems.map((item, itemIdx) => (
+              <li key={itemIdx} className="flex items-start gap-2 text-zinc-300 text-xs leading-relaxed">
+                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full mt-1.5 shrink-0" />
+                <span>{formatInline(item)}</span>
+              </li>
+            ))}
+          </ul>
+        );
+      }
+      continue;
+    }
+
+    // 6. Regular paragraph
+    elements.push(
+      <p key={`p-${i}`} className="text-zinc-300 text-xs leading-relaxed my-1.5">
+        {formatInline(line)}
+      </p>
+    );
+    i++;
+  }
+
+  return <div className="space-y-3">{elements}</div>;
+}
+
 export function GenericTaskAssignment({ task }: TaskProps) {
   return (
-    <div className="bg-zinc-950 p-5 border border-zinc-800 space-y-4 font-mono text-xs text-zinc-300 leading-relaxed">
+    <div className="bg-zinc-950 p-5 border border-zinc-800 space-y-5 font-mono text-xs text-zinc-300 leading-relaxed rounded">
       {task.video_url && <VideoBanner url={task.video_url} />}
 
-      <div className="space-y-1.5">
-        <div className="text-white font-bold uppercase tracking-wider text-[11px]">
-          Описание задачи:
+      {/* Описание задачи */}
+      <div className="space-y-2">
+        <div className="text-white font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+          <span>Описание задачи:</span>
         </div>
-        <p className="text-zinc-300 whitespace-pre-line leading-relaxed">
-          {task.assignment || task.description}
-        </p>
+        <div className="text-zinc-200 text-xs sm:text-[13px] leading-relaxed bg-zinc-900/60 p-4 border border-zinc-800 rounded">
+          {task.description}
+        </div>
       </div>
 
+      {/* Место выполнения */}
       {task.nodes && task.nodes.length > 0 && (
-        <div className="space-y-1.5 pt-2 border-t border-zinc-800/80">
-          <div className="text-white font-bold uppercase tracking-wider text-[11px]">
-            Место выполнения:
+        <div className="space-y-2 pt-2 border-t border-zinc-800/80">
+          <div className="text-white font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-sky-400 rounded-full" />
+            <span>Место выполнения:</span>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-zinc-400 text-xs">Узлы:</span>
+            <span className="text-zinc-400 text-xs">Узлы стенда:</span>
             {task.nodes.map(node => (
               <span
                 key={node}
-                className="bg-zinc-900 border border-zinc-800 px-2 py-0.5 font-bold text-amber-300 text-xs"
+                className="bg-zinc-900 border border-zinc-700/80 px-2.5 py-1 font-bold text-amber-300 text-xs rounded"
               >
                 {node}
               </span>
@@ -1021,22 +1284,43 @@ export function GenericTaskAssignment({ task }: TaskProps) {
         </div>
       )}
 
-      {task.theory && task.theory.length > 0 && (
+      {/* Спецификация и требования задания (Rich Markdown) */}
+      {task.assignment && (
         <div className="space-y-3 pt-2 border-t border-zinc-800/80">
-          <div className="text-white font-bold uppercase tracking-wider text-[11px]">
-            Теоретическая справка:
+          <MarkdownAssignmentContent content={task.assignment} />
+        </div>
+      )}
+
+      {/* Теоретическая справка */}
+      {task.theory && task.theory.length > 0 && (
+        <div className="space-y-3 pt-3 border-t border-zinc-800/80">
+          <div className="text-white font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
+            <span>Теоретическая справка:</span>
           </div>
-          {task.theory.map((item, idx) => (
-            <div key={idx} className="bg-zinc-900/70 border border-zinc-800 p-3.5 space-y-1.5">
-              <div className="text-white font-bold flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
-                <span>{item.title}</span>
+          <div className="grid grid-cols-1 gap-3">
+            {task.theory.map((item, idx) => (
+              <div key={idx} className="bg-zinc-900/70 border border-zinc-800 p-3.5 space-y-1.5 rounded">
+                <div className="text-white font-bold flex items-center gap-2">
+                  <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+                  <span>{item.title}</span>
+                </div>
+                <p className="text-zinc-300 leading-relaxed text-xs">
+                  {item.explanation}
+                </p>
+                {item.details && item.details.length > 0 && (
+                  <ul className="space-y-1 pt-1.5 pl-1 border-t border-zinc-800/60">
+                    {item.details.map((detail, dIdx) => (
+                      <li key={dIdx} className="text-zinc-400 text-[11px] flex items-start gap-1.5">
+                        <span className="text-zinc-600">•</span>
+                        <span>{formatInline(detail)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
-              <p className="text-zinc-300 leading-relaxed whitespace-pre-line text-xs">
-                {item.explanation}
-              </p>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>

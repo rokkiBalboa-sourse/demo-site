@@ -82,6 +82,7 @@ export interface ModuleInfo {
   total_tasks: number;
   slug: string;
   year?: number;
+  is_locked?: boolean;
 }
 
 export interface Submission {

@@ -141,66 +141,100 @@ export function StudentModulesSection({
           const modPending = moduleSubmissions.filter(s => s.status === 'pending').length;
           const progressPercent = mod.total_tasks > 0 ? Math.round((modPassed / mod.total_tasks) * 100) : 0;
 
+          const isLocked = Boolean(mod.is_locked);
+
           return (
             <div
               key={mod.id}
-              className="border border-zinc-800 bg-zinc-900/60 p-6 flex flex-col justify-between hover:border-zinc-500 transition-colors group rounded"
+              className={`border p-6 flex flex-col justify-between transition-colors rounded ${
+                isLocked
+                  ? 'border-zinc-800/80 bg-zinc-950/50 opacity-65 cursor-not-allowed select-none'
+                  : 'border-zinc-800 bg-zinc-900/60 hover:border-zinc-500 group'
+              }`}
             >
               <div className="space-y-4">
                 {/* Module Code & Tasks Badge */}
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold bg-white text-zinc-950 px-2 py-0.5 rounded">
+                  <span
+                    className={`font-mono text-xs font-bold px-2 py-0.5 rounded ${
+                      isLocked ? 'bg-zinc-800 text-zinc-400 border border-zinc-700' : 'bg-white text-zinc-950'
+                    }`}
+                  >
                     {mod.code}
                   </span>
-                  <span className="font-mono text-xs text-zinc-400 border border-zinc-800 bg-zinc-900 px-2 py-0.5 rounded">
-                    {mod.total_tasks} заданий
-                  </span>
+                  {isLocked ? (
+                    <span className="font-mono text-[11px] font-bold text-amber-400 border border-amber-500/40 bg-amber-950/50 px-2 py-0.5 rounded flex items-center gap-1">
+                      <Lock className="w-3 h-3 text-amber-400" />
+                      <span>В разработке</span>
+                    </span>
+                  ) : (
+                    <span className="font-mono text-xs text-zinc-400 border border-zinc-800 bg-zinc-900 px-2 py-0.5 rounded">
+                      {mod.total_tasks} заданий
+                    </span>
+                  )}
                 </div>
 
                 {/* Title */}
                 <div>
-                  <h3 className="text-base font-bold text-white font-mono group-hover:text-zinc-100">
+                  <h3
+                    className={`text-base font-bold font-mono ${
+                      isLocked ? 'text-zinc-400' : 'text-white group-hover:text-zinc-100'
+                    }`}
+                  >
                     {mod.title}
                   </h3>
-                  <p className="text-xs text-zinc-400 font-mono mt-2 line-clamp-3 leading-relaxed">
+                  <p className="text-xs text-zinc-500 font-mono mt-2 line-clamp-3 leading-relaxed">
                     {mod.description}
                   </p>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="space-y-1.5 pt-2 border-t border-zinc-800">
-                  <div className="flex justify-between text-xs font-mono text-zinc-400">
-                    <span>Прогресс сдачи:</span>
-                    <span className="font-bold text-zinc-200">
-                      {modPassed} / {mod.total_tasks} ({progressPercent}%)
-                    </span>
-                  </div>
-                  <div className="w-full h-1.5 bg-zinc-800 overflow-hidden rounded-full">
-                    <div
-                      className="h-full bg-emerald-500 transition-all duration-300 rounded-full"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                  {modPending > 0 && (
-                    <div className="text-[11px] font-mono text-amber-300 flex items-center gap-1 mt-1">
-                      <Clock className="w-3 h-3 text-amber-400" />
-                      <span>Ожидают проверки: {modPending}</span>
+                {/* Progress Bar (only if active) */}
+                {!isLocked ? (
+                  <div className="space-y-1.5 pt-2 border-t border-zinc-800">
+                    <div className="flex justify-between text-xs font-mono text-zinc-400">
+                      <span>Прогресс сдачи:</span>
+                      <span className="font-bold text-zinc-200">
+                        {modPassed} / {mod.total_tasks} ({progressPercent}%)
+                      </span>
                     </div>
-                  )}
-                </div>
+                    <div className="w-full h-1.5 bg-zinc-800 overflow-hidden rounded-full">
+                      <div
+                        className="h-full bg-emerald-500 transition-all duration-300 rounded-full"
+                        style={{ width: `${progressPercent}%` }}
+                      />
+                    </div>
+                    {modPending > 0 && (
+                      <div className="text-[11px] font-mono text-amber-300 flex items-center gap-1 mt-1">
+                        <Clock className="w-3 h-3 text-amber-400" />
+                        <span>Ожидают проверки: {modPending}</span>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="pt-2 border-t border-zinc-800/80 text-[11px] font-mono text-zinc-500 italic">
+                    Задания и стенды этого модуля станут доступны позже
+                  </div>
+                )}
               </div>
 
               {/* Action Link */}
               <div className="pt-6 mt-4 border-t border-zinc-800">
-                <Link href={`/modules/${mod.id}`}>
-                  <Button
-                    variant="primary"
-                    className="w-full flex items-center justify-center gap-2"
-                  >
-                    <span>Открыть список заданий</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Button>
-                </Link>
+                {isLocked ? (
+                  <div className="w-full py-2 bg-zinc-900/90 border border-zinc-800 text-zinc-500 font-mono text-xs flex items-center justify-center gap-2 cursor-not-allowed rounded">
+                    <Lock className="w-3.5 h-3.5 text-zinc-500" />
+                    <span>Модуль в разработке</span>
+                  </div>
+                ) : (
+                  <Link href={`/modules/${mod.id}`}>
+                    <Button
+                      variant="primary"
+                      className="w-full flex items-center justify-center gap-2"
+                    >
+                      <span>Открыть список заданий</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </Button>
+                  </Link>
+                )}
               </div>
             </div>
           );

@@ -17,6 +17,7 @@ import {
   Key,
 } from 'lucide-react';
 import { Task } from '@/lib/types';
+import { GenericTaskAssignment } from './TaskModule1Assignments';
 
 interface TaskProps {
   task: Task;
@@ -747,6 +748,6 @@ export function Module3AssignmentDispatcher({ task }: TaskProps) {
     case 'm3-task-10':
       return <Task10Module3Assignment task={task} />;
     default:
-      return null;
+      return <GenericTaskAssignment task={task} />;
   }
 }

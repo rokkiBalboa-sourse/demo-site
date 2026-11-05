@@ -17,6 +17,7 @@ import {
   Layers,
 } from 'lucide-react';
 import { Task } from '@/lib/types';
+import { GenericTaskAssignment } from './TaskModule1Assignments';
 import Link from 'next/link';
 
 interface TaskProps {
@@ -698,6 +699,6 @@ export function Module2AssignmentDispatcher({ task }: TaskProps) {
     case 'm2-task-11':
       return <Task11Module2Assignment task={task} />;
     default:
-      return null;
+      return <GenericTaskAssignment task={task} />;
   }
 }
