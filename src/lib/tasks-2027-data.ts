@@ -9,70 +9,332 @@ export const TASKS_2027_DATA: Task[] = [
     slug: 'm1-2027-task-1',
     module_id: 'module-1-2027',
     task_number: 1,
-    title: 'Топология сети и базовая адресация IPv4/IPv6',
+    title: 'Базовая настройка сети и хостов',
     module_code: 'Модуль 1 (2027)',
     description:
-      'Конфигурирование сетевых интерфейсов узлов стенда Proxmox VE, настройка FQDN в домене .au-team.irpo, статической маршрутизации и двойного стека IPv4/IPv6 для маршрутизаторов и серверов.',
-    nodes: ['ISP', 'HQ-RTR', 'HQ-SRV', 'HQ-CLI', 'BR-RTR', 'BR-SRV'],
-    assignment: `### Задание 1.1 (2027): Сетевая адресация и хосты
+      'Практическое руководство по выполнению базовой настройки сетевой инфраструктуры в ALT Linux: FQDN в домене .au-team.irpo, подсистема etcnet, расчет подсетей RFC 1918, транки и 802.1Q VLAN для сегментов HQ, а также статические маршруты через провайдера ISP и межсетевой экран BR-FW.',
+    nodes: ['ISP', 'HQ-RTR', 'HQ-SRV', 'HQ-CLI', 'BR-RTR', 'BR-FW', 'BR-SRV'],
+    assignment: `### 1. Как устроена сеть в ALT Linux (подсистема etcnet)
 
-1. **FQDN и имена узлов**:
-   Настроить системные имена хостов согласно схеме:
-   • \`isp.au-team.irpo\`
-   • \`hq-rtr.au-team.irpo\`
-   • \`hq-srv.au-team.irpo\`
-   • \`hq-cli.au-team.irpo\`
-   • \`br-rtr.au-team.irpo\`
-   • \`br-srv.au-team.irpo\`
+В отличие от Debian/Ubuntu (\`netplan\`, \`/etc/network/interfaces\`) или RHEL (\`NetworkManager\`), в ALT Linux традиционно используется подсистема **etcnet**.
+Все настройки интерфейсов хранятся в каталоге \`/etc/net/ifaces/\`. Один интерфейс = одна папка.
+Внутри папки интерфейса создаются простые текстовые файлы:
+• **options** — тип интерфейса и его свойства (\`TYPE=eth\` для физической карты, \`TYPE=vlan\` для виртуального саб-интерфейса, \`HOST=...\` — физический порт-носитель VLAN, \`VID=...\` — номер тега VLAN).
+• **ipv4address** — IP-адрес с префиксом маски (например, \`192.168.100.1/27\`).
+• **ipv4route** — статические маршруты или шлюз по умолчанию (\`default via 172.16.1.1\`).
+• **resolv.conf** — настройки DNS для данного интерфейса (\`nameserver 77.88.8.8\`, \`search au-team.irpo\`).
 
-2. **Адресация IPv4 и IPv6**:
-   • Для соединений WAN использовать префикс \`172.16.0.0/30\` и IPv6 \`2001:db8:1::/64\`.
-   • Для локальных сетей офиса HQ использовать подсеть \`192.168.10.0/24\`.
-   • Для филиала BR использовать подсеть \`192.168.20.0/24\`.`,
+---
+
+### 2. Сводная таблица адресации (Таблица 2)
+
+Используйте данную таблицу как эталон при настройке каждого узла:
+
+| Устройство | Интерфейс | IP-адрес / Префикс | Шлюз по умолчанию | DNS-сервер | Описание / Назначение |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| **ISP** | ens19 | \`172.16.1.1/28\` | — | — | Линк в сторону HQ-RTR |
+| **ISP** | ens20 | \`172.16.2.1/28\` | — | — | Линк в сторону BR-RTR |
+| **HQ-RTR** | ens18 | \`172.16.1.2/28\` | \`172.16.1.1\` | \`77.88.8.8\` | Внешний линк к ISP |
+| **HQ-RTR** | vlan100 | \`192.168.100.1/27\` | — | — | Сеть серверов HQ (до 32 IP) |
+| **HQ-RTR** | vlan200 | \`192.168.200.1/24\` | — | — | Сеть клиентов HQ (от 16 IP) |
+| **HQ-RTR** | vlan999 | \`192.168.99.1/29\` | — | — | Сеть управления (до 8 IP) |
+| **HQ-SRV** | ens18 | \`192.168.100.2/27\` | \`192.168.100.1\` | \`77.88.8.8\` | Сервер главного офиса HQ |
+| **BR-RTR** | ens18 | \`172.16.2.2/28\` | \`172.16.2.1\` | \`77.88.8.8\` | Внешний линк к ISP |
+| **BR-RTR** | ens19 | \`172.16.10.1/30\` | — | — | Локальная сеть филиала BR |
+| **BR-FW** | ens18 | \`172.16.10.2/30\` | \`172.16.10.1\` | \`77.88.8.8\` | В сторону BR-RTR |
+| **BR-FW** | ens19 | \`172.16.20.1/28\` | — | — | В сторону BR-SRV |
+| **BR-SRV** | ens18 | \`172.16.20.2/28\` | \`172.16.20.1\` | \`77.88.8.8\` | Сервер филиала BR |
+
+---
+
+### 3. Требования к именам хостов (FQDN)
+Настроить системные имена узлов в доменной зоне \`.au-team.irpo\`:
+• \`isp.au-team.irpo\`
+• \`hq-rtr.au-team.irpo\`
+• \`hq-srv.au-team.irpo\`
+• \`hq-cli.au-team.irpo\`
+• \`br-rtr.au-team.irpo\`
+• \`br-fw.au-team.irpo\`
+• \`br-srv.au-team.irpo\``,
     theory: [
       {
-        title: 'Управление сетью в ALT Linux через etcnet',
+        title: 'Архитектура подсистемы etcnet в ALT Linux',
         explanation:
-          'В ALT Linux подсистема etcnet использует директории в /etc/net/ifaces/<iface> для хранения конфигурационных файлов options, ipv4address и ipv4route.',
+          'В ALT Linux традиционно используется подсистема etcnet. Конфигурация каждого интерфейса изолирована в собственном каталоге /etc/net/ifaces/<interface_name>/.',
         details: [
-          'Файл options определяет тип интерфейса (BOOTPROTO=static).',
-          'Файл ipv4address задает IP с маской CIDR.',
-          'Команда перезапуска: systemctl restart network.',
+          '/etc/net/ifaces/<iface>/options — свойства интерфейса (TYPE=eth, TYPE=vlan, HOST=..., VID=...).',
+          '/etc/net/ifaces/<iface>/ipv4address — назначение IPv4 адреса в CIDR нотации (IP/маска).',
+          '/etc/net/ifaces/<iface>/ipv4route — маршруты, включая шлюз по умолчанию: "default via <шлюз>".',
+          '/etc/net/ifaces/<iface>/resolv.conf — локальные DNS-серверы и домен поиска: "nameserver ...", "search ...".',
+          'Применение изменений выполняется перезапуском сетевой службы: systemctl restart network.',
+        ],
+      },
+      {
+        title: 'Установка FQDN и мгновенное обновление оболочки Bash',
+        explanation:
+          'Команда hostnamectl set-hostname навсегда прописывает FQDN хоста в системе (в /etc/hostname). Конструкция "exec bash" заменяет текущий процесс оболочки на новый, мгновенно обновляя приглашение командной строки (prompt) без необходимости перезагружать ОС или заново подключаться по SSH.',
+        details: [
+          'hostnamectl set-hostname <fqdn> — изменяет статическое, переходное и красивое имя хоста.',
+          'exec bash — заменяет текущий шелл на новый сеанс bash с перечитанным hostname.',
+        ],
+      },
+      {
+        title: 'Тегирование 802.1Q (VLAN sub-interfaces) в etcnet',
+        explanation:
+          'Для создания саб-интерфейсов VLAN поверх транкового физического порта (ens19) создается каталог vlan<VID>. В файле options задаются директивы TYPE=vlan, HOST=ens19 и VID=<номер тега>.',
+        details: [
+          'HOST=ens19 указывает несущий физический адаптер транка.',
+          'VID=100 задает номер тега 802.1Q в Ethernet-фреймах.',
+          'Пересылка транзитных пакетов между интерфейсами требует net.ipv4.ip_forward = 1 в /etc/net/sysctl.conf.',
         ],
       },
     ],
     steps: [
       {
         step_number: 1,
+        node: 'ISP, HQ-RTR, HQ-SRV, HQ-CLI, BR-RTR, BR-FW, BR-SRV',
+        title: 'Шаг 1. Настройка FQDN имён хостов',
+        explanation:
+          'Команда hostnamectl set-hostname навсегда прописывает имя хоста в системе. Команда exec bash через точку с запятой заменяет текущий процесс оболочки на новый, благодаря чему приглашение командной строки (prompt) обновляется мгновенно без переподключения.',
+        commands: `# На узле ISP:
+hostnamectl set-hostname isp.au-team.irpo; exec bash
+
+# На узле HQ-RTR:
+hostnamectl set-hostname hq-rtr.au-team.irpo; exec bash
+
+# На узле HQ-SRV:
+hostnamectl set-hostname hq-srv.au-team.irpo; exec bash
+
+# На узле HQ-CLI:
+hostnamectl set-hostname hq-cli.au-team.irpo; exec bash
+
+# На узле BR-RTR:
+hostnamectl set-hostname br-rtr.au-team.irpo; exec bash
+
+# На узле BR-FW:
+hostnamectl set-hostname br-fw.au-team.irpo; exec bash
+
+# На узле BR-SRV:
+hostnamectl set-hostname br-srv.au-team.irpo; exec bash`,
+      },
+      {
+        step_number: 2,
+        node: 'ISP',
+        title: 'Шаг 2. Настройка сетевых портов и маршрутизации на ISP',
+        explanation:
+          'Маршрутизатор ISP соединяет два офиса через интерфейсы ens19 (к HQ-RTR) и ens20 (к BR-RTR). Включаем пересылку пакетов net.ipv4.ip_forward = 1.',
+        commands: `# 1. Создаем каталоги настроек сразу для двух интерфейсов ens19 и ens20:
+mkdir -p /etc/net/ifaces/ens{19,20}
+
+# 2. Указываем тип интерфейсов (TYPE=eth) в оба файла через tee:
+echo 'TYPE=eth' | tee /etc/net/ifaces/ens{19,20}/options
+
+# 3. Назначаем статические IP-адреса на каждый интерфейс:
+echo '172.16.1.1/28' > /etc/net/ifaces/ens19/ipv4address
+echo '172.16.2.1/28' > /etc/net/ifaces/ens20/ipv4address
+
+# 4. Включаем пересылку пакетов (маршрутизацию):
+echo "net.ipv4.ip_forward = 1" >> /etc/net/sysctl.conf
+sysctl -p
+
+# 5. Применяем настройки и проверяем состояние:
+systemctl restart network
+clear
+ip -c --br a`,
+      },
+      {
+        step_number: 3,
         node: 'HQ-RTR',
-        title: 'Настройка имени хоста и адресов',
-        explanation: 'Устанавливаем FQDN и настраиваем интерфейсы.',
-        commands: 'hostnamectl set-hostname hq-rtr.au-team.irpo\nsystemctl restart network',
+        title: 'Шаг 3. Настройка портов и VLAN на центральном маршрутизаторе HQ-RTR',
+        explanation:
+          'У маршрутизатора HQ есть внешний линк к ISP (ens18) и внутренний транк-порт (ens19), по которому передаются тегированные пакеты VLAN 100, 200 и 999. Также сразу создаем каталог туннеля gre1.',
+        commands: `# 1. Создаем каталоги для физических портов, VLAN-интерфейсов и туннеля gre1:
+mkdir -p /etc/net/ifaces/{ens{18,19},vlan{100,200,999},gre1}
+
+# 2. Физическим интерфейсам ens18 и ens19 задаем тип Ethernet:
+echo 'TYPE=eth' | tee /etc/net/ifaces/ens{18,19}/options
+
+# 3. Настраиваем внешний интерфейс ens18 (в сторону ISP):
+echo '172.16.1.2/28' > /etc/net/ifaces/ens18/ipv4address
+echo 'default via 172.16.1.1' > /etc/net/ifaces/ens18/ipv4route
+echo 'nameserver 77.88.8.8' > /etc/net/ifaces/ens18/resolv.conf
+
+# 4. Настраиваем виртуальные интерфейсы VLAN (100, 200, 999):
+echo $'100\n200\n999' | xargs -i bash -c 'echo -e "TYPE=vlan\nHOST=ens19\nVID={}" > /etc/net/ifaces/vlan{}/options'
+
+# 5. Назначаем IP-адреса на созданные VLAN-интерфейсы:
+echo '192.168.100.1/27' > /etc/net/ifaces/vlan100/ipv4address
+echo '192.168.200.1/24' > /etc/net/ifaces/vlan200/ipv4address
+echo '192.168.99.1/29'  > /etc/net/ifaces/vlan999/ipv4address
+
+# 6. Включаем пересылку пакетов (маршрутизацию):
+echo "net.ipv4.ip_forward = 1" >> /etc/net/sysctl.conf
+sysctl -p
+
+# 7. Применяем настройки и проверяем состояние:
+systemctl restart network
+clear
+ip -c --br a`,
+      },
+      {
+        step_number: 4,
+        node: 'HQ-SRV',
+        title: 'Шаг 4. Настройка сетевого интерфейса на сервере HQ-SRV',
+        explanation:
+          'Сервер находится в подсети VLAN 100 и использует адрес 192.168.100.2/27. Шлюзом для него выступает маршрутизатор HQ-RTR (192.168.100.1).',
+        commands: `# 1. Указываем тип интерфейса (Ethernet):
+mkdir -p /etc/net/ifaces/ens18
+echo 'TYPE=eth' > /etc/net/ifaces/ens18/options
+
+# 2. Назначаем IP-адрес сервера:
+echo '192.168.100.2/27' > /etc/net/ifaces/ens18/ipv4address
+
+# 3. Указываем шлюз по умолчанию (маршрутизатор HQ-RTR):
+echo 'default via 192.168.100.1' > /etc/net/ifaces/ens18/ipv4route
+
+# 4. Указываем DNS-сервер:
+echo 'nameserver 77.88.8.8' > /etc/net/ifaces/ens18/resolv.conf
+
+# 5. Применяем параметры и проверяем:
+systemctl restart network
+clear
+ip -c --br a`,
+      },
+      {
+        step_number: 5,
+        node: 'BR-RTR',
+        title: 'Шаг 5. Настройка портов на маршрутизаторе филиала BR-RTR',
+        explanation:
+          'Маршрутизатор филиала соединяет локальную сеть филиала (ens19, транзитный линк к BR-FW 172.16.10.0/30) с каналом провайдера (ens18, линк 172.16.2.0/28).',
+        commands: `# 1. Создаем каталоги для сетевых портов и туннеля gre1:
+mkdir -p /etc/net/ifaces/{ens{18,19},gre1}
+echo 'TYPE=eth' | tee /etc/net/ifaces/ens{18,19}/options
+
+# 2. Настраиваем линк к провайдеру ISP:
+echo '172.16.2.2/28' > /etc/net/ifaces/ens18/ipv4address
+echo 'default via 172.16.2.1' > /etc/net/ifaces/ens18/ipv4route
+echo 'nameserver 77.88.8.8' > /etc/net/ifaces/ens18/resolv.conf
+
+# 3. Настраиваем интерфейс к BR-FW:
+echo '172.16.10.1/30' > /etc/net/ifaces/ens19/ipv4address
+
+# 4. Включаем пересылку пакетов (маршрутизацию):
+echo "net.ipv4.ip_forward = 1" >> /etc/net/sysctl.conf
+sysctl -p
+
+# 5. Применяем настройки:
+systemctl restart network
+clear
+ip -c --br a`,
+      },
+      {
+        step_number: 6,
+        node: 'BR-FW',
+        title: 'Шаг 6. Настройка межсетевого экрана филиала BR-FW',
+        explanation:
+          'Межсетевой экран соединяет BR-RTR (ens18: 172.16.10.2/30 со шлюзом 172.16.10.1) и сервер филиала BR-SRV (ens19: 172.16.20.1/28). Включаем маршрутизацию пакетов.',
+        commands: `# 1. Задаем тип сетевых адаптеров:
+mkdir -p /etc/net/ifaces/ens{18,19}
+echo 'TYPE=eth' | tee /etc/net/ifaces/ens{18,19}/options
+
+# 2. Назначаем статический IP-адрес к BR-RTR:
+echo '172.16.10.2/30' > /etc/net/ifaces/ens18/ipv4address
+echo 'default via 172.16.10.1' > /etc/net/ifaces/ens18/ipv4route
+echo 'nameserver 77.88.8.8' > /etc/net/ifaces/ens18/resolv.conf
+
+# 3. Настраиваем интерфейс к BR-SRV:
+echo '172.16.20.1/28' > /etc/net/ifaces/ens19/ipv4address
+
+# 4. Включаем пересылку пакетов (маршрутизацию):
+echo "net.ipv4.ip_forward = 1" >> /etc/net/sysctl.conf
+sysctl -p
+
+# 5. Применяем настройки и проверяем состояние:
+systemctl restart network
+clear
+ip -c --br a`,
+      },
+      {
+        step_number: 7,
+        node: 'BR-SRV',
+        title: 'Шаг 7. Настройка сетевого интерфейса на сервере филиала BR-SRV',
+        explanation:
+          'Сервер филиала имеет IP-адрес 172.16.20.2/28. Шлюзом по умолчанию является BR-FW (172.16.20.1). Настраиваем домен поиска au-team.irpo и DNS-сервер.',
+        commands: `# 1. Задаем тип сетевого адаптера:
+mkdir -p /etc/net/ifaces/ens18
+echo 'TYPE=eth' > /etc/net/ifaces/ens18/options
+
+# 2. Назначаем статический IP-адрес:
+echo '172.16.20.2/28' > /etc/net/ifaces/ens18/ipv4address
+
+# 3. Прописываем маршрутизатор филиала как шлюз по умолчанию:
+echo 'default via 172.16.20.1' > /etc/net/ifaces/ens18/ipv4route
+
+# 4. Задаем домен поиска и корпоративный DNS-сервер:
+echo $'search au-team.irpo\nnameserver 77.88.8.8' > /etc/net/ifaces/ens18/resolv.conf
+
+# 5. Применяем настройки и проверяем состояние:
+systemctl restart network
+clear
+ip -c --br a`,
+      },
+      {
+        step_number: 8,
+        node: 'Все узлы',
+        title: 'Шаг 8. Верификация и проверка связности',
+        explanation:
+          'После завершения конфигурации проверяем статус всех интерфейсов и наличие маршрута по умолчанию.',
+        commands: `# Проверка статуса портов (все должны быть UP):
+ip -c --br a
+
+# Проверка таблицы маршрутизации (должен быть маршрут default via ...):
+ip r
+
+# Проверка доступности шлюзов:
+# На HQ-SRV:
+ping -c 2 192.168.100.1
+
+# На BR-SRV:
+ping -c 2 172.16.20.1`,
       },
     ],
-    script_command: '/root/scripts/check-m1-2027-task1.sh',
+    script_command: 'curl -sSL https://exam.sudostudy.dev/scripts/2027/m1_t1.sh | bash',
     questions: [
       {
         id: 'q1',
-        text: 'Какой конфигурационный файл в etcnet определяет статический IP-адрес интерфейса?',
+        text: 'Где в ALT Linux хранятся конфигурационные каталоги и файлы сетевых интерфейсов подсистемы etcnet?',
         options: [
-          { id: 'A', text: 'ipv4address' },
-          { id: 'B', text: 'interfaces' },
-          { id: 'C', text: 'ifcfg-eth0' },
-          { id: 'D', text: 'network.conf' },
+          { id: 'A', text: '/etc/network/interfaces' },
+          { id: 'B', text: '/etc/net/ifaces/' },
+          { id: 'C', text: '/etc/sysconfig/network-scripts/' },
+          { id: 'D', text: '/etc/netplan/' },
+        ],
+        correct_answer: 'B',
+      },
+      {
+        id: 'q2',
+        text: 'Какие параметры в файле options подсистемы etcnet обязательны для создания виртуального саб-интерфейса 802.1Q (VLAN)?',
+        options: [
+          { id: 'A', text: 'TYPE=vlan, HOST=<интерфейс_транка>, VID=<номер_тега>' },
+          { id: 'B', text: 'TYPE=eth, VLAN=yes, ID=<номер_тега>' },
+          { id: 'C', text: 'MODE=vlan, PARENT=<интерфейс>, TAG=<номер_тега>' },
+          { id: 'D', text: 'TYPE=trunk, INTERFACE=<интерфейс>, VID=<номер_тега>' },
         ],
         correct_answer: 'A',
       },
       {
-        id: 'q2',
-        text: 'Какой протокол обеспечивает параллельную работу стеков IPv4 и IPv6?',
+        id: 'q3',
+        text: 'С какой целью после изменения имени хоста выполняется команда exec bash (например: hostnamectl set-hostname hq-rtr.au-team.irpo; exec bash)?',
         options: [
-          { id: 'A', text: 'Dual Stack (двойной стек)' },
-          { id: 'B', text: 'NAT64' },
-          { id: 'C', text: '6to4 Tunneling' },
-          { id: 'D', text: 'ISATAP' },
+          { id: 'A', text: 'Для перезапуска сетевой службы network' },
+          { id: 'B', text: 'Для сохранения имени хоста в файл /etc/hosts' },
+          {
+            id: 'C',
+            text: 'Для заменяющего запуска нового процесса оболочки и мгновенного обновления prompt без переподключения',
+          },
+          { id: 'D', text: 'Для автоматической генерации SSH-ключей хоста' },
         ],
-        correct_answer: 'A',
+        correct_answer: 'C',
       },
     ],
     max_score: 5,
@@ -1579,3 +1841,4 @@ export const TASKS_2027_DATA: Task[] = [
     updated_at: new Date().toISOString(),
   },
 ];
+
