@@ -492,14 +492,78 @@ export const mysqlDb = {
   },
 
   // Tasks
+  async ensureTasksSeeded(): Promise<void> {
+    try {
+      for (const t of TASKS_DATA) {
+        await query(
+          `INSERT INTO tasks (
+            id, slug, module_id, task_number, title, module_code, description,
+            assignment, video_url, nodes, theory, steps, script_command, questions,
+            max_score, order_index, is_active, created_at, updated_at
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          ON DUPLICATE KEY UPDATE
+            slug = VALUES(slug),
+            module_id = VALUES(module_id),
+            task_number = VALUES(task_number),
+            title = VALUES(title),
+            module_code = VALUES(module_code),
+            description = VALUES(description),
+            assignment = VALUES(assignment),
+            video_url = VALUES(video_url),
+            nodes = VALUES(nodes),
+            theory = VALUES(theory),
+            steps = VALUES(steps),
+            script_command = VALUES(script_command),
+            questions = VALUES(questions),
+            max_score = VALUES(max_score),
+            order_index = VALUES(order_index),
+            is_active = VALUES(is_active)`,
+          [
+            t.id,
+            t.slug,
+            t.module_id,
+            t.task_number || 1,
+            t.title,
+            t.module_code || 'SYS',
+            t.description || '',
+            t.assignment || null,
+            t.video_url || null,
+            JSON.stringify(t.nodes || []),
+            JSON.stringify(t.theory || []),
+            JSON.stringify(t.steps || []),
+            t.script_command || null,
+            JSON.stringify(t.questions || []),
+            t.max_score !== undefined ? t.max_score : 5,
+            t.order_index !== undefined ? t.order_index : 0,
+            t.is_active ? 1 : 0,
+            t.created_at || new Date().toISOString(),
+            t.updated_at || new Date().toISOString(),
+          ]
+        );
+      }
+    } catch (e) {
+      console.warn('[MySQL] Failed to auto-seed tasks:', e);
+    }
+  },
+
   async getAllTasks(): Promise<Task[]> {
     const rows = await query<RowDataPacket[]>(
       'SELECT * FROM tasks WHERE is_active = 1 ORDER BY order_index ASC'
     );
     if (!rows || rows.length === 0) {
+      this.ensureTasksSeeded().catch(() => {});
       return TASKS_DATA;
     }
-    return rows.map(mapTaskRow);
+    const dbTasks = rows.map(mapTaskRow);
+    const dbTaskIds = new Set(dbTasks.map(t => t.id));
+    const missingTasks = TASKS_DATA.filter(t => !dbTaskIds.has(t.id));
+    if (missingTasks.length > 0) {
+      this.ensureTasksSeeded().catch(() => {});
+      return [...dbTasks, ...missingTasks].sort(
+        (a, b) => (a.order_index ?? 0) - (b.order_index ?? 0)
+      );
+    }
+    return dbTasks;
   },
 
   async getTasksByModule(moduleId: string): Promise<Task[]> {
@@ -507,6 +571,14 @@ export const mysqlDb = {
       'SELECT * FROM tasks WHERE module_id = ? AND is_active = 1 ORDER BY task_number ASC',
       [moduleId]
     );
+    if (!rows || rows.length === 0) {
+      const fallback = TASKS_DATA.filter(t => t.module_id === moduleId && t.is_active);
+      if (fallback.length > 0) {
+        this.ensureTasksSeeded().catch(() => {});
+        return fallback;
+      }
+      return [];
+    }
     return rows.map(mapTaskRow);
   },
 
@@ -515,7 +587,14 @@ export const mysqlDb = {
       'SELECT * FROM tasks WHERE slug = ? AND is_active = 1 LIMIT 1',
       [slug]
     );
-    if (!rows || rows.length === 0) return null;
+    if (!rows || rows.length === 0) {
+      const fallback = TASKS_DATA.find(t => t.slug === slug && t.is_active) || null;
+      if (fallback) {
+        this.ensureTasksSeeded().catch(() => {});
+        return fallback;
+      }
+      return null;
+    }
     return mapTaskRow(rows[0]);
   },
 
@@ -524,7 +603,14 @@ export const mysqlDb = {
       'SELECT * FROM tasks WHERE id = ? AND is_active = 1 LIMIT 1',
       [id]
     );
-    if (!rows || rows.length === 0) return null;
+    if (!rows || rows.length === 0) {
+      const fallback = TASKS_DATA.find(t => t.id === id) || null;
+      if (fallback) {
+        this.ensureTasksSeeded().catch(() => {});
+        return fallback;
+      }
+      return null;
+    }
     return mapTaskRow(rows[0]);
   },
 
@@ -868,9 +954,17 @@ export const mysqlDb = {
       await conn.query('SET FOREIGN_KEY_CHECKS = 0');
       await conn.beginTransaction();
 
-      // 2. Import tasks if provided, or ensure system tasks are present
-      const tasksToImport =
-        Array.isArray(imported.tasks) && imported.tasks.length > 0 ? imported.tasks : TASKS_DATA;
+      // 2. Always ensure all system tasks (2026 + 2027) are present!
+      const tasksMap = new Map<string, Task>();
+      for (const t of TASKS_DATA) {
+        tasksMap.set(t.id, t);
+      }
+      if (Array.isArray(imported.tasks)) {
+        for (const t of imported.tasks) {
+          tasksMap.set(t.id, t);
+        }
+      }
+      const tasksToImport = Array.from(tasksMap.values());
 
       for (const t of tasksToImport) {
         await conn.query(

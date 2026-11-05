@@ -1086,6 +1086,11 @@ export const db = {
       () => mysqlDb.getAllTasks(),
       () => localJsonDb.getAllTasks()
     ),
+  ensureTasksSeeded: () =>
+    runWithFallback(
+      () => mysqlDb.ensureTasksSeeded(),
+      () => {}
+    ),
   getTasksByModule: (moduleId: string) =>
     runWithFallback(
       () => mysqlDb.getTasksByModule(moduleId),
