@@ -17,14 +17,14 @@ REPORT_DIR="/root/pve_reports"
 TIMESTAMP=$(date +"%d-%m-%Y_%H-%M-%S")
 REPORT_FILE="${REPORT_DIR}/2027_M1_Task1_Report_${TIMESTAMP}.txt"
 
-# ID виртуальных машин стенда 2027 года в Proxmox VE
-ISP="10101"
-HQ_RTR="10102"
-HQ_SRV="10103"
-HQ_CLI="10104"
-BR_RTR="10105"
-BR_FW="10106"
-BR_SRV="10107"
+# ID виртуальных машин стенда 2027 года в Proxmox VE (VMID)
+ISP="100"
+HQ_RTR="101"
+HQ_SRV="102"
+HQ_CLI="103"
+BR_RTR="104"
+BR_FW="105"
+BR_SRV="106"
 
 # Отображаемые имена ВМ
 declare -A VM_NAMES
@@ -241,3 +241,4 @@ log_report ""
 log_report "=== ПРОВЕРКА ЗАВЕРШЕНА ===" "$YELLOW"
 log_report "Файл отчета сохранен в: $REPORT_FILE" "$YELLOW"
 echo ""
+
