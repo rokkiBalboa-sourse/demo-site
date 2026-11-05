@@ -21,11 +21,23 @@ export function StudentModulesSection({
   examSettings,
   userGroup,
 }: StudentModulesSectionProps) {
-  // Check group restriction
-  const groupAssignment = examSettings.mode === 'restricted' ? examSettings.groupAssignments?.[userGroup] : null;
+  // Check group restriction with case-insensitive matching
+  const groupAssignment = useMemo(() => {
+    if (examSettings.mode !== 'restricted' || !examSettings.groupAssignments) return null;
+    const cleanUserGroup = (userGroup || '').trim().toLowerCase();
+    for (const [grp, config] of Object.entries(examSettings.groupAssignments)) {
+      if (grp.trim().toLowerCase() === cleanUserGroup) {
+        return config;
+      }
+    }
+    // Default fallback in restricted mode if group has no explicit override
+    return { year: examSettings.defaultYear || 2026 };
+  }, [examSettings, userGroup]);
 
-  const isStrictYear = groupAssignment && (groupAssignment.year === 2026 || groupAssignment.year === 2027);
-  const strictYear = isStrictYear ? (groupAssignment.year as 2026 | 2027) : null;
+  const isStrictYear = Boolean(
+    groupAssignment && (groupAssignment.year === 2026 || groupAssignment.year === 2027)
+  );
+  const strictYear = isStrictYear ? (groupAssignment?.year as 2026 | 2027) : null;
 
   const [selectedYear, setSelectedYear] = useState<number>(() => {
     if (strictYear) return strictYear;

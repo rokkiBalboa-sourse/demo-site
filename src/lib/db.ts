@@ -995,11 +995,14 @@ export const db = {
       () => mysqlDb.getExamSettings(),
       () => localJsonDb.getExamSettings()
     ),
-  saveExamSettings: (settings: ExamYearSettings) =>
-    runWithFallback(
+  saveExamSettings: async (settings: ExamYearSettings) => {
+    // Always persist to localJsonDb as safety buffer
+    localJsonDb.saveExamSettings(settings);
+    return runWithFallback(
       () => mysqlDb.saveExamSettings(settings),
       () => localJsonDb.saveExamSettings(settings)
-    ),
+    );
+  },
   findUserByUsername: (username: string) =>
     runWithFallback(
       () => mysqlDb.findUserByUsername(username),

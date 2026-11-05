@@ -102,15 +102,18 @@ export const mysqlDb = {
   },
 
   async getExamSettings(): Promise<ExamYearSettings> {
-    try {
-      const rows = await query<RowDataPacket[]>(
-        "SELECT setting_value FROM app_settings WHERE setting_key = 'exam_settings' LIMIT 1"
-      );
-      if (rows.length > 0 && rows[0].setting_value) {
-        return JSON.parse(rows[0].setting_value) as ExamYearSettings;
-      }
-    } catch {
-      // ignore
+    await query(
+      `CREATE TABLE IF NOT EXISTS app_settings (
+        setting_key VARCHAR(100) PRIMARY KEY,
+        setting_value TEXT NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )`
+    );
+    const rows = await query<RowDataPacket[]>(
+      "SELECT setting_value FROM app_settings WHERE setting_key = 'exam_settings' LIMIT 1"
+    );
+    if (rows.length > 0 && rows[0].setting_value) {
+      return JSON.parse(rows[0].setting_value) as ExamYearSettings;
     }
     return {
       mode: 'tabs',
@@ -120,23 +123,19 @@ export const mysqlDb = {
   },
 
   async saveExamSettings(settings: ExamYearSettings): Promise<ExamYearSettings> {
-    try {
-      await query(
-        `CREATE TABLE IF NOT EXISTS app_settings (
-          setting_key VARCHAR(100) PRIMARY KEY,
-          setting_value TEXT NOT NULL,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-        )`
-      );
-      await query(
-        `INSERT INTO app_settings (setting_key, setting_value)
-         VALUES ('exam_settings', ?)
-         ON DUPLICATE KEY UPDATE setting_value = ?`,
-        [JSON.stringify(settings), JSON.stringify(settings)]
-      );
-    } catch (e) {
-      console.warn('[MySQL] Failed to save exam_settings in DB table:', e);
-    }
+    await query(
+      `CREATE TABLE IF NOT EXISTS app_settings (
+        setting_key VARCHAR(100) PRIMARY KEY,
+        setting_value TEXT NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )`
+    );
+    await query(
+      `INSERT INTO app_settings (setting_key, setting_value)
+       VALUES ('exam_settings', ?)
+       ON DUPLICATE KEY UPDATE setting_value = ?`,
+      [JSON.stringify(settings), JSON.stringify(settings)]
+    );
     return settings;
   },
 

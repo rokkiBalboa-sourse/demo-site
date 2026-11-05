@@ -1328,12 +1328,188 @@ export function GenericTaskAssignment({ task }: TaskProps) {
 }
 
 // ==========================================
+// TASK 1 (2027): Network & Hosts Setup
+// ==========================================
+export function Task1Assignment2027() {
+  const vms = [
+    { name: 'ISP', vid: '100', fqdn: 'isp.au-team.irpo', role: 'Интернет-провайдер' },
+    { name: 'HQ-RTR', vid: '101', fqdn: 'hq-rtr.au-team.irpo', role: 'Маршрутизатор HQ' },
+    { name: 'HQ-SRV', vid: '102', fqdn: 'hq-srv.au-team.irpo', role: 'Сервер главного офиса HQ' },
+    { name: 'HQ-CLI', vid: '103', fqdn: 'hq-cli.au-team.irpo', role: 'Рабочая станция HQ' },
+    { name: 'BR-RTR', vid: '104', fqdn: 'br-rtr.au-team.irpo', role: 'Маршрутизатор филиала BR' },
+    { name: 'BR-FW', vid: '105', fqdn: 'br-fw.au-team.irpo', role: 'Межсетевой экран филиала' },
+    { name: 'BR-SRV', vid: '106', fqdn: 'br-srv.au-team.irpo', role: 'Сервер филиала BR' },
+  ];
+
+  const addresses = [
+    { device: 'ISP', iface: 'ens19', ip: '172.16.1.1/28', gw: '—', dns: '—', desc: 'Линк в сторону HQ-RTR' },
+    { device: 'ISP', iface: 'ens20', ip: '172.16.2.1/28', gw: '—', dns: '—', desc: 'Линк в сторону BR-RTR' },
+    { device: 'HQ-RTR', iface: 'ens18', ip: '172.16.1.2/28', gw: '172.16.1.1', dns: '77.88.8.8', desc: 'Внешний линк к ISP' },
+    { device: 'HQ-RTR', iface: 'vlan100', ip: '192.168.100.1/27', gw: '—', dns: '—', desc: 'Сеть серверов HQ (до 32 IP)' },
+    { device: 'HQ-RTR', iface: 'vlan200', ip: '192.168.200.1/24', gw: '—', dns: '—', desc: 'Сеть клиентов HQ (от 16 IP)' },
+    { device: 'HQ-RTR', iface: 'vlan999', ip: '192.168.99.1/29', gw: '—', dns: '—', desc: 'Сеть управления (до 8 IP)' },
+    { device: 'HQ-SRV', iface: 'ens18', ip: '192.168.100.2/27', gw: '192.168.100.1', dns: '77.88.8.8', desc: 'Сервер главного офиса HQ' },
+    { device: 'BR-RTR', iface: 'ens18', ip: '172.16.2.2/28', gw: '172.16.2.1', dns: '77.88.8.8', desc: 'Внешний линк к ISP' },
+    { device: 'BR-RTR', iface: 'ens19', ip: '172.16.10.1/30', gw: '—', dns: '—', desc: 'Линк к межсетевому экрану BR-FW' },
+    { device: 'BR-FW', iface: 'ens18', ip: '172.16.10.2/30', gw: '172.16.10.1', dns: '77.88.8.8', desc: 'В сторону BR-RTR' },
+    { device: 'BR-FW', iface: 'ens19', ip: '172.16.20.1/28', gw: '—', dns: '—', desc: 'В сторону сервера BR-SRV' },
+    { device: 'BR-SRV', iface: 'ens18', ip: '172.16.20.2/28', gw: '172.16.20.1', dns: '77.88.8.8', desc: 'Сервер филиала BR' },
+  ];
+
+  return (
+    <div className="bg-zinc-950 p-5 border border-zinc-800 space-y-6 font-mono text-xs text-zinc-300 leading-relaxed rounded">
+      {/* 1. Описание задачи */}
+      <div className="space-y-2">
+        <div className="text-white font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+          <span>Описание задачи:</span>
+        </div>
+        <div className="text-zinc-200 text-xs sm:text-[13px] leading-relaxed bg-zinc-900/60 p-4 border border-zinc-800 rounded">
+          Базовая настройка сетевой инфраструктуры демо-экзамена 2027 года: конфигурация FQDN в домене{' '}
+          <code className="text-emerald-400 bg-zinc-900 border border-zinc-800 px-1 py-0.5 rounded">.au-team.irpo</code>,
+          расчет и распределение приватных подсетей RFC 1918, настройка сетевых интерфейсов через подсистему{' '}
+          <strong className="text-white">etcnet</strong> в ALT Linux, организация 802.1Q саб-интерфейсов VLAN на HQ-RTR
+          и установка статических маршрутов по умолчанию и между филиалами.
+        </div>
+      </div>
+
+      {/* 2. Место выполнения и VID узлов */}
+      <div className="space-y-2 pt-2 border-t border-zinc-800/80">
+        <div className="text-white font-bold uppercase tracking-wider text-[11px] flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-sky-400 rounded-full" />
+            <span>Место выполнения — Виртуальные машины Proxmox VE (2027):</span>
+          </div>
+          <span className="text-[10px] text-zinc-500 font-normal">7 узлов стенда</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
+          {vms.map(vm => (
+            <div
+              key={vm.vid}
+              className="bg-zinc-900/80 border border-zinc-800 p-2.5 rounded hover:border-zinc-700 transition-colors"
+            >
+              <div className="flex items-center justify-between mb-1">
+                <span className="font-bold text-white text-xs">{vm.name}</span>
+                <span className="px-1.5 py-0.2 bg-zinc-800 text-amber-300 border border-zinc-700 text-[10px] font-bold rounded">
+                  VID {vm.vid}
+                </span>
+              </div>
+              <div className="text-emerald-400 text-[11px] font-semibold truncate">{vm.fqdn}</div>
+              <div className="text-[10px] text-zinc-400 mt-1 truncate">{vm.role}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 3. Архитектура etcnet */}
+      <div className="space-y-2.5 pt-2 border-t border-zinc-800/80">
+        <div className="text-white font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+          <span>Архитектура сетевой подсистемы etcnet (/etc/net/ifaces):</span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="bg-zinc-900/60 border border-zinc-800 p-3.5 space-y-1.5 rounded">
+            <div className="text-white font-bold flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+              <span>Файлы внутри папки интерфейса</span>
+            </div>
+            <p className="text-zinc-300 text-[11px] leading-relaxed">
+              В ALT Linux каждый интерфейс настраивается отдельной папкой в <code className="text-zinc-200">/etc/net/ifaces/&lt;iface&gt;/</code>:
+            </p>
+            <ul className="text-[11px] text-zinc-300 space-y-1 pl-1">
+              <li>• <strong className="text-white">options</strong>: <code className="text-emerald-400">TYPE=eth</code> или <code className="text-emerald-400">TYPE=vlan</code></li>
+              <li>• <strong className="text-white">ipv4address</strong>: IP-адрес с префиксом маски, напр. <code className="text-emerald-400">192.168.100.1/27</code></li>
+              <li>• <strong className="text-white">ipv4route</strong>: шлюз по умолчанию <code className="text-emerald-400">default via 172.16.1.1</code></li>
+              <li>• <strong className="text-white">resolv.conf</strong>: DNS-серверы <code className="text-emerald-400">nameserver 77.88.8.8</code></li>
+            </ul>
+          </div>
+
+          <div className="bg-zinc-900/60 border border-zinc-800 p-3.5 space-y-1.5 rounded">
+            <div className="text-white font-bold flex items-center gap-2">
+              <span className="w-1.5 h-1.5 bg-sky-400 rounded-full" />
+              <span>Настройка 802.1Q саб-интерфейсов VLAN (HQ-RTR)</span>
+            </div>
+            <p className="text-zinc-300 text-[11px] leading-relaxed">
+              Для создания тегированных интерфейсов <code className="text-zinc-200">vlan100</code>, <code className="text-zinc-200">vlan200</code>, <code className="text-zinc-200">vlan999</code>:
+            </p>
+            <div className="bg-zinc-950 p-2.5 border border-zinc-800 text-[11px] text-zinc-200 font-mono rounded space-y-0.5">
+              <div>mkdir -p /etc/net/ifaces/vlan100</div>
+              <div>echo -e &quot;TYPE=vlan\nHOST=ens18\nVID=100&quot; &gt; /etc/net/ifaces/vlan100/options</div>
+              <div>echo &quot;192.168.100.1/27&quot; &gt; /etc/net/ifaces/vlan100/ipv4address</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Таблица адресации */}
+      <div className="space-y-2 pt-2 border-t border-zinc-800/80">
+        <div className="text-white font-bold uppercase tracking-wider text-[11px] flex items-center justify-between">
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full" />
+            <span>Сводная таблица сетевой адресации (Таблица 2):</span>
+          </div>
+          <span className="text-[10px] text-zinc-500 font-normal">RFC 1918</span>
+        </div>
+        <div className="overflow-x-auto border border-zinc-800 rounded">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="bg-zinc-900 text-zinc-300 border-b border-zinc-800 text-[11px]">
+                <th className="p-2.5 font-bold">Устройство</th>
+                <th className="p-2.5 font-bold">Интерфейс</th>
+                <th className="p-2.5 font-bold">IP-адрес / Префикс</th>
+                <th className="p-2.5 font-bold">Шлюз по умолч.</th>
+                <th className="p-2.5 font-bold">DNS-сервер</th>
+                <th className="p-2.5 font-bold">Описание / Назначение</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800/80 text-[11px]">
+              {addresses.map((row, idx) => (
+                <tr key={idx} className="hover:bg-zinc-900/40 transition-colors">
+                  <td className="p-2.5 font-bold text-white whitespace-nowrap">{row.device}</td>
+                  <td className="p-2.5 font-mono text-amber-300 font-semibold">{row.iface}</td>
+                  <td className="p-2.5 font-mono text-emerald-400 font-semibold">{row.ip}</td>
+                  <td className="p-2.5 font-mono text-zinc-300">{row.gw}</td>
+                  <td className="p-2.5 font-mono text-sky-300">{row.dns}</td>
+                  <td className="p-2.5 text-zinc-300">{row.desc}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* 5. Маршрутизация и требования к связности */}
+      <div className="space-y-2 pt-2 border-t border-zinc-800/80">
+        <div className="text-white font-bold uppercase tracking-wider text-[11px] flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 bg-amber-400 rounded-full" />
+          <span>Статические маршруты и требования к связности:</span>
+        </div>
+        <div className="bg-zinc-900/50 border border-zinc-800 p-3 space-y-2 rounded text-[11px]">
+          <p className="text-zinc-300">
+            Для обеспечения корректной связности между филиалами и выхода в сеть Интернет настройте следующие маршруты:
+          </p>
+          <ul className="space-y-1 text-zinc-200">
+            <li>• <strong className="text-white">HQ-RTR</strong>: шлюз по умолчанию <code className="text-emerald-400">default via 172.16.1.1</code> (в сторону ISP).</li>
+            <li>• <strong className="text-white">BR-RTR</strong>: шлюз по умолчанию <code className="text-emerald-400">default via 172.16.2.1</code> (ISP), а также маршрут к серверному сегменту филиала <code className="text-emerald-400">172.16.20.0/28 via 172.16.10.2</code> (через BR-FW).</li>
+            <li>• <strong className="text-white">BR-FW</strong>: шлюз по умолчанию <code className="text-emerald-400">default via 172.16.10.1</code> (через BR-RTR).</li>
+            <li>• <strong className="text-white">BR-SRV</strong>: шлюз по умолчанию <code className="text-emerald-400">default via 172.16.20.1</code> (через BR-FW).</li>
+            <li>• <strong className="text-white">HQ-SRV</strong>: шлюз по умолчанию <code className="text-emerald-400">default via 192.168.100.1</code> (через HQ-RTR).</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
 // DISPATCHER COMPONENT
 // ==========================================
 export function Module1AssignmentDispatcher({ task }: TaskProps) {
   switch (task.id) {
     case 'm1-task-1':
       return <Task1Assignment />;
+    case 'm1-2027-task-1':
+      return <Task1Assignment2027 />;
     case 'm1-task-4':
       return <Task4Assignment />;
     case 'm1-task-5':
